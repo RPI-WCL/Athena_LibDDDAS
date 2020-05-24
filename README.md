@@ -1,6 +1,6 @@
 # Athena_LibCPS
 
-##### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of cyber-physical systems
+### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Cyber-Physical Systems
 
 ##### ATHENA:
 
@@ -15,6 +15,7 @@
 
 
 ##### DISCLAIMER: 
+
 Copyright &copy; 2020 Saswata Paul
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
