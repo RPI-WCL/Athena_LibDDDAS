@@ -1,0 +1,130 @@
+#-------------------------------------------------------------------------
+#-- Theories of Charecteristic Functions and Distributions
+
+
+#-- Declaring a datatype CF about Charecteristic Functions
+#-- NormalCF is the constructor for datatype CF and OtherCF is the base case
+
+(datatype CF (NormalCF Real Real) OtherCF)
+
+#-- mul-cf-normal takes two normal CFs and creates a new normal CF 
+
+(declare mul-cf (-> (CF CF) CF))
+(define mul-cf-normal
+  (forall ?m1:Real
+    (forall ?v1:Real
+      (forall ?m2:Real
+        (forall ?v2:Real
+          (= (mul-cf (NormalCF ?m1:Real ?v1:Real) (NormalCF ?m2:Real ?v2:Real))
+             (NormalCF (+ ?m1:Real ?m2:Real) (+ ?v1:Real ?v2:Real))))))))
+(assert mul-cf-normal)
+
+
+#-- Dist is the set of all distributions
+(domain Dist)
+
+#-- mean takes a distribution and returns its real mean
+
+(declare mean (-> (Dist) Real))
+
+#-- variance takes a distribution and returns its real variance
+
+(declare variance (-> (Dist) Real))
+
+#-- charecteristic-fuction takes a distribution ad returns its CF
+
+(declare characteristic-function (-> (Dist) CF))
+
+#-- is-normal takes a distribution and returns True iff it is a normal distribution
+
+(declare is-normal (-> (Dist) Boolean))
+
+#-- convolution takes two distributions and returns their linear combination
+
+(declare convolution (-> (Dist Dist) Dist))
+
+#-- normal-cf-forward states that if x is a normal distribution, then its CF can be expressed by using its real mean and variance
+
+(define normal-cf-forward
+  (forall ?x:Dist
+    (if (is-normal ?x:Dist)
+        (= (characteristic-function ?x:Dist)
+           (NormalCF (mean ?x:Dist) (variance ?x:Dist))))))
+
+#-- normal-cf-backward states that if the CF of a distribution are expressed using its real mean and variance, then it is a normal distribution
+
+(define normal-cf-backward
+  (forall ?x:Dist
+    (if (= (characteristic-function ?x:Dist)
+           (NormalCF (mean ?x:Dist) (variance ?x:Dist)))
+        (is-normal ?x:Dist))))
+
+#-- normal-cf-mean-variance states that if the CF of a distribution is expressed using reals, then the mean and variance can be extracted from it  ????????????????? --- how do you claim this? 
+
+(define normal-cf-mean-variance
+  (forall ?x:Dist
+    (forall ?m:Real
+      (forall ?v:Real
+        (if (= (characteristic-function ?x:Dist)
+               (NormalCF ?m:Real ?v:Real))
+            (and (= (mean ?x:Dist) ?m:Real)
+                 (= (variance ?x:Dist) ?v:Real)))))))
+
+(assert normal-cf-forward)
+(assert normal-cf-backward)
+(assert normal-cf-mean-variance)
+
+#-- normal-cf-sum states that the CF of the convolution of xCramersy distributions can be obtained by the linear combination of the CFs of the xCramersy distributions
+
+(define normal-cf-sum
+  (forall ?x:Dist
+    (forall ?y:Dist
+      (if (and (is-normal ?x:Dist) (is-normal ?y:Dist))
+          (= (characteristic-function (convolution ?x:Dist ?y:Dist))
+             (mul-cf (characteristic-function ?x:Dist) (characteristic-function ?y:Dist)))))))
+(assert normal-cf-sum)
+
+#-- Cramér's Decomposition Theoremtheorem 
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#-- MAYBE WRONG SINCE IT DOES NOT CHECK IF x and y are independent
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+(define Cramers-Decomposition-Theorem
+  (forall ?x:Dist 
+    (forall ?y:Dist
+      (if (and (is-normal ?x:Dist) (is-normal ?y:Dist))
+          (is-normal (convolution ?x:Dist ?y:Dist))))))
+
+#-- Proof of Cramér's Decomposition Theorem
+
+conclude Cramers-Decomposition-Theorem
+pick-any x:Dist
+pick-any y:Dist
+assume (and (is-normal x) (is-normal y))
+(!mp
+ (!uspec normal-cf-backward (convolution x y))
+ let {px := (!mp (!uspec normal-cf-forward x) (is-normal x));
+      py := (!mp (!uspec normal-cf-forward y) (is-normal y));
+      ncs := (!mp (!uspec (!uspec normal-cf-sum x) y) (and (is-normal x) (is-normal y)));
+      mcn := (!uspec (!uspec (!uspec (!uspec mul-cf-normal (mean x)) (variance x)) (mean y)) (variance y));
+      cmv := (!uspec (!uspec (!uspec normal-cf-mean-variance (convolution x y)) (+ (mean x) (mean y))) (+ (variance x) (variance y)))}
+   let {amv := (!mp 
+                 cmv
+                 (!chain [(characteristic-function (convolution x y))
+                          = (mul-cf (characteristic-function x) (characteristic-function y)) [ncs]
+                          = (mul-cf (NormalCF (mean x) (variance x)) (characteristic-function y)) [px]
+                          = (mul-cf (NormalCF (mean x) (variance x)) (NormalCF (mean y) (variance y))) [py]
+                          = (NormalCF (+ (mean x) (mean y)) (+ (variance x) (variance y))) [mcn]
+                          ]))}
+   (!chain [(characteristic-function (convolution x y))
+            = (mul-cf (characteristic-function x) (characteristic-function y)) [ncs]
+            = (mul-cf (NormalCF (mean x) (variance x)) (characteristic-function y)) [px]
+            = (mul-cf (NormalCF (mean x) (variance x)) (NormalCF (mean y) (variance y))) [py]
+            = (NormalCF (+ (mean x) (mean y)) (+ (variance x) (variance y))) [mcn]
+            = (NormalCF (mean (convolution x y)) (+ (variance x) (variance y))) [(!left-and amv)]
+            = (NormalCF (mean (convolution x y)) (variance (convolution x y))) [(!right-and amv)]
+            ]))
+
+

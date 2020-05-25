@@ -1,0 +1,83 @@
+#-------------------------------------------------------------------------
+#-- Theories of probability
+
+#-- Variables 
+
+define [t T] := [?t:Real ?T:Real]
+
+define [X Y Z] := [?X:Dist ?Y:Dist ?Z:Dist]
+
+
+#-- An integral function that computes the real integral of cumulative distribution function of a standard normal distribution by taking the real z-score as input (undefined for now)
+
+declare integral-SND : [Real] -> Real
+
+#-- A square root function for Reals (undefined for now)
+
+declare sqrt: [Real] -> Real
+
+
+#-- A function that computes the z-score of a value T wrt a normal distribution Z. It returns zero if the distribution is not normal.
+
+declare z-score : [Real Dist] -> Real
+
+assert z-score-axioms :=
+   let{
+        mean := (mean Z);
+       stdev := (sqrt (variance Z));
+      compute := (/ (- T mean) stdev)
+      }
+(fun
+[(z-score T Z) =
+  [ 0.0 when (~(is-normal Z))
+    compute when (is-normal Z)
+  ]  
+]) 
+
+define [z-score-Z-not-normal z-score-result] := z-score-axioms
+
+
+#-- A probabiliity function that takes in a normal distribution Z and a Real T, and returns the probability that a random variable that lies in Z will be at most some real T. It returns zero if the distribution is not normal.   
+#-- If need be, we can overload the probability function according to different input cases
+
+declare probability : [Dist Real]-> Real
+
+assert probability-axioms :=
+   let{
+       score := (z-score T Z);
+       integral := (integral-SND score)
+   }
+(fun
+[(probability Z T) =
+   [ 0.0 when (~(is-normal Z))
+     integral when (is-normal Z)
+   ]
+])  
+
+define [probability-Z-not-normal probability-result] := probability-axioms
+
+
+#-- Probability-Theorem1 states that if two distributions X and Y are normal, then the probability that a random variable that lies in the convolution of X and Y will be at most some real T will be the integral of the SND upto the z score of T wrt the convolution of X and Y
+
+define Probability-Theorem1 :=
+(
+forall X Y T .  
+(
+    (and (is-normal X) (is-normal Y) ) ==>
+    (= (probability (convolution X Y) T)
+       (integral-SND (z-score T (convolution X Y) ) ) )
+)
+)
+
+conclude Probability-Theorem1
+pick-any x:Dist
+pick-any y:Dist
+pick-any t:Real
+assume (and (is-normal x) (is-normal y))
+let{
+    xyNormal := (and (is-normal x) (is-normal y)); 
+	xyCramers := (!uspec (!uspec Cramers-Decomposition-Theorem x) y);
+	xPlusyNormal := (!mp xyCramers xyNormal);
+	txPlusyProbability := (!uspec (!uspec probability-result t) (convolution x y) )
+}
+(!mp txPlusyProbability xPlusyNormal) 

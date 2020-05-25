@@ -1,0 +1,84 @@
+
+#-------------------------------------------------------------------------
+#-- Theories of Random Variables
+
+#-- set of all random variables
+
+domain RandVar
+
+#-- Variables 
+
+define [x y z] := [?x:RandVar ?y:RandVar ?z:RandVar]
+
+
+#-- pdf returns the Probability Distribution Function of a random variable
+
+declare pdf: [RandVar]-> Dist
+
+#-- sum returns the sum of two random variables
+
+declare sum: [RandVar RandVar]-> RandVar
+
+#-- Postulate: The probability distribution of the sum of two independent random variables is the convolution of each of their probability distributions.
+
+define sum-randVars :=
+(
+forall x y .
+   (= (pdf (sum x y)) 
+      (convolution (pdf x) 
+                   (pdf y) ) ) 
+)
+
+assert sum-randVars
+
+#-- probability-randVar function takes a random varible z and a Real T and finds the probability that z<=T by using its pdf
+
+declare probability-randVar: [RandVar Real] -> Real
+
+assert* probability-randVar-axiom :=
+          (= (probability-randVar z T)
+             (probability (pdf z) T)  )
+
+
+#-- RandVar-Theorem1 states that the sum of two normally distributed random variablesx and y being at most a given real T is equal to the integral of the SND upto the z-score of T wrt the convolution of the pdfs of x and y
+
+define RandVar-Theorem1 :=
+(
+forall x y T .
+  (and (is-normal (pdf x))
+       (is-normal (pdf y)) ) 
+         ==> 
+            (= (probability-randVar (sum x y) T) 
+               (integral-SND (z-score T (convolution (pdf x) (pdf y) ) ) ) )
+)
+
+
+conclude RandVar-Theorem1
+pick-any x:RandVar
+pick-any y:RandVar
+pick-any T:Real
+assume  (and (is-normal (pdf x))
+             (is-normal (pdf y)) )
+let{
+    xPDF := (pdf x);
+    yPDF := (pdf y);
+    xyPDFnormal := (and  (is-normal xPDF) (is-normal yPDF) );
+    convolutionxyPDF := (convolution xPDF yPDF);
+    z := (sum x y);
+    xySumRandVars := (!uspec (!uspec sum-randVars x) y);
+    zPDF := (pdf z);
+    zPDFConvolution := (!chain [ (pdf z)
+                              =  (pdf (sum x y))  [z]
+                              =  convolutionxyPDF [xySumRandVars]
+                               ]);
+    probthm1 := (!uspec (!uspec (!uspec Probability-Theorem1 xPDF) yPDF) T);                        
+    probthm1result := (!mp probthm1 xyPDFnormal)     
+ }
+(!chain [ (probability-randVar (sum x y) T)
+        = (probability (pdf (sum x y) ) T) [probability-randVar-axiom]
+        = (probability (pdf z) T)          [z]
+        = (probability convolutionxyPDF T) [zPDFConvolution]
+        = (probability (convolution xPDF yPDF) T) [convolutionxyPDF]
+        = (integral-SND (z-score T (convolution (pdf x) (pdf y) ) ) ) [probthm1result]
+        ]
+)
