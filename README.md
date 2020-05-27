@@ -1,6 +1,6 @@
-# Athena_LibCPS
+# Athena_LibDDDAS
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Cyber-Physical Systems
+### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Applications Systems
 
 ##### ATHENA:
 
