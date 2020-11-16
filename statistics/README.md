@@ -5,7 +5,7 @@
 
 ##### Instructions:
 
-* The `sample_mpaxos_progress.ath` file contains the sample proof about stochastic progress of Paxos provided in the [DDDAS 2020 paper](http://wcl.cs.rpi.edu/papers/DDDAS2020_paul.pdf).
+* The `sample_mpaxos_progress.ath` file contains the sample proof about stochastic progress of Paxos provided in the paper [Dynamic Data-Driven Formal Progress Envelopes for Distributed Algorithms](http://wcl.cs.rpi.edu/papers/DDDAS2020_paul.pdf).
 
 
 ##### DISCLAIMER: 
