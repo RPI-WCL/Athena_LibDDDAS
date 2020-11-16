@@ -1,6 +1,6 @@
 # STATISTICS 
 
-##### This repository contains the ATHENA theory and proofs about random variables, probability distributions, etc  
+##### This repository contains ATHENA theory and proofs about random variables, probability distributions, etc  
 
 
 ##### Instructions:
