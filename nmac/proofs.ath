@@ -1,0 +1,1233 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "vector_2d"
+load "types"
+load "violation"
+load "flightplan"
+load "matrix"
+load "nmac"
+load "algorithm"
+
+extend-module NMAC{
+  #####################################################################
+  #--   PROOFS OF PROPERTIES USING ALGORITHM SPECIFICATION AXIOMS --
+  #####################################################################
+#__________________________________________________________________________
+  #-- Theorem 1
+
+  define Theorem1a :=
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 ?fa ?fb ?D ?H) = true) <==
+    
+    (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config ?fa ?t)) (Configuration.getsy (get-config ?fa ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config ?fa ?t)) * (Real.cos (Configuration.geth (get-config ?fa ?t)))) ((Configuration.getvg (get-config ?fa ?t)) * (Real.sin (Configuration.geth (get-config ?fa ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config ?fa ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config ?fa ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H)) 
+
+  )
+
+  by-induction Theorem1a{
+
+    nilF => conclude (forall ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 nilF ?fb ?D ?H) = true) <==
+        (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config nilF ?t)) (Configuration.getsy (get-config nilF ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config nilF ?t)) * (Real.cos (Configuration.geth (get-config nilF ?t)))) ((Configuration.getvg (get-config nilF ?t)) * (Real.sin (Configuration.geth (get-config nilF ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config nilF ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config nilF ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H))  )
+             
+              pick-any fb 
+               pick-any t
+                pick-any t2
+                 pick-any D
+                  pick-any H
+                 (!chain [ ((exists-violation t t2 nilF fb D H) = true)
+                         <== (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config nilF t)) (Configuration.getsy (get-config nilF t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config nilF t)) * (Real.cos (Configuration.geth (get-config nilF t)))) ((Configuration.getvg (get-config nilF t)) * (Real.sin (Configuration.geth (get-config nilF t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config nilF t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config nilF t)) - (Configuration.getvz (get-config fb t))))) < H)) [exists-violation-true]   
+
+                 ])
+
+
+    | (fa as (consF Configuration Flightplan)) => conclude (forall ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 fa ?fb ?D ?H) = true) <==
+        (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa ?t)) (Configuration.getsy (get-config fa ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa ?t)) * (Real.cos (Configuration.geth (get-config fa ?t)))) ((Configuration.getvg (get-config fa ?t)) * (Real.sin (Configuration.geth (get-config fa ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config fa ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config fa ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H))  )
+             
+              pick-any fb 
+               pick-any t
+                pick-any t2
+                 pick-any D
+                  pick-any H
+                 (!chain [ ((exists-violation t t2 fa fb D H) = true)
+                         <== (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H)) [exists-violation-true]   
+
+                 ])
+
+  }#by induction Theorem1a
+
+  define Theorem1b :=
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 ?fa ?fb ?D ?H) = false) <==
+    
+    (~ (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config ?fa ?t)) (Configuration.getsy (get-config ?fa ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config ?fa ?t)) * (Real.cos (Configuration.geth (get-config ?fa ?t)))) ((Configuration.getvg (get-config ?fa ?t)) * (Real.sin (Configuration.geth (get-config ?fa ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config ?fa ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config ?fa ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H))) 
+
+  )
+
+  by-induction Theorem1b{
+
+    nilF => conclude (forall ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 nilF ?fb ?D ?H) = false) <==
+        (~ (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config nilF ?t)) (Configuration.getsy (get-config nilF ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config nilF ?t)) * (Real.cos (Configuration.geth (get-config nilF ?t)))) ((Configuration.getvg (get-config nilF ?t)) * (Real.sin (Configuration.geth (get-config nilF ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config nilF ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config nilF ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H)))  )
+             
+              pick-any fb 
+               pick-any t
+                pick-any t2
+                 pick-any D
+                  pick-any H
+                 (!chain [ ((exists-violation t t2 nilF fb D H) = false)
+                         <== (~ (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config nilF t)) (Configuration.getsy (get-config nilF t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config nilF t)) * (Real.cos (Configuration.geth (get-config nilF t)))) ((Configuration.getvg (get-config nilF t)) * (Real.sin (Configuration.geth (get-config nilF t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config nilF t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config nilF t)) - (Configuration.getvz (get-config fb t))))) < H))) [exists-violation-false]   
+
+                 ])
+
+
+    | (fa as (consF Configuration Flightplan)) => conclude (forall ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 fa ?fb ?D ?H) = false) <==
+        (~ (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa ?t)) (Configuration.getsy (get-config fa ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa ?t)) * (Real.cos (Configuration.geth (get-config fa ?t)))) ((Configuration.getvg (get-config fa ?t)) * (Real.sin (Configuration.geth (get-config fa ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config fa ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config fa ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H)))  )
+             
+              pick-any fb 
+               pick-any t
+                pick-any t2
+                 pick-any D
+                  pick-any H
+                 (!chain [ ((exists-violation t t2 fa fb D H) = false)
+                         <== (~ (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H))) [exists-violation-false]   
+
+                 ])
+                 
+  }#by induction Theorem1b
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert exists-violation-true-not-false :=
+  (
+forall ?fa:Flightplan ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 ?fa ?fb ?D ?H) = true) ==>
+    (~((exists-violation ?t ?t2 ?fa ?fb ?D ?H) = false)) 
+  )
+
+
+  define T1b-contra := 
+  conclude 
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    (~((exists-violation ?t ?t2 ?fa ?fb ?D ?H) = false)) ==>
+    
+    (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config ?fa ?t)) (Configuration.getsy (get-config ?fa ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config ?fa ?t)) * (Real.cos (Configuration.geth (get-config ?fa ?t)))) ((Configuration.getvg (get-config ?fa ?t)) * (Real.sin (Configuration.geth (get-config ?fa ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config ?fa ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config ?fa ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H)) 
+
+  )
+   pick-any fa  
+    pick-any fb 
+     pick-any t
+      pick-any t2
+       pick-any D
+        pick-any H
+       let{ p==>q := conclude(
+                              (~ (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H))) ==>
+                              ((exists-violation t t2 fa fb D H) = false) 
+                             )
+                             (!chain [ (~ (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H)))
+                             ==> ((exists-violation t t2 fa fb D H) = false) [Theorem1b] 
+                             ])
+       }
+       (!contra-pos p==>q)
+
+  define Theorem1 := 
+  conclude 
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
+    ((exists-violation ?t ?t2 ?fa ?fb ?D ?H) = true) <==>
+    
+    (exists time . (?t < time & time <= ?t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config ?fa ?t)) (Configuration.getsy (get-config ?fa ?t))) (vec_2d (Configuration.getsx (get-config ?fb ?t)) (Configuration.getsy (get-config ?fb ?t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config ?fa ?t)) * (Real.cos (Configuration.geth (get-config ?fa ?t)))) ((Configuration.getvg (get-config ?fa ?t)) * (Real.sin (Configuration.geth (get-config ?fa ?t))))) (vec_2d ((Configuration.getvg (get-config ?fb ?t)) * (Real.cos (Configuration.geth (get-config ?fb ?t)))) ((Configuration.getvg (get-config ?fb ?t)) * (Real.sin (Configuration.geth (get-config ?fb ?t)))))) (time - ?t)) )) < ?D) & ((((Configuration.getsx (get-config ?fa ?t)) - (Configuration.getsx (get-config ?fb ?t))) + ((time - ?t) * ((Configuration.getvz (get-config ?fa ?t)) - (Configuration.getvz (get-config ?fb ?t))))) < ?H))
+  )
+   pick-any fa  
+    pick-any fb 
+     pick-any t
+      pick-any t2
+       pick-any D
+        pick-any H
+       let{ p==>q := conclude(
+                              ((exists-violation t t2 fa fb D H) = true) <==
+                              
+                              (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H)) 
+                             )
+                             (!chain [ (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H))
+                             ==> ((exists-violation t t2 fa fb D H) = true) [Theorem1a] 
+                             ]);
+            q==>p := conclude(
+                              ((exists-violation t t2 fa fb D H) = true) ==>
+                              
+                              (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H)) 
+                             )
+                             (!chain [ ((exists-violation t t2 fa fb D H) = true)
+                                   ==> (~ ((exists-violation t t2 fa fb D H) = false)) [exists-violation-true-not-false]
+                                   ==> (exists time . (t < time & time <= t2) & ((Vector_2d.NORM (Vector_2d.+ (Vector_2d.- (vec_2d (Configuration.getsx (get-config fa t)) (Configuration.getsy (get-config fa t))) (vec_2d (Configuration.getsx (get-config fb t)) (Configuration.getsy (get-config fb t)))) (Vector_2d.* (Vector_2d.- (vec_2d ((Configuration.getvg (get-config fa t)) * (Real.cos (Configuration.geth (get-config fa t)))) ((Configuration.getvg (get-config fa t)) * (Real.sin (Configuration.geth (get-config fa t))))) (vec_2d ((Configuration.getvg (get-config fb t)) * (Real.cos (Configuration.geth (get-config fb t)))) ((Configuration.getvg (get-config fb t)) * (Real.sin (Configuration.geth (get-config fb t)))))) (time - t)) )) < D) & ((((Configuration.getsx (get-config fa t)) - (Configuration.getsx (get-config fb t))) + ((time - t) * ((Configuration.getvz (get-config fa t)) - (Configuration.getvz (get-config fb t))))) < H)) [T1b-contra] 
+                             ])
+       }
+       (!equiv q==>p p==>q)
+
+#__________________________________________________________________________  
+
+#__________________________________________________________________________
+  #-- Theorem 2
+
+  define Theorem2a :=
+  (
+    forall ?t_list:Time-list ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (exists-violation ?t ?t2 ?fa ?fb ?D ?H) ==>
+    ((T-violation (consTl ?t (consTl ?t2 ?t_list)) ?fa ?fb ?D ?H) = true) 
+
+  )
+
+  by-induction Theorem2a{
+
+    nilTl => conclude (forall ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (exists-violation ?t ?t2 ?fa ?fb ?D ?H) ==>
+    ((T-violation (consTl ?t (consTl ?t2 nilTl)) ?fa ?fb ?D ?H) = true)  )
+             
+          pick-any t
+            pick-any t2
+             pick-any fa
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (exists-violation t t2 fa fb D H)
+                 ==> ((T-violation (consTl t (consTl t2 nilTl)) fa fb D H) = true) [T-violation-true]
+                 ])
+
+    | (t_list as (consTl Real Time-list)) => conclude (forall ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (exists-violation ?t ?t2 ?fa ?fb ?D ?H) ==>
+    ((T-violation (consTl ?t (consTl ?t2 t_list)) ?fa ?fb ?D ?H) = true)  )
+             
+          pick-any t
+            pick-any t2
+             pick-any fa
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (exists-violation t t2 fa fb D H)
+                 ==> ((T-violation (consTl t (consTl t2 t_list)) fa fb D H) = true) [T-violation-true]
+                 ])
+
+
+  }#by induction Theorem2a
+
+
+  define Theorem2b :=
+  (
+    forall ?t_list:Time-list ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (~(exists-violation ?t ?t2 ?fa ?fb ?D ?H)) ==>
+    ((T-violation (consTl ?t (consTl ?t2 ?t_list)) ?fa ?fb ?D ?H) = (T-violation (consTl ?t2 ?t_list) ?fa ?fb ?D ?H)) 
+  )
+
+  by-induction Theorem2b{
+
+    nilTl => conclude (forall ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (~(exists-violation ?t ?t2 ?fa ?fb ?D ?H)) ==>
+    ((T-violation (consTl ?t (consTl ?t2 nilTl)) ?fa ?fb ?D ?H) = (T-violation (consTl ?t2 nilTl) ?fa ?fb ?D ?H))  )
+             
+          pick-any t
+            pick-any t2
+             pick-any fa
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (~(exists-violation t t2 fa fb D H))
+                 ==> ((T-violation (consTl t (consTl t2 nilTl)) fa fb D H) = (T-violation (consTl t2 nilTl) fa fb D H)) [T-violation-next]
+                 ])
+
+    | (t_list as (consTl Real Time-list)) => conclude (forall ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (~(exists-violation ?t ?t2 ?fa ?fb ?D ?H)) ==>
+    ((T-violation (consTl ?t (consTl ?t2 t_list)) ?fa ?fb ?D ?H) = (T-violation (consTl ?t2 t_list) ?fa ?fb ?D ?H))  )
+             
+          pick-any t
+            pick-any t2
+             pick-any fa
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (~(exists-violation t t2 fa fb D H))
+                 ==> ((T-violation (consTl t (consTl t2 t_list)) fa fb D H) = (T-violation (consTl t2 t_list) fa fb D H)) [T-violation-next]
+                 ])
+
+
+  }#by induction Theorem2b
+
+  define Theorem2 :=
+  conclude
+  (
+    forall ?t_list:Time-list ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+		(
+		(exists-violation ?t ?t2 ?fa ?fb ?D ?H) ==>
+		((T-violation (consTl ?t (consTl ?t2 ?t_list)) ?fa ?fb ?D ?H) = true)
+		) 
+    &
+	    (
+		(~(exists-violation ?t ?t2 ?fa ?fb ?D ?H)) ==>
+        ((T-violation (consTl ?t (consTl ?t2 ?t_list)) ?fa ?fb ?D ?H) = (T-violation (consTl ?t2 ?t_list) ?fa ?fb ?D ?H))
+        ) 	    
+  )
+
+     pick-any t_list
+      pick-any t
+        pick-any t2
+         pick-any fa
+          pick-any fb 
+           pick-any D
+             pick-any H
+             let{ p := conclude
+                	   (
+						(exists-violation t t2 fa fb D H) ==>
+						((T-violation (consTl t (consTl t2 t_list)) fa fb D H) = true)
+		               ) 
+		               (!chain [ (exists-violation t t2 fa fb D H)
+		                    ==>	((T-violation (consTl t (consTl t2 t_list)) fa fb D H) = true) [Theorem2a]
+		               ]);
+                  q := conclude
+                       (
+						(~(exists-violation t t2 fa fb D H)) ==>
+				        ((T-violation (consTl t (consTl t2 t_list)) fa fb D H) = (T-violation (consTl t2 t_list) fa fb D H))
+                       )
+		               (!chain [ (~(exists-violation t t2 fa fb D H))
+		                    ==>	((T-violation (consTl t (consTl t2 t_list)) fa fb D H) = (T-violation (consTl t2 t_list) fa fb D H)) [Theorem2b]
+		               ])
+             }
+             (!both p q)
+           
+
+#__________________________________________________________________________  
+
+#__________________________________________________________________________
+  #-- Theorem 3
+
+  define Theorem3a :=
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (T-violation (get-all-times ?fa ?fb) ?fa ?fb ?D ?H) ==>
+    ((conflict ?fa ?fb ?D ?H) = true) 
+
+  )
+
+  by-induction Theorem3a{
+
+    nilF => conclude (forall ?fb:Flightplan ?D:Real ?H:Real .
+    (T-violation (get-all-times nilF ?fb) nilF ?fb ?D ?H) ==>
+    ((conflict nilF ?fb ?D ?H) = true) )
+ 
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (T-violation (get-all-times nilF fb) nilF fb D H)
+                 ==> ((conflict nilF fb D H) = true) [conflict-true]
+                 ])
+
+    | (fa as (consF Configuration Flightplan)) => conclude (forall ?fb:Flightplan ?D:Real ?H:Real .
+    (T-violation (get-all-times fa ?fb) fa ?fb ?D ?H) ==>
+    ((conflict fa ?fb ?D ?H) = true) )
+ 
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (T-violation (get-all-times fa fb) fa fb D H)
+                 ==> ((conflict fa fb D H) = true) [conflict-true]
+                 ])
+
+  }#by induction Theorem3a
+
+  define Theorem3b :=
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (~(T-violation (get-all-times ?fa ?fb) ?fa ?fb ?D ?H)) ==>
+    ((conflict ?fa ?fb ?D ?H) = false) 
+
+  )
+
+  by-induction Theorem3b{
+
+    nilF => conclude (forall ?fb:Flightplan ?D:Real ?H:Real .
+    (~(T-violation (get-all-times nilF ?fb) nilF ?fb ?D ?H)) ==>
+    ((conflict nilF ?fb ?D ?H) = false) )
+ 
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (~(T-violation (get-all-times nilF fb) nilF fb D H))
+                 ==> ((conflict nilF fb D H) = false) [conflict-false]
+                 ])
+
+    | (fa as (consF Configuration Flightplan)) => conclude (forall ?fb:Flightplan ?D:Real ?H:Real .
+    (~(T-violation (get-all-times fa ?fb) fa ?fb ?D ?H)) ==>
+    ((conflict fa ?fb ?D ?H) = false) )
+ 
+              pick-any fb 
+               pick-any D
+                 pick-any H
+                 (!chain [ (~(T-violation (get-all-times fa fb) fa fb D H))
+                 ==> ((conflict fa fb D H) = false) [conflict-false]
+                 ])
+
+  }#by induction Theorem3b
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert conflict-true-not-false :=
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    ((conflict ?fa ?fb ?D ?H) = true) ==>
+    (~((conflict ?fa ?fb ?D ?H) = false)) 
+  )
+
+  define T3b-contra := 
+  conclude 
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (~((conflict ?fa ?fb ?D ?H) = false)) ==>
+    (T-violation (get-all-times ?fa ?fb) ?fa ?fb ?D ?H)      
+  )
+    pick-any fa
+     pick-any fb
+      pick-any D
+       pick-any H 
+       let{ p==>q := conclude(
+                              (~(T-violation (get-all-times fa fb) fa fb D H)) ==>
+                              ((conflict fa fb D H) = false) 
+
+                             )
+                             (!chain [ (~(T-violation (get-all-times fa fb) fa fb D H))
+                             ==> ((conflict fa fb D H) = false) [Theorem3b] 
+                             ])
+       }
+       (!contra-pos p==>q)
+
+
+  define Theorem3 := 
+  conclude 
+  (
+    forall ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real .
+    (T-violation (get-all-times ?fa ?fb) ?fa ?fb ?D ?H) <==>
+    ((conflict ?fa ?fb ?D ?H) = true) 
+  )
+    pick-any fa
+     pick-any fb
+      pick-any D
+       pick-any H 
+       let{ p==>q := conclude(
+                              (T-violation (get-all-times fa fb) fa fb D H) ==> ((conflict fa fb D H) = true) 
+                             )
+                             (!chain [ (T-violation (get-all-times fa fb) fa fb D H)
+                             ==> ((conflict fa fb D H) = true) [Theorem3a] 
+                             ]);
+
+            q==>p := conclude(
+                            (T-violation (get-all-times fa fb) fa fb D H) <== ((conflict fa fb D H) = true) 
+                             )
+                             (!chain [ ((conflict fa fb D H) = true)
+                             ==> (~((conflict fa fb D H) = false)) [conflict-true-not-false]
+                             ==> (T-violation (get-all-times fa fb) fa fb D H) [T3b-contra] 
+                             ])                             
+
+       }
+       (!equiv p==>q q==>p)
+
+#__________________________________________________________________________  
+
+#__________________________________________________________________________
+  #-- Theorem 4
+
+  define Theorem4a :=
+  (
+    forall ?f_list:Fplan-list ?D:Real ?H:Real . 
+    (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa ?f_list) & (in-Fplan-list ?fb ?f_list) & (conflict ?fa ?fb ?D ?H))) ==>
+    ((safe ?f_list ?D ?H) = true) 
+  )
+
+  by-induction Theorem4a{
+
+    nilP => conclude ( forall ?D:Real ?H:Real . (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa nilP) & (in-Fplan-list ?fb nilP) & (conflict ?fa ?fb ?D ?H))) ==>
+    ((safe nilP ?D ?H) = true) )
+
+               pick-any D
+                 pick-any H
+                 (!chain [ (~( exists fa fb . (in-Fplan-list fa nilP) & (in-Fplan-list fb nilP) & (conflict fa fb D H)))
+                        ==> ((safe nilP D H) = true) [safe-true]
+                 ])
+    | (set as (consP Flightplan Fplan-list)) => conclude ( forall ?D:Real ?H:Real . (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa set) & (in-Fplan-list ?fb set) & (conflict ?fa ?fb ?D ?H))) ==>
+    ((safe set ?D ?H) = true) ) 
+
+               pick-any D
+                 pick-any H
+                 (!chain [ (~( exists fa fb . (in-Fplan-list fa set) & (in-Fplan-list fb set) & (conflict fa fb D H)))
+                        ==> ((safe set D H) = true) [safe-true]
+                 ])
+
+  }#by induction Theorem4a
+
+  define Theorem4b :=
+  (
+    forall ?f_list:Fplan-list ?D:Real ?H:Real . 
+    ( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa ?f_list) & (in-Fplan-list ?fb ?f_list) & (conflict ?fa ?fb ?D ?H)) ==>
+    ((safe ?f_list ?D ?H) = false) 
+  )
+
+  by-induction Theorem4b{
+
+    nilP => conclude ( forall ?D:Real ?H:Real . (exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa nilP) & (in-Fplan-list ?fb nilP) & (conflict ?fa ?fb ?D ?H)) ==>
+    ((safe nilP ?D ?H) = false) )
+
+               pick-any D
+                 pick-any H
+                 (!chain [ ( exists fa fb . (in-Fplan-list fa nilP) & (in-Fplan-list fb nilP) & (conflict fa fb D H))
+                        ==> ((safe nilP D H) = false) [safe-false]
+                 ])
+    | (set as (consP Flightplan Fplan-list)) => conclude ( forall ?D:Real ?H:Real . ( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa set) & (in-Fplan-list ?fb set) & (conflict ?fa ?fb ?D ?H)) ==>
+    ((safe set ?D ?H) = false) ) 
+
+               pick-any D
+                 pick-any H
+                 (!chain [ ( exists fa fb . (in-Fplan-list fa set) & (in-Fplan-list fb set) & (conflict fa fb D H))
+                        ==> ((safe set D H) = false) [safe-false]
+                 ])
+
+  }#by induction Theorem4b
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert safe-true-not-false :=
+  (
+    forall ?f_list:Fplan-list ?D:Real ?H:Real . 
+    ((safe f_list D H) = true)  ==>
+    (~((safe f_list D H) = false)) 
+  )
+
+  define T4b-contra := 
+  conclude 
+  (
+    forall ?f_list:Fplan-list ?D:Real ?H:Real . 
+    ~((safe ?f_list ?D ?H) = false) ==>
+    ~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa ?f_list) & (in-Fplan-list ?fb ?f_list) & (conflict ?fa ?fb ?D ?H)) 
+     
+  )
+    pick-any f_list
+     pick-any D
+       pick-any H 
+       let{ p==>q := conclude(
+                               ( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list fa f_list) & (in-Fplan-list fb f_list) & (conflict ?fa ?fb D H))
+                                ==> ((safe f_list D H) = false) 
+                             )
+                             (!chain [ ( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list fa f_list) & (in-Fplan-list fb f_list) & (conflict ?fa ?fb D H))
+                             ==> ((safe f_list D H) = false) [Theorem4b] 
+                             ])
+       }
+       (!contra-pos p==>q)
+
+
+  define Theorem4 :=
+  conclude 
+  (
+  forall ?f_list:Fplan-list ?D:Real ?H:Real . 
+    (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa ?f_list) & (in-Fplan-list ?fb ?f_list) & (conflict ?fa ?fb ?D ?H))) <==>
+    ((safe ?f_list ?D ?H) = true)     
+  )
+    pick-any f_list
+     pick-any D
+       pick-any H 
+       let{ p==>q := conclude(
+                               (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa f_list) & (in-Fplan-list ?fb f_list) & (conflict ?fa ?fb D H))) ==> ((safe f_list D H) = true)  
+                             )
+                             (!chain [ (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa f_list) & (in-Fplan-list ?fb f_list) & (conflict ?fa ?fb D H)))
+                             ==> ((safe f_list D H) = true) [Theorem4a] 
+                             ]);
+            q==>p :=  conclude(
+                               (~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa f_list) & (in-Fplan-list ?fb f_list) & (conflict ?fa ?fb D H))) <== ((safe f_list D H) = true)            
+                              )                
+                              (!chain [ ((safe f_list D H) = true)
+                                   ==> (~((safe f_list D H) = false)) [safe-true-not-false]
+                                   ==>(~( exists ?fa:Flightplan ?fb:Flightplan . (in-Fplan-list ?fa f_list) & (in-Fplan-list ?fb f_list) & (conflict ?fa ?fb D H))) [T4b-contra]
+                              ])
+                            
+       }
+       (!equiv p==>q q==>p)       
+
+
+#__________________________________________________________________________  
+
+#__________________________________________________________________________
+  #-- Theorem 5
+
+  define Theorem5a :=
+  (
+    forall ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H) ==>
+    ((check-safety ?board ?fa ?f_list ?v_list ?D ?H) = true) 
+  )
+
+  by-induction Theorem5a{
+
+    nilM => conclude ( forall ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . (safe (consP (plan nilM ?fa ?v_list) ?f_list) ?D ?H) ==> ((check-safety nilM ?fa ?f_list ?v_list ?D ?H) = true) )
+
+         pick-any fa
+           pick-any f_list
+             pick-any v_list
+               pick-any D
+                 pick-any H
+                 (!chain [ (safe (consP (plan nilM fa v_list) f_list) D H)
+                        ==> ((check-safety nilM fa f_list v_list D H) = true) [check-safety-true]
+                 ])
+    | (board as (consM Row Matrix)) => conclude ( forall ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . (safe (consP (plan board ?fa ?v_list) ?f_list) ?D ?H) ==> ((check-safety board ?fa ?f_list ?v_list ?D ?H) = true) ) 
+
+         pick-any fa
+           pick-any f_list
+             pick-any v_list
+               pick-any D
+                 pick-any H
+                 (!chain [ (safe (consP (plan board fa v_list) f_list) D H)
+                        ==> ((check-safety board fa f_list v_list D H) = true) [check-safety-true]
+                 ])
+
+  }#by induction Theorem5a
+
+
+  define Theorem5b :=
+  (
+    forall ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H)) ==>
+    ((check-safety ?board ?fa ?f_list ?v_list ?D ?H) = false) 
+  )
+
+  by-induction Theorem5b{
+
+    nilM => conclude ( forall ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . (~(safe (consP (plan nilM ?fa ?v_list) ?f_list) ?D ?H)) ==> ((check-safety nilM ?fa ?f_list ?v_list ?D ?H) = false) )
+
+         pick-any fa
+           pick-any f_list
+             pick-any v_list
+               pick-any D
+                 pick-any H
+                 (!chain [ (~(safe (consP (plan nilM fa v_list) f_list) D H))
+                        ==> ((check-safety nilM fa f_list v_list D H) = false) [check-safety-false]
+                 ])
+    | (board as (consM Row Matrix)) => conclude ( forall ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . (~(safe (consP (plan board ?fa ?v_list) ?f_list) ?D ?H)) ==> ((check-safety board ?fa ?f_list ?v_list ?D ?H) = false) ) 
+
+         pick-any fa
+           pick-any f_list
+             pick-any v_list
+               pick-any D
+                 pick-any H
+                 (!chain [ (~(safe (consP (plan board fa v_list) f_list) D H))
+                        ==> ((check-safety board fa f_list v_list D H) = false) [check-safety-false]
+                 ])
+
+  }#by induction Theorem5b
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert check-safety-true-not-false :=
+  (
+    forall ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((check-safety ?board ?fa ?f_list ?v_list ?D ?H) = true) ==>
+    ~((check-safety ?board ?fa ?f_list ?v_list ?D ?H) = false) 
+  )
+
+  define Theorem5b-contra := 
+  conclude 
+  (
+    forall ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ~((check-safety ?board ?fa ?f_list ?v_list ?D ?H) = false) ==>
+    (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H) 
+     
+  )
+  pick-any board
+   pick-any fa
+    pick-any f_list
+     pick-any v_list
+      pick-any D
+       pick-any H 
+       let{ p==>q := conclude(
+                               (~(safe (consP (plan board fa v_list) f_list) D H)) ==>
+    ((check-safety board fa f_list v_list D H) = false) 
+                             )
+                             (!chain [ (~(safe (consP (plan board fa v_list) f_list) D H))
+                             ==> ((check-safety board fa f_list v_list D H) = false) [Theorem5b]
+                             ==> 
+                             ])
+       }
+       (!contra-pos p==>q)
+
+
+  define Theorem5 :=
+  conclude 
+  (
+    forall ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H) <==>
+    ((check-safety ?board ?fa ?f_list ?v_list ?D ?H) = true)      
+  )    
+  pick-any board
+   pick-any fa
+    pick-any f_list
+     pick-any v_list
+      pick-any D
+       pick-any H 
+       let { check-safety-true==>safe :=
+                conclude
+                (
+                     ((check-safety board fa f_list v_list D H) = true) ==>
+                     (safe (consP (plan board fa v_list) f_list) D H)
+                )
+                (!chain [ ((check-safety board fa f_list v_list D H) = true)
+                      ==> (~ ((check-safety board fa f_list v_list D H) = false) ) [check-safety-true-not-false]
+                      ==> (safe (consP (plan board fa v_list) f_list) D H) [Theorem5b-contra]
+                ]);
+
+              safe==>check-safety-true :=
+               conclude
+                (
+                     (safe (consP (plan board fa v_list) f_list) D H) ==>
+                     ((check-safety board fa f_list v_list D H) = true)                      
+                ) 
+                (!chain [ (safe (consP (plan board fa v_list) f_list) D H)
+                      ==> ((check-safety board fa f_list v_list D H) = true) [Theorem5a]
+                ])
+       }
+       (!equiv safe==>check-safety-true check-safety-true==>safe) 
+
+#__________________________________________________________________________  
+
+#__________________________________________________________________________
+  #-- Theorem 6
+
+  define Theorem6a :=
+  conclude
+  (
+    forall ?M:Matrix . 
+    (forall row . ((Matrix.in-Matrix row ?M) & (Matrix.assigned row))) ==>
+    ((Matrix.complete ?M) = true) 
+  )
+  pick-any M
+  (!chain [ (forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row)))
+       ==> ((Matrix.complete M) = true) [Matrix.complete-true]
+
+  ])
+ 
+  define Theorem6b :=
+  conclude
+  (
+    forall ?M:Matrix . 
+    (~(forall row . ((Matrix.in-Matrix row ?M) & (Matrix.assigned row)))) ==>
+    ((Matrix.complete ?M) = false) 
+  )
+  pick-any M
+  (!chain [ (~(forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row))))
+       ==> ((Matrix.complete M) = false) [Matrix.complete-false]
+
+  ])
+
+  assert complete-true-not-false :=
+  (
+     forall ?M:Matrix .
+     ((Matrix.complete ?M) = true) ==> (~((Matrix.complete ?M) = false)) 
+  )
+
+  define T6b-contra :=
+  conclude
+  (
+    forall ?M:Matrix . 
+    (forall row . ((Matrix.in-Matrix row ?M) & (Matrix.assigned row))) <==
+    (~((Matrix.complete ?M) = false)) 
+  )
+  pick-any M
+  let { p==>q := conclude
+                    (
+                     (~(forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row)))) ==>
+                     ((Matrix.complete M) = false)
+                    )
+                    (!chain [ (~(forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row))))
+                    ==> ((Matrix.complete M) = false) [Theorem6b]
+  ])
+  }  
+  (!contra-pos p==>q)
+  
+  define Theorem6 :=
+  conclude
+  (
+    forall ?M:Matrix . 
+    (forall row . ((Matrix.in-Matrix row ?M) & (Matrix.assigned row))) <==>
+    ((Matrix.complete ?M) = true) 
+  )
+  pick-any M
+  let { p==>q := conclude
+                    (
+                     (forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row))) ==>
+                     ((Matrix.complete M) = true)
+                    )
+                    (!chain [ (forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row)))
+                    ==> ((Matrix.complete M) = true) [Theorem6a]
+ ]);
+        q==>p := conclude
+                    (
+                     (forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row)))  <==
+                     ((Matrix.complete M) = true)
+                    )
+                    (!chain [ ((Matrix.complete M) = true)
+                    ==> (~((Matrix.complete M) = false)) [complete-true-not-false]
+                    ==> (forall row . ((Matrix.in-Matrix row M) & (Matrix.assigned row)))  [T6b-contra]
+ ])        
+  }  
+  (!equiv p==>q q==>p)
+#__________________________________________________________________________  
+
+#__________________________________________________________________________  
+  #-- Theorem 7
+
+  define Theorem7a :=
+  conclude
+  (
+    forall ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((check-safety (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?fa ?f_list ?v_list ?D ?H) & (~ ((solve (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM))) ==>
+    ((valid ?v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = true) 
+  )
+ pick-any v
+  pick-any board
+   pick-any num_v
+    pick-any num_intervals
+     pick-any fa
+      pick-any f_list
+       pick-any v_list
+        pick-any D
+         pick-any H
+  (!chain [((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM))) 
+  ==> ((valid v board num_v num_intervals fa f_list v_list D H) = true) [valid-true]
+  ])
+
+
+  define Theorem7b :=
+  conclude
+  (
+    forall ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~((check-safety (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?fa ?f_list ?v_list ?D ?H) & (~ ((solve (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM)))) ==>
+    ((valid ?v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = false) 
+  )
+ pick-any v
+  pick-any board
+   pick-any num_v
+    pick-any num_intervals
+     pick-any fa
+      pick-any f_list
+       pick-any v_list
+        pick-any D
+         pick-any H
+  (!chain [(~((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM)))) 
+  ==> ((valid v board num_v num_intervals fa f_list v_list D H) = false) [valid-false]
+  ])
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert valid-true-not-false :=
+  (
+    forall ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((valid ?v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = true) ==>
+    (~((valid ?v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = false)) 
+  )
+
+  define T7b-contra :=
+  conclude 
+    (
+    forall ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((check-safety (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?fa ?f_list ?v_list ?D ?H) & (~ ((solve (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM))) <==
+    (~((valid ?v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = false)) 
+  )
+    pick-any v
+     pick-any board
+      pick-any num_v
+       pick-any num_intervals
+        pick-any fa
+         pick-any f_list
+          pick-any v_list
+           pick-any D
+            pick-any H
+            let { p==>q := 
+                         conclude
+                         (
+                                (~((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM)))) 
+                                ==> ((valid v board num_v num_intervals fa f_list v_list D H) = false)
+                         )
+                         (!chain [ (~((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM)))) 
+                              ==>  ((valid v board num_v num_intervals fa f_list v_list D H) = false) [Theorem7b]
+                         ])
+            } 
+ 
+            (!contra-pos p==>q)
+
+  define Theorem7 :=
+  conclude 
+  (
+    forall ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((check-safety (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?fa ?f_list ?v_list ?D ?H) & (~ ((solve (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM))) <==>
+    ((valid ?v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = true) 
+  )    
+    pick-any v
+     pick-any board
+      pick-any num_v
+       pick-any num_intervals
+        pick-any fa
+         pick-any f_list
+          pick-any v_list
+           pick-any D
+            pick-any H
+            let { p==>q := 
+                         conclude
+                         (
+                                ((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM))) 
+                                ==> ((valid v board num_v num_intervals fa f_list v_list D H) = true)
+                         )
+                         (!chain [ ((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM))) 
+                              ==>  ((valid v board num_v num_intervals fa f_list v_list D H) = true) [Theorem7a]
+                         ]);
+                 q==>p := 
+                         conclude
+                         (
+                                ((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM))) 
+                                <== ((valid v board num_v num_intervals fa f_list v_list D H) = true)
+                         )
+                         (!chain [ ((valid v board num_v num_intervals fa f_list v_list D H) = true) 
+                              ==> (~((valid v board num_v num_intervals fa f_list v_list D H) = false)) [valid-true-not-false]
+                              ==> ((check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H) & (~ ((solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) = nilM))) [T7b-contra]
+                         ])                         
+            } 
+ 
+            (!equiv p==>q q==>p)
+#__________________________________________________________________________  
+
+
+#__________________________________________________________________________
+  #-- Theorem 8
+
+  define Theorem8a :=
+  conclude
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((Matrix.complete ?board) & (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H) )==>
+    ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = board ) 
+  )
+  pick-any board
+   pick-any num_v
+    pick-any num_intervals
+     pick-any fa
+      pick-any f_list
+       pick-any v_list
+        pick-any D
+         pick-any H
+  (!chain [ ((Matrix.complete board) & (safe (consP (plan board fa v_list) f_list) D H) )
+        ==> ((Matrix.complete board) & ((check-safety board fa f_list v_list D H) = true) ) [check-safety-true]
+        ==> ((solve board num_v num_intervals fa f_list v_list D H) = board) [solve-all-intervals-solved]
+  ])
+
+
+
+  define Theorem8b :=
+  conclude
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    ((Matrix.complete ?board) & ~(safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H) )==>
+    ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM ) 
+  )
+  pick-any board
+   pick-any num_v
+    pick-any num_intervals
+     pick-any fa
+      pick-any f_list
+       pick-any v_list
+        pick-any D
+         pick-any H
+  (!chain [ ((Matrix.complete board) & ~(safe (consP (plan board fa v_list) f_list) D H) )
+        ==> ((Matrix.complete board) & ((check-safety board fa f_list v_list D H) = false) ) [check-safety-false]
+        ==> ((solve board num_v num_intervals fa f_list v_list D H) = nilM) [solve-final-interval-not-possible]
+  ])
+
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+ #(A^B)=>C has been proved, so we can assert A=>B=>C since (A^B)=>C <=> A=>B=>C  
+ 
+  assert T8a-taut :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (Matrix.complete ?board) ==>
+    (
+    (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H)  ==>
+    ((solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = board)
+    )      
+  )
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+ #(A^B)=>C has been proved, so we can assert A=>B=>C since (A^B)=>C <=> A=>B=>C  
+
+  assert T8b-taut :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (Matrix.complete ?board) ==>
+    (
+    (~(safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H))  ==>
+    ((solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM)
+    )      
+  )
+
+  define T8b-taut-contra :=
+  conclude 
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (Matrix.complete ?board) ==>
+    (
+    (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H)  <==
+    (~((solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM))
+    )      
+  )
+    pick-any board
+      pick-any num_v
+       pick-any num_intervals
+        pick-any fa
+         pick-any f_list
+          pick-any v_list
+           pick-any D
+            pick-any H
+            assume (Matrix.complete board)            
+            let { p==>q := 
+                         conclude
+                         (
+                            (~(safe (consP (plan board fa v_list) f_list) D H))  ==>
+                            ((solve board num_v num_intervals fa f_list v_list D H) = nilM)
+                         )
+                         (!chain [ (~(safe (consP (plan board fa v_list) f_list) D H)) 
+                              ==>  ((solve board num_v num_intervals fa f_list v_list D H) = nilM) [T8b-taut]
+                         ])
+            } 
+ 
+            (!contra-pos p==>q)
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert solve-nilM-not-board :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real .
+   ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = board )
+   ==> 
+   ~( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM ) 
+  )
+  
+
+  define Theorem8 :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (Matrix.complete ?board) ==>
+    (
+    (safe (consP (plan ?board ?fa ?v_list) ?f_list) ?D ?H)  <==>
+    ((solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = board)
+    )       
+  )
+    pick-any board
+      pick-any num_v
+       pick-any num_intervals
+        pick-any fa
+         pick-any f_list
+          pick-any v_list
+           pick-any D
+            pick-any H
+            assume (Matrix.complete board)            
+            let{ p==>q := 
+                    conclude
+                    (
+                      (safe (consP (plan board fa v_list) f_list) D H) ==> ((solve board num_v num_intervals fa f_list v_list D H) = board)                      
+                    )
+                    (!chain [ (safe (consP (plan board fa v_list) f_list) D H)
+                         ==> ((solve board num_v num_intervals fa f_list v_list D H) = board) [T8a-taut]
+                    ]) ;
+
+                 q==>p :=    
+                    conclude
+                    (
+                      (safe (consP (plan board fa v_list) f_list) D H) <== ((solve board num_v num_intervals fa f_list v_list D H) = board)                      
+                    )
+                    (!chain [ ((solve board num_v num_intervals fa f_list v_list D H) = board)
+                    ==> (~ ((solve board num_v num_intervals fa f_list v_list D H) = nilM)) [solve-nilM-not-board]
+                    ==> (safe (consP (plan board fa v_list) f_list) D H) [T8b-taut-contra]
+                    ])
+            }
+            (!equiv p==>q q==>p)            
+#__________________________________________________________________________  
+
+
+#__________________________________________________________________________  
+
+ #Theorem 9
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+  assert solve-proceed-not-nilM :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real .
+   ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = (solve (Matrix.set ?board (Matrix.unassigned ?board) (V-list.get-index ?v_list ?v)) ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) )
+   ==> 
+   (~( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM )) 
+  )
+
+  define Theorem9a :=
+  conclude
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(Matrix.complete ?board) & (exists v . ((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H)) ) ) ==>
+    (~( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM) ) 
+  )
+  pick-any board
+   pick-any num_v
+    pick-any num_intervals
+     pick-any fa
+      pick-any f_list
+       pick-any v_list
+        pick-any D
+         pick-any H
+  (!chain [ (~(Matrix.complete board) & (exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) ) )
+        ==> ((solve board num_v num_intervals fa f_list v_list D H) = (solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H)) [solve-current-interval-solved]
+        ==> (~((solve board num_v num_intervals fa f_list v_list D H) = nilM)) [solve-proceed-not-nilM]
+  ])
+
+
+
+  define Theorem9b :=
+  conclude
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(Matrix.complete ?board) & ~(exists v . ((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H)) ) ) ==>
+    ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM)  
+  )
+
+  pick-any board
+   pick-any num_v
+    pick-any num_intervals
+     pick-any fa
+      pick-any f_list
+       pick-any v_list
+        pick-any D
+         pick-any H
+  (!chain [ (~(Matrix.complete board) & ~(exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) ) )
+        ==> ((solve board num_v num_intervals fa f_list v_list D H) = nilM) [solve-current-interval-not-possible]
+  ])
+
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+ #(A^B)=>C has been proved, so we can assert A=>B=>C since (A^B)=>C <=> A=>B=>C  
+ 
+  assert T9a-taut :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(Matrix.complete ?board)) ==>
+    (
+    (exists v . ((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H)) )  ==>
+    (~( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM) )
+    )      
+  )
+
+ #***********************
+ #    PROPOSITION
+ #***********************
+ #(A^B)=>C has been proved, so we can assert A=>B=>C since (A^B)=>C <=> A=>B=>C  
+
+  assert T9b-taut :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(Matrix.complete ?board)) ==>
+    (
+    (~(exists v . ((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H)) ) ) ==>
+    ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM)
+    )      
+  )
+
+  define T9b-taut-contra :=
+  conclude 
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(Matrix.complete ?board)) ==>
+    (
+    (exists v . ((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H)) )  <==
+    (~(solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM)
+    )      
+  )
+    pick-any board
+      pick-any num_v
+       pick-any num_intervals
+        pick-any fa
+         pick-any f_list
+          pick-any v_list
+           pick-any D
+            pick-any H
+            assume (~(Matrix.complete board))            
+            let { p==>q := 
+                         conclude
+                         (
+                                (~(exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) ) ) ==>
+                                ( (solve board num_v num_intervals fa f_list v_list D H) = nilM)
+                         )
+                         (!chain [ (~(exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) ) ) 
+                              ==>  ( (solve board num_v num_intervals fa f_list v_list D H) = nilM) [T9b-taut]
+                         ])
+            } 
+ 
+            (!contra-pos p==>q)
+
+  define Theorem9 :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (~(Matrix.complete ?board)) ==>
+    (
+    (exists v . ((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H)) )  <==>
+    (~( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM) )
+    )      
+  )
+    pick-any board
+      pick-any num_v
+       pick-any num_intervals
+        pick-any fa
+         pick-any f_list
+          pick-any v_list
+           pick-any D
+            pick-any H
+            assume (~(Matrix.complete board))            
+            let{ p==>q := 
+                    conclude
+                         (
+                                (exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) )  ==>
+                                ( ~(solve board num_v num_intervals fa f_list v_list D H) = nilM)
+                         )
+                    (!chain [ (exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) )
+                         ==> ( ~(solve board num_v num_intervals fa f_list v_list D H) = nilM) [T9a-taut]
+                    ]) ;
+
+                 q==>p :=    
+                    conclude
+                         (
+                                (exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) )  <==
+                                ( ~(solve board num_v num_intervals fa f_list v_list D H) = nilM)
+                         )
+                    (!chain [ ( ~(solve board num_v num_intervals fa f_list v_list D H) = nilM)
+                         ==> (exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) ) [T9b-taut-contra]
+                    ])
+            }
+            (!equiv p==>q q==>p)    
+#__________________________________________________________________________
+
+
+
+}# end module NMAC

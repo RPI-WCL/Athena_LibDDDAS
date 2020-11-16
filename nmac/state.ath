@@ -1,0 +1,24 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "vector_2d"
+load "types"
+
+#datatype State := (state sxy:Vector_2d sz:Real vxy:Vector_2d vz:Real t:Real)
+
+module State{
+#****************************************************************************
+	define [sa va saz vaz ta v]:= [?sa:Vector_2d ?va:Vector_2d ?saz:Real ?vaz:Real ?ta:Real ?v:Vector_2d]
+
+#****************************************************************************
+	#-- function that takes a State i and a Vector_2d v 
+	#-- and returns a new state i such that i.vxy = v
+
+	declare set-vxy: [State Vector_2d] -> State
+
+	assert* set-vxy-axiom :=
+	let{ state_i := (state sa saz va vaz ta);
+	     new_state := (state sa saz v vaz ta)}
+	( (set-vxy state_i v) = new_state) 
+
+}#module state

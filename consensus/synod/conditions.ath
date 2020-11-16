@@ -1,0 +1,231 @@
+#****************************************************************************
+# Constraints/conditions required specifically for proving livelock and progress in Paxos 
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+
+
+extend-module Synod{
+	
+
+#----------------------------------------------------------------------------
+#-- GUARANTEES IMPLIED BY THE "dependable" PREDICATE  
+#----------------------------------------------------------------------------
+
+#-- The "dependable" predicate basically implies that an actor will be available
+#-- when the system conditions require it to perform some action, i.e., a 
+#-- dependable actor is available whenever it is supposed to send a message or receive
+#-- a message that had been sent to it 
+
+	#-- A dependable acceptor is available if there is a 1a or a 2a message for it in the channel
+	#-- and its read-lock is free
+	define acceptor-dependable1 :=
+	(forall p T b i a v typ .
+		( (   (acc a) 
+			& (dependable a) 
+		  )
+				==>
+					(
+
+	  		  	       (inMSet (consM p a typ b v) (mu (config (rho T i))))
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) a))
+	    		    	  	  )		
+					)
+		) 
+	)
+
+
+	#-- An dependable acceptor is available if its local state satisfies conditions for it to send a 
+	#-- 1b or 2b message 
+	define acceptor-dependable2 :=
+	(forall p T b i a v typ .
+		( (   (acc a) 
+			& (dependable a) 
+		  )
+				==>
+					(
+					  	(inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
+
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) a))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+
+	#-- A dependable proposer is available if there is a 1b or a 2b (or failed) message for it in the channel
+	#-- and its read-lock is free
+	define proposer-dependable1 :=
+	(forall p T i a typ b v .
+		( (   (prp p) 
+			& (dependable p) 
+		  )
+				==>
+					(   
+        	   		  	  (inMSet (consM a p typ b v) (mu (config (rho T i))) )
+		
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) p)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) p))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+
+	#-- A dependable proposer is available if its local state satisfies conditions for it to send a 
+	#-- 2a message (or failed message)
+	define proposer-dependable2 :=
+	(forall p T b i a Q .
+		( (   (prp p) 
+			& (dependable p) 
+		  )	
+				==>
+					(
+							((inQ a Q) 
+								==> 
+									(exists j v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )	       
+							)
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) p)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) p))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+
+#----------------------------------------------------------------------------
+	#-- (ioe x) implies that the IOE condition is valid for the actor x
+	#-- This allows us to selectively allow actor transitions to be IOE instead of
+	#-- all of them implicitly being IOE as per the actor mddel
+	define dependable->IOE-rcv :=
+		(forall x m T i .
+			(dependable x) ==>
+			(
+		        ((inMSet m (mu (config (rho T i)))) 
+		        & (ready-to (rho T i) x (receive x m)))  
+	            	==>
+	            	(
+	            		   (= (rho T (S i)) (then (rho T i) (receive x m))) 
+	            	    |  (exists j . (i N.< j) 
+	            	    				& (inMSet m (mu (config (rho T j)))) 
+	            	    				& (ready-to (rho T j) x (receive x m))) 
+	            	) 
+    		)
+     	)	
+
+	define dependable->IOE-snd :=
+		(forall x m T i .
+				(dependable x) ==>
+				(
+			        (ready-to (rho T i) x (send x m))  
+		            	==>
+		            	(
+		            		   (= (rho T (S i)) (then (rho T i) (send x m))) 
+		            	    |  (exists j . (i N.< j) 
+		            	    				& (ready-to (rho T j) x (send x m))) 
+		            	) 
+	            )	
+        )						   	
+
+
+	define dependable-def-axioms := [ proposer-dependable1
+	                            	  proposer-dependable2
+	                              	  acceptor-dependable1
+	                              	  acceptor-dependable2 
+	                              	  dependable->IOE-snd
+	                              	  dependable->IOE-rcv
+	                            	]
+
+
+#----------------------------------------------------------------------------
+#-- PROPERTIES OF A PROPOSAL NECESSARY FOR IT TO SUCCESSFULLY GET VOTES 
+
+#-- Since actor model does not support message loss, there is no need to repeat messages
+#-- Consequences of having finite and unique ballots, and not-repeating messages, but taking as defineions. Actually prove later
+#-- 
+
+	#-- We can call it the "highest" since it requires >= properties
+ 	#-- If highest proposer, then two things: 
+ 	#--		1. if an acceptor receives 1a message at some indexed position with the ballot,
+ 	#--        the ballot should be > beta of every acceptor 
+ 	#-- 	2. if an acceptor receives 2a message at some indexed position with the ballot, 
+ 	#--        the ballot should be >= beta of every acceptor
+ 	#-- This can be said because ballots are UNIQUE in Synod and we do not repeat messages
+
+ 	define highest-1a-beta :=                                                                  # change it to use transition occurence instead of local state msg -- for all acceptors, there is an indexed position where the node is and acceptor and there is a 1a message and beta <
+ 		(forall p T a i b . 
+ 			 	(highest b)                                                                    #Make it a property of the ballot and not the proposer
+				 ==> 
+				 	(
+				 		(
+				 			  (acc a) 
+					 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+						)
+						==>	((beta (als (config (rho T i)) a)) < b) 
+				 	)
+		)		 	
+
+ 	define highest-2a-beta :=
+ 		(forall p T v b i a . 
+ 			(highest b)
+				 ==> 
+				 	(
+				 		(
+				 			  (acc a) 
+					 		& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+						)
+						==>	((beta (als (config (rho T i)) a)) =< b) 
+				 	)
+	 	)
+
+
+	define highest-beta-def-axioms := [ highest-1a-beta 
+				  					    highest-2a-beta ]
+
+
+#----------------------------------------------------------------------------
+#-- REQUIREMENTS FOR PROVING PROGRESS
+#----------------------------------------------------------------------------
+ 	#-- The following conditions are necessary:
+ 	#-- 1. For every transaction path:
+ 	#-- 	1. There is an indexed position such that some proposer is ready to propose 
+ 	#--        the highest proposal number at that index
+ 	#--     2. The highest proposer is also IOE
+ 	#-- 2. There is a quorum such that all its acceptors are IOE (may be empty, but for safety, needs to be non-empty)
+
+ 	define progress_conditions :=
+	(forall T .
+		(exists i p b Q .
+					  (prp p) 
+					& (highest b)
+					& (dependable p) 
+					& (forall a . (inQ a Q) 
+						                ==> 
+						                      (dependable a) 
+						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+					  )
+		)
+	)
+
+
+
+
+}#close module

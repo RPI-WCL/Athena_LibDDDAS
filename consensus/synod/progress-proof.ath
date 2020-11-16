@@ -1,0 +1,4245 @@
+#****************************************************************************
+# Proof of progress
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+load "system.ath"
+load "behavior.ath"
+load "conditions.ath"
+
+
+
+extend-module Synod{ 
+
+	#-- model specific axioms
+	assert model-fair-axioms
+	assert model-msg-persists-until-read-axiom
+	assert model-step-axioms
+	#-- Synod behavior specific axioms
+	assert synod-quorum-axioms
+	assert synod-ready-to-send-axioms
+	assert synod-ready-to-receive-general-axiom
+	assert synod-state-axioms
+	# predicate definition axioms	
+	assert synod-has-promises-def-axiom	
+	assert synod-has-votes-def-axiom
+	assert synod-learn-def-axiom		
+	assert dependable-def-axioms
+	assert highest-beta-def-axioms 
+
+
+
+	#SANITY CHECK: There is no contradiction in the assertions -- FAILS
+	#(!prove false [model-fair-axioms model-step-axioms dependable-def-axioms quorum-axioms synod-behavior-axioms highest-beta-def-axioms])
+
+
+#---------------------------------------------------------------------------- 
+####################  NO ASSERTIONS BEYOND THIS POINT  ######################
+#----------------------------------------------------------------------------
+
+
+#-- DEFINING THE MAIN PROGRESS THEOREM
+#----------------------------------------------------------------------------
+	#-- Our main progress theorem states that for all transaction paths, there is an indexed position such that
+	#-- a proposer has learnt of a ballot's success at that position 
+	define Progress-Theorem :=
+	(progress_conditions
+		==>
+			(forall T . 
+				(exists p i b .
+					 (learn p (rho T i) b)	
+				)
+			)
+	)
+
+
+#----------------------------------------------------------------------------
+#-- INTERMEDIATE LEMMAS & THEOREMS FOR PROVING "Progress-Thorem"
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+	#-- Fair-receive: If at any index in a transition path, a receive transition is enabled
+	#-- for an actor that is IOE, then it eventually happens at some index in the same path
+	define IOE->Fair-Rcv-Theorem :=
+			(forall x m T i .
+				(dependable x) 
+					==>
+					(
+				        ((inMSet m (mu (config (rho T i)))) 
+				        & (ready-to (rho T i) x (receive x m)))  
+			            	==>
+				            	(exists j . (i N.<= j) 
+			            	    			& (= (rho T j) (then (rho T i) (receive x m))) ) 						
+					)
+
+             )	
+
+
+	define IOE->Fair-Rcv-Theorem-step1 :=
+			(forall x m T i .
+				(dependable x) 
+					==>
+					(
+				        ((inMSet m (mu (config (rho T i)))) 
+				        & (ready-to (rho T i) x (receive x m)))  
+			            	==>  	
+					        	  (= (rho T (S i)) (then (rho T i) (receive x m)))
+			            	    | (exists j . (i N.<= j) 
+		            	    				& (= (rho T j) (then (rho T i) (receive x m))) ) 
+					)            	 
+             )
+
+	(!prove IOE->Fair-Rcv-Theorem-step1 [dependable-def-axioms model-fair-axioms])
+
+	(!prove IOE->Fair-Rcv-Theorem [IOE->Fair-Rcv-Theorem-step1 N.Less=.S3])
+
+#----------------------------------------------------------------------------
+	#-- Fair-send: If at any index in a transition path, a send transition is enabled
+	#-- for an actor that is IOE,then it eventually happens at some index in the same path
+	define IOE->Fair-Snd-Theorem :=
+			(forall x m T i .
+				(dependable x) 
+					==>
+					(
+				        ((ready-to (rho T i) x (send x m)))  
+			            	==>
+				            	(exists j . (i N.<= j) 
+			            	    			& (= (rho T j) (then (rho T i) (send x m))) ) 
+				    )        	
+             )	
+
+
+	define IOE->Fair-Snd-Theorem-step1 :=
+			(forall x m T i .
+				(dependable x) 
+					==>
+					(
+				        ( (ready-to (rho T i) x (send x m)))  
+			            	==>  	
+					        	  (= (rho T (S i)) (then (rho T i) (send x m)))
+			            	    | (exists j . (i N.<= j) 
+		            	    				& (= (rho T j) (then (rho T i) (send x m))) ) 
+	    			)        	 
+             )
+
+	(!prove IOE->Fair-Snd-Theorem-step1 [dependable-def-axioms model-fair-axioms])
+
+	(!prove IOE->Fair-Snd-Theorem [IOE->Fair-Snd-Theorem-step1 N.Less=.S3]) 
+#----------------------------------------------------------------------------
+#-- Message persistance proofs for different types of Synod messages
+
+
+	define 1a-model-msg-persists-until-read-axiom-lemma :=
+			(forall T i j p a b .
+				(inMSet (consM p a 1a b nilV) (mu (config (rho T i))))
+					==>
+						(
+							  ( (i N.<= j) 
+							  		==> 
+							  			(inMSet (consM p a 1a b nilV) (mu (config (rho T j)))) )
+
+							| (exists k . (   (i N.<= k) 
+		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a 1a b nilV))))
+		            	    			  )
+							  )
+						)	
+
+			)
+
+		
+	
+	(!prove 1a-model-msg-persists-until-read-axiom-lemma [model-msg-persists-until-read-axiom N.Less=.Implied-by-<])		
+
+
+	define 1b-model-msg-persists-until-read-axiom-lemma :=
+			(forall T i j p a b v .
+				(inMSet (consM a p 1b b v) (mu (config (rho T i))))
+					==>
+						(
+							  ( (i N.<= j) 
+							  		==> 
+							  			(inMSet (consM a p 1b b v) (mu (config (rho T j)))) )
+
+							| (exists k .   (i N.<= k) 
+		            	    			  & (= (rho T k) (then (rho T i) (receive p (consM a p 1b b v))))
+							  )
+						)	
+
+			)
+
+	
+	(!prove 1b-model-msg-persists-until-read-axiom-lemma [model-msg-persists-until-read-axiom N.Less=.Implied-by-<])		
+
+
+	define 2a-model-msg-persists-until-read-axiom-lemma :=
+			(forall T i j p a b v .
+				(inMSet (consM p a 2a b v) (mu (config (rho T i))))
+					==>
+						(
+							  ( (i N.<= j) 
+							  		==> 
+							  			(inMSet (consM p a 2a b v) (mu (config (rho T j)))) )
+
+							| (exists k . (   (i N.<= k) 
+		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a 2a b v))))
+		            	    			  )
+							  )
+						)	
+
+			)
+
+	(!prove 2a-model-msg-persists-until-read-axiom-lemma [model-msg-persists-until-read-axiom N.Less=.Implied-by-<])
+
+	define 2b-model-msg-persists-until-read-axiom-lemma :=
+			(forall T i j p a b .
+				(inMSet (consM a p 2b b nilV) (mu (config (rho T i))))
+					==>
+						(
+							  ( (i N.<= j) 
+							  		==> 
+							  			(inMSet (consM a p 2b b nilV) (mu (config (rho T j)))) )
+
+							| (exists k .   (i N.<= k) 
+		            	    			  & (= (rho T k) (then (rho T i) (receive p (consM a p 2b b nilV))))
+							  )
+						)	
+
+			)
+
+	(!prove 2b-model-msg-persists-until-read-axiom-lemma [model-msg-persists-until-read-axiom N.Less=.Implied-by-<])			
+
+	define synod-msg-persistance-axioms := [1a-model-msg-persists-until-read-axiom-lemma 
+							  				1b-model-msg-persists-until-read-axiom-lemma
+							  				2a-model-msg-persists-until-read-axiom-lemma
+							  				2b-model-msg-persists-until-read-axiom-lemma 
+							  				]
+
+#----------------------------------------------------------------------------
+# Intermediate lemmas for ready-to receive behavior by message 
+
+
+	define synod-ready-to-receive-lemma1a :=
+		(forall T i b p a .
+				  (	
+				  	#	(prp p)
+				  	#  & (acc a)	
+					   (available (rho T i) a)
+					  & (inMSet (consM p a 1a b nilV) (mu (config (rho T i))))
+				  )
+					<==>
+						(ready-to (rho T i) a (receive a (consM p a 1a b nilV)))
+					
+		)
+
+	(!prove synod-ready-to-receive-lemma1a [synod-ready-to-receive-general-axiom])
+
+	define synod-ready-to-receive-lemma1b :=
+		(forall T i b v p a .
+				  (	
+				  	#	(prp p)
+				  	#  & (acc a)	
+					    (available (rho T i) p)
+					  & (inMSet (consM a p 1b b v) (mu (config (rho T i))))
+				  )
+					<==>
+						(ready-to (rho T i) p (receive p (consM a p 1b b v)))
+					
+		)
+
+	(!prove synod-ready-to-receive-lemma1b [synod-ready-to-receive-general-axiom])
+
+
+	define synod-ready-to-receive-lemma2a :=
+		(forall T i b v p a .
+				  (	
+				  	#	(prp p)
+				  	#  & (acc a)	
+					    (available (rho T i) a)
+					  & (inMSet (consM p a 2a b v) (mu (config (rho T i))))
+				  )
+					<==>
+						(ready-to (rho T i) a (receive a (consM p a 2a b v)))
+					
+		)
+
+
+	(!prove synod-ready-to-receive-lemma2a [synod-ready-to-receive-general-axiom])
+
+	define synod-ready-to-receive-lemma2b :=
+		(forall T i b p a .
+				  (	
+				  	#	(prp p)
+				  	#  & (acc a)	
+					    (available (rho T i) p)
+					  & (inMSet (consM a p 2b b nilV) (mu (config (rho T i))))
+				  )
+					<==>
+						(ready-to (rho T i) p (receive p (consM a p 2b b nilV)))
+					
+		)
+
+	(!prove synod-ready-to-receive-lemma2b [synod-ready-to-receive-general-axiom])
+
+	define synod-ready-to-receive-lemmas := [ synod-ready-to-receive-lemma1a
+								 			  synod-ready-to-receive-lemma1b
+								  			  synod-ready-to-receive-lemma2a
+								  			  synod-ready-to-receive-lemma2b
+								  			]
+
+
+
+#----------------------------------------------------------------------------
+# Some intermediate Lemmas 
+
+
+
+	#-- LEMMA1
+	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
+	#-- then 1a messages will be eventually received by all members of Q
+	#------------------------------------------------------------------------
+
+	define Lemma1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				( 
+					(forall a .
+						(inQ a Q) 
+						     ==> 
+								(exists j .
+											 (i N.<= j) 
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+								)	       
+					)	
+				) 
+	)
+
+
+
+	define Lemma1-step1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					(inQ a Q) 
+						     ==> 
+							(exists j . (i N.<= j) 
+						        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV)))) )	
+				) 
+	)
+
+
+	(!prove Lemma1-step1 [IOE->Fair-Snd-Theorem])
+
+
+	define Lemma1-step2 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j . (i N.<= j) 
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV)))) )	       
+								)	
+				) 
+	)
+
+
+	(!prove Lemma1-step2 [Lemma1-step1])
+
+
+
+	define Lemma1-step3 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a . 
+					((inQ a Q) 
+						==> 
+								(exists j . (i N.<= j) 
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j)))) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step3 [Lemma1-step2 model-step-axioms])	
+
+
+
+
+	define Lemma1-step4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 	(dependable a) & (acc a)
+							  & (exists j . (i N.<= j) 
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step4 [Lemma1-step3 synod-quorum-axioms])
+
+
+	define Lemma1-step5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j) 
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+				        	  		      & (
+				        	  		  		  (available (rho T j) a)
+
+				    		    	  		| (exists k .
+			                                             (j N.< k)
+				    		    	  				   & (available (rho T k) a))
+				    		    	  	    )	 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step5 [Lemma1-step4 dependable-def-axioms acceptor-dependable1])
+
+
+	define Lemma1-step6 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+				        	  		      & (
+				        	  		      	  (
+					        	  		      	  	(available (rho T j) a)
+					        	  		      	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))	
+				        	  		      	  )
+				    		    	  		| (exists k .
+			                                             (j N.<= k)
+				    		    	  				   & (available (rho T k) a)
+				    		    	  		  )
+				    		    	  	    )							        	  	 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step6 [Lemma1-step5 N.Less=.Implied-by-<])	
+
+
+	define Lemma1-step7 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+				        	  		      & (
+				        	  		      	  (
+					        	  		      	  	(available (rho T j) a)
+					        	  		      	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))	
+				        	  		      	  )
+				    		    	  		| (exists k .
+			                                             (j N.<= k)
+				    		    	  				   & (available (rho T k) a)
+   													   & (
+					            	    		  		  (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
+					            	    		  		| (exists l . (j N.<= l) 
+						            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
+											  			  )
+
+				            	    		  	         )				    		    	  				   
+				    		    	  		  )
+				    		    	  	    )							        	  	 
+							    )	       
+					)	
+				) 
+	)
+
+	(!prove Lemma1-step7 [Lemma1-step6 synod-msg-persistance-axioms])
+
+
+	define Lemma1-step8 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j) 
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		  (   #(~(lock (als (config (rho T j)) a)))
+							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+							        	  		  	& (dependable a)
+							        	  		  	& (acc a)
+							        	  		  	& (available (rho T j) a)
+							        	  		  )	
+
+							        	  		| (exists k . (j N.<= k)
+										  				   #& ~(lock (als (config (rho T k)) a))
+  	   							        	  		  	   #& (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+  	   													   & (
+							            	    		  		 (  
+							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
+							            	    		  		 #& (~(lock (als (config (rho T k)) a)))
+							            	    		  		 & (dependable a)
+							            	    		  		 & (acc a)
+							            	    		  		 & (available (rho T k) a)  
+							            	    		  		 )
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step8 [Lemma1-step7 synod-quorum-axioms])	
+
+
+	define Lemma1-step9 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		  (   #(~(lock (als (config (rho T j)) a)))
+							        	  		  	  (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+							        	  		  	& (dependable a)
+							        	  		  	& (available (rho T j) a)
+							        	  		  )	
+
+							        	  		| (exists k . (j N.<= k)
+										  				   #& ~(lock (als (config (rho T k)) a))
+  	   							        	  		  	   #& (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+  	   													   & (
+							            	    		  		 (  
+							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
+							            	    		  		 #& (~(lock (als (config (rho T k)) a)))
+							            	    		  		 & (dependable a)
+							            	    		  		 & (available (rho T k) a)  
+							            	    		  		 )
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step9 [Lemma1-step8 acceptor-dependable1])	
+
+
+
+	define Lemma1-step10 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		  (  # (~(lock (als (config (rho T j)) a)))
+							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+							        	  		  	& (dependable a)
+							        	  		  	& (available (rho T j) a)
+							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
+							        	  		  )	
+
+							        	  		| (exists k . (j N.<= k)
+										  				   #& ~(lock (als (config (rho T k)) a))
+  	   							        	  		  	   #& (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+  	   													   & (
+							            	    		  		 (  
+							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
+							            	    		  		# & (~(lock (als (config (rho T k)) a)))
+							            	    		  		 & (dependable a)
+							            	    		  		 & (available (rho T k) a)
+							            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV)))  
+							            	    		  		 )
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step10 [Lemma1-step9 synod-ready-to-receive-lemmas synod-quorum-axioms])
+
+
+	define Lemma1-step11 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		  (  # (~(lock (als (config (rho T j)) a)))
+							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+							        	  		  	& (dependable a)
+							        	  		  	& (available (rho T j) a)
+							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
+						            	    		& (exists z .
+		            	    		  	      			  (j N.<= z) 
+				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 1a b nilV))))									            	    		    
+						            	    		  )							        	  		  	
+							        	  		  )	
+
+							        	  		| (exists k y . (j N.<= k)
+										  				   #& ~(lock (als (config (rho T k)) a))
+  	   							        	  		  	   #& (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
+  	   													   & (
+							            	    		  		 (  
+								            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
+								            	    		  		 #& (~(lock (als (config (rho T k)) a)))
+								            	    		  		 & (dependable a)
+								            	    		  		 & (available (rho T k) a)
+								            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV))) 
+										            	    		 & (
+							            	    		  	      			  (k N.<= y) 
+									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 1a b nilV))))									            	    		    
+										            	    		   )								            	    		  		  
+							            	    		  		 )	 
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step11 [Lemma1-step10 IOE->Fair-Rcv-Theorem])	
+
+
+	define Lemma1-step12 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j) 
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		     
+					            	    		 (exists z .
+	            	    		  	      			  (j N.<= z)
+	            	    		  	      			& (i N.<= z)   
+			            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 1a b nilV))))									            	    		    
+					            	    		  )							        	  		  	
+						        	  		  	
+
+							        	  		| (exists k y . (j N.<= k)
+										  				   
+  	   													   & (
+							            	    		  		   (
+						            	    		  	      			  (k N.<= y)
+						            	    		  	      			& (j N.<= y)
+						            	    		  	      			& (i N.<= y)   
+								            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 1a b nilV))))									            	    		    
+									            	    		   )								            	    		  		  
+
+							            	    		  		| (exists l . (j N.<= l)
+							            	    		  		            & (i N.<= l)
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step12 [Lemma1-step11 N.Less=.transitive])
+
+
+	define Lemma1-step13 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		     
+					            	    		 (exists z .
+	            	    		  	      			  (j N.<= z)
+	            	    		  	      			& (i N.<= z)   
+			            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 1a b nilV))))
+			            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a))) 									            	    		    
+					            	    		  )							        	  		  	
+						        	  		  	
+
+							        	  		| (exists k y . (j N.<= k)
+  	   													   & (
+							            	    		  		   (
+						            	    		  	      			  (k N.<= y)
+						            	    		  	      			& (j N.<= y)
+						            	    		  	      			& (i N.<= y)   
+								            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 1a b nilV))))
+								            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a))) 									            	    		    
+									            	    		   )								            	    		  		  
+
+							            	    		  		| (exists l . (j N.<= l)
+							            	    		  		            & (i N.<= l)
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))
+								            	    				        & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))    
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step13 [Lemma1-step12 model-step-axioms])	
+
+
+	define Lemma1-step14 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  & (
+							        	  		     
+					            	    		 (exists z .
+	            	    		  	      			  (i N.<= z)   
+			            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a))) 									            	    		    
+					            	    		  )							        	  		  	
+						        	  		  	
+
+							        	  		| ( 
+							        	  			         (
+							            	    		  		  (exists y .
+
+						            	    		  	      			  (i N.<= y)   
+								            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a))) 									            	    		    
+									            	    		   )								            	    		  		  
+
+							            	    		  		| (exists l . (i N.<= l)
+								            	    				        & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))    
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step14 [Lemma1-step13])	
+
+
+
+	define Lemma1-step15 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))   
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step15 [Lemma1-step14])
+
+	(!prove Lemma1 [Lemma1-step15])	
+
+
+	#-- LEMMA2 
+	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
+	#-- then 1b messages will be received by p from all members of Q for the ballot proposed by p
+	#------------------------------------------------------------------------	 
+		
+
+	define Lemma2 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+  							(exists j .
+  									  (i N.<= j)	
+						  			& (has-promises (als (config (rho T j)) p) b  Q) 
+  							)
+	)		
+
+
+
+	define Lemma2-step1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))
+							        	  & (acc a)   
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step1 [Lemma1 synod-quorum-axioms])
+
+
+	define Lemma2-step2 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b) 	
+								)        
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step2 [Lemma2-step1 highest-beta-def-axioms])
+
+
+
+	define Lemma2-step3 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+									       & (
+												(available (rho T j) a)
+													==>
+														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+									       	 )
+								)        
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step3 [Lemma2-step2 synod-ready-to-send-axioms])	
+
+
+ 
+
+	define Lemma2-step4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+									       & (dependable a)
+									       #& (available (rho T j) a)
+									       & (
+												(available (rho T j) a)
+													==>
+														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+									       	 )
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step4 [Lemma2-step3])		
+
+
+
+	define Lemma2-step5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+				        	  		       & (
+					        	  		  		  (available (rho T j) a)
+
+					    		    	  		| (exists k .
+				                                             (j N.< k)
+					    		    	  				   & (available (rho T k) a))
+				    		    	  	     )
+									       & (
+												(available (rho T j) a)
+													==>
+														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+									       	 )
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step5 [Lemma2-step4 acceptor-dependable2])	
+
+
+	define Lemma2-step5_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+				        	  		       & (
+										         (
+													(available (rho T j) a)
+												  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+										       	 )
+
+					    		    	  		| (exists k .
+				                                             (j N.< k)
+					    		    	  				   & (available (rho T k) a))
+				    		    	  	     )
+									       & (
+												(available (rho T j) a)
+													==>
+														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+									       	 )
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step5_1 [Lemma2-step5])
+
+	define Lemma2-step6 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+				        	  		       & (
+				        	  		       		(
+				        	  		       			(available (rho T j) a)
+				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )	
+
+				        	  		       	    )
+					    		    	  		| (exists k .
+				                                             (j N.<= k)
+				                                           & (i N.<= k)  
+					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
+					    		    	  		  )
+				    		    	  	     )			        	  		       
+									       	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step6 [Lemma2-step5_1 N.Less=.Implied-by-< collect-1b-from-quorum persistent-state-msg-variable N.Less=.transitive])
+
+
+
+
+	define Lemma2-step6_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+				        	  		       & (
+				        	  		       		(
+				        	  		       			(available (rho T j) a)
+				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )	
+
+				        	  		       	    )
+					    		    	  		| (exists k .
+				                                             (j N.<= k)
+				                                           & (i N.<= k)  
+					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
+					    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
+					    		    	  		  )
+				    		    	  	     )			        	  		       
+									       	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step6_1 [Lemma2-step6 highest-beta-def-axioms])
+
+
+
+	define Lemma2-step6_2 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . 
+				        	  		         (
+				        	  		       		(   (i N.<= j)
+				        	  		       		  & (available (rho T j) a)
+				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
+				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
+
+				        	  		       	    )
+					    		    	  		| (exists k .
+				                                             (i N.<= k)  
+					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
+					    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
+					    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
+					    		    	  		  )
+				    		    	  	     )			        	  		       
+									       	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step6_2 [Lemma2-step6_1 synod-ready-to-send-axioms])
+
+
+	define Lemma2-step6_3 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & ( 
+				        	  		         (exists j .
+				        	  		       		(   (i N.<= j)
+				        	  		       		  & (available (rho T j) a)
+				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
+				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
+				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
+
+				        	  		       	    )
+					    		    	  		| (exists k .
+				                                             (i N.<= k)  
+					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
+					    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
+					    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
+					    		    	  		  )
+				    		    	  	     )			        	  		       
+									       	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step6_3 [Lemma2-step6_2 ])
+
+	define Lemma2-step7 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 
+							  & (exists j . (i N.<= j)
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) < b)
+									       & (available (rho T j) a)
+									       & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )      	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step7 [Lemma2-step6_3])
+
+
+	define Lemma2-step8 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists j v k .
+											 (i N.<= j) 
+									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+									       & (acc a)
+									       & ((beta (als (config (rho T j)) a)) < b)
+									       & (available (rho T j) a)
+									       & (ready-to (rho T j) a (send a (consM a p 1b b v) ) )
+					 	       			   & (j N.<= k) 
+			            	    		   & (= (rho T k) (then (rho T j) (send a (consM a p 1b b v))))									             	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step8 [Lemma2-step7 IOE->Fair-Snd-Theorem])	
+
+
+
+	define Lemma2-step9 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists j v k .
+											 (i N.<= j)
+					 	       			   & (i N.<= k) 
+			            	    		   & (= (rho T k) (then (rho T j) (send a (consM a p 1b b v))))									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step9 [Lemma2-step8 N.Less=.transitive])
+
+
+	define Lemma2-step10 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k) 
+			            	    		   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )  									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step10 [Lemma2-step9 model-step-axioms])	
+
+
+
+	define Lemma2-step13 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k) 
+				            	    	   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+				        	  		       & (
+					        	  		  		  (available (rho T k) p)
+
+					    		    	  		| (exists j .
+				                                             (k N.< j)
+					    		    	  				   & (available (rho T j) p))
+				    		    	  	     )				            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step13 [Lemma2-step10 proposer-dependable1])	
+
+
+
+	define Lemma2-step14 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k) 
+				            	    	   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+				        	  		       & (
+				        	  		       		  (
+				        	  		       		  	  (available (rho T k) p)	
+				        	  		       		  	& (inMSet (consM a p 1b b v) (mu (config (rho T k))) )	
+				        	  		       		  )
+					        	  		  		  
+
+					    		    	  		| (exists j .
+				                                             (k N.<= j)
+					    		    	  				   & (available (rho T j) p)
+					    		    	  		  )
+				    		    	  	     )
+
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step14 [Lemma2-step13 N.Less=.Implied-by-<])
+
+
+	define Lemma2-step15 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)
+										   & (inMSet (consM a p 1b b v) (mu (config (rho T k))))	  
+				        	  		       & (
+				        	  		       		  (
+				        	  		       		  	  (available (rho T k) p)	
+				        	  		       		  	& (inMSet (consM a p 1b b v) (mu (config (rho T k))) )	
+				        	  		       		  )
+					        	  		  		  
+				    		    	  		| (exists j .
+			                                             (k N.<= j)
+				    		    	  				   & (available (rho T j) p)
+				    		    	  				   & (inMSet (consM a p 1b b v) (mu (config (rho T k))))
+   													   & (
+					            	    		  		  (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+					            	    		  		| (exists l . (k N.<= l) 
+						            	    				        & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+											  			  )
+
+				            	    		  	         )				    		    	  				   
+				    		    	  		  )
+				    		    	  	     )			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step15 [Lemma2-step14 synod-msg-persistance-axioms])
+
+
+	define Lemma2-step16 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)
+							        	   & (
+							        	   		  (
+							        	  		       (~(lock (als (config (rho T k)) p)))
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+							        	   		  	 & (available (rho T k) p)
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.< j)
+							        	  		     & (~(lock (als (config (rho T j)) p)))
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+												     & (
+						            	    		  		   (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	#(!prove Lemma2-step16 [Lemma2-step15 1b-model-msg-persists-until-read-axiom N.Less=.Implied-by-<])
+
+
+
+	define Lemma2-step17 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)
+							        	   & (
+							        	   		  (
+							        	  		       (~(lock (als (config (rho T k)) p)))
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+							        	   		  	 & (available (rho T k) p)
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.< j)
+
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+							        	  		     				& (~(lock (als (config (rho T j)) p)))
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	#(!prove Lemma2-step17 [Lemma2-step16])	
+
+
+
+	define Lemma2-step18 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)
+							        	   & (
+							        	   		  (
+							        	  		       #(~(lock (als (config (rho T k)) p)))
+							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+							        	   		  	 & (available (rho T k) p)
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step18 [Lemma2-step15 proposer-dependable1])	
+
+
+
+	define Lemma2-step19 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)
+							        	   & (
+							        	   		  (
+							        	  		       #(~(lock (als (config (rho T k)) p)))
+							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+							        	   		  	 & (available (rho T k) p)
+							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+	(!prove Lemma2-step19 [Lemma2-step18 synod-ready-to-receive-lemmas synod-quorum-axioms])
+
+
+	define Lemma2-step20 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k) 
+							        	   & (
+							        	   		  (
+							        	  		       #(~(lock (als (config (rho T k)) p)))
+							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+							        	   		  	 & (available (rho T k) p)
+							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
+			        	  		     				 & (exists z . 
+			        	  		     				 	         (k N.<= z)
+			        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
+
+			        	  		     				   )							        	   		  	 
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
+							        	  		     				& (exists y . 
+							        	  		     					         (j N.<= y)
+							        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
+
+							        	  		     				  )
+
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step20 [Lemma2-step19 IOE->Fair-Rcv-Theorem])	
+
+
+	define Lemma2-step21 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k) 
+							        	   & (
+							        	   		  (
+							        	  		       #(~(lock (als (config (rho T k)) p)))
+							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+							        	   		  	 & (available (rho T k) p)
+							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
+			        	  		     				 & (exists z . 
+			        	  		     				 	         (k N.<= z)
+			        	  		     				 	       & (i N.<= z)
+			        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
+
+			        	  		     				   )							        	   		  	 
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	  			 & (i N.<= j)  
+							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
+							        	  		     				& (exists y . 
+							        	  		     					         (j N.<= y)
+							        	  		     					       & (i N.<= y)  
+							        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
+
+							        	  		     				  )
+
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l)
+						            	    		  		             & (i N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step21 [Lemma2-step20 N.Less=.transitive N.Less=.Implied-by-<])		
+
+
+	define Lemma2-step21_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k) 
+							        	   & (
+							        	   		  (
+			        	  		     				   (exists z . 
+			        	  		     				 	         (k N.<= z)
+			        	  		     				 	       & (i N.<= z)
+			        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
+
+			        	  		     				   )							        	   		  	 
+							        	   		  )
+							        	  		| (exists j . 
+												      (
+												     		   (
+
+							        	  		     				 (exists y . 
+							        	  		     					         (i N.<= y)  
+							        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
+
+							        	  		     				  )
+
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . 
+						            	    		  		               (i N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step21_1 [Lemma2-step21 ])
+
+
+	define Lemma2-step22 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v k .
+											  (i N.<= k) 
+							        	   & (
+						        	   		  
+						        	  		       (exists z . 
+		        	  		     				 	         (i N.<= z)
+		        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
+
+		        	  		     				   )							        	   		  	 
+						        	   		  
+							        	  		| (exists j . 
+ 												       (
+										     		   
+										     		   	       (exists y . 
+					        	  		     					         (i N.<= y)  
+					        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
+
+					        	  		     				   )
+
+										     		   
+						            	    		  		 
+						            	    		  		|  (exists l . 
+						            	    		  			           (i N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step22 [Lemma2-step21_1])					
+
+
+	define Lemma2-step23 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(dependable a) & (acc a) 	
+								& (exists v z k . 
+	  		     				 	          (i N.<= z)                                                     # for each a, exists k . (rho T z) = then (rho T k) ... implies that
+	  		     				 	       &  (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v))))  # Receive transition happened at different times for each
+	  		     				 	       & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))   # Did not happen at the same time. k is important here 
+							        	   		  	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step23 [Lemma2-step22 model-step-axioms])	
+
+
+	define Lemma2-step24 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+							 (exists v z . 
+		     				 	          (i N.<= z)                                                     # for each a, exists k . (rho T z) = then (rho T k) ... implies that
+		     				 	       & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))   # Did not happen at the same time. k is important here 
+					        	   		  	 
+						     )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step24 [Lemma2-step23])	
+
+
+	define Lemma2-step24_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(exists j . (i N.<= j) 
+					      & (forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )) )
+
+	)
+
+
+	(!prove Lemma2-step24_1 [Lemma2-step24 synod-state-axioms])		
+
+
+	(!prove Lemma2 [Lemma2-step24_1 synod-has-promises-def-axiom])
+
+
+	#-- LEMMA3
+	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
+	#-- then 2a messages will be eventually received by all members of Q
+	#------------------------------------------------------------------------
+
+	define Lemma3 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>  
+				(forall a .
+					((inQ a Q) 
+						==> 
+							(exists j v .
+										 (i N.<= j) 
+								       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+							)	       
+					)	
+				)
+	)
+
+
+
+	define Lemma3-step1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>  
+				(forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) ))
+	)		
+
+	(!prove Lemma3-step1 [synod-has-promises-def-axiom])
+
+
+
+	define Lemma3-step2 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				(forall a .
+                    ((inQ a Q) 
+                    	==> 
+                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+                    )
+					
+				  & (
+							(available (rho T i) p)
+								==>
+									 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
+					)					
+
+
+
+				) 
+	)		
+
+	(!prove Lemma3-step2 [Lemma3-step1 synod-ready-to-send-axioms])
+
+
+
+
+
+
+
+	define Lemma3-step4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+					(forall a .
+	                    ((inQ a Q) 
+	                    	==> 
+	                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+	                    )
+						
+					  & (
+								(available (rho T i) p)
+									==>
+										 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
+						)						
+					) 
+	  		     & (
+	  		  		  (available (rho T i) p)
+
+	    	  		| (exists j .
+	                             (i N.< j)
+	    	  				   & (available (rho T j) p))
+	    	  	   )				
+	)		
+
+	(!prove Lemma3-step4 [Lemma3-step2 proposer-dependable2])
+
+
+	define Lemma3-step4_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+					(forall a .
+	                    ((inQ a Q) 
+	                    	==> 
+	                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+	                    )
+						
+					  & (
+								(available (rho T i) p)
+									==>
+										 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
+						)
+					) 
+				  & (
+	  		     	  (
+
+		  		  		  (available (rho T i) p)
+		  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
+                      )
+	    	  		| (exists j .
+                                 (i N.<= j)  
+	    	  				   & (available (rho T j) p))
+	    	  	   )				
+	)		
+
+	(!prove Lemma3-step4_1 [Lemma3-step4 N.Less=.Implied-by-<  N.Less=.transitive])
+
+
+	define Lemma3-step4_1_1 := 
+	(forall p T b i Q j .
+				(
+					(i N.<= j)
+					& (forall a .
+	                    ((inQ a Q) 
+	                    	==> 
+	                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+	                    )
+	                  )
+                )     
+                    ==> 
+						(forall a .
+		                    ((inQ a Q) 
+		                    	==> 
+		                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )
+		                    )
+		                 )   
+						                    				 
+	)		
+
+	(!prove Lemma3-step4_1_1 [synod-state-axioms])
+
+	define Lemma3-step4_2 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				(forall a .
+                    ((inQ a Q) 
+                    	==> 
+                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+                    )
+					
+				  & (
+							(available (rho T i) p)
+								==>
+									 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
+					)
+				)
+			  & (
+  		     	  (
+
+	  		  		  (available (rho T i) p)
+	  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
+                  )
+    	  		| (exists j .
+                             (i N.<= j)
+    	  				   & (available (rho T j) p)
+		                   & (forall a .
+		                   	  	(inQ a Q) 
+		                    		 ==> 
+		                    			(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+		                     )
+		          )          	    	  		
+    	  	   )						
+
+	)		
+
+	(!prove Lemma3-step4_2 [Lemma3-step4_1])
+
+
+
+	define Lemma3-step4_3 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				(forall a .
+                    ((inQ a Q) 
+                    	==> 
+                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+                    )
+					
+				  & (
+							(available (rho T i) p)
+								==>
+									 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
+					)
+				)
+			  & (
+  		     	  (
+
+	  		  		  (available (rho T i) p)
+	  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
+                  )
+    	  		| (exists j .
+                             (i N.<= j)
+    	  				   & (available (rho T j) p)
+		                   & (forall a .
+		                   	  	(inQ a Q) 
+		                    		 ==> 
+		                    			(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+		                     )
+						   & (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+			                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )
+			                 )
+			                 
+			       )          		                     	    	  		
+    	  	   )						
+
+	)		
+
+	(!prove Lemma3-step4_3 [Lemma3-step4_1_1 Lemma3-step4_2])
+
+
+	define Lemma3-step4_3 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				(forall a .
+                    ((inQ a Q) 
+                    	==> 
+                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+                    )
+					
+				  & (
+							(available (rho T i) p)
+								==>
+									 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
+					)
+				)
+			  & (
+  		     	  (
+
+	  		  		  (available (rho T i) p)
+	  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
+                  )
+    	  		| (exists j .
+                             (i N.<= j)
+    	  				   & (available (rho T j) p)
+		                   & (forall a .
+		                   	  	(inQ a Q) 
+		                    		 ==> 
+		                    			(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) )
+		                     )
+						   & (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+			                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )
+			                 )
+			                 
+			       )          		                     	    	  		
+    	  	   )						
+
+	)		
+
+	(!prove Lemma3-step4_3 [Lemma3-step4_1_1 Lemma3-step4_2])
+
+
+
+
+	define Lemma3-step4_4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+			    (
+  		     	  (
+
+	  		  		  (available (rho T i) p)
+	  		  		  & (forall a . 
+  		  		  			(inQ a Q) 
+  		  		  				==> 
+  		  		  					(exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))))  )
+                  )
+    	  		| (exists j .
+                             (i N.<= j)
+    	  				   & (available (rho T j) p)
+						   & (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+			                    		(exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )
+			                 )
+			                 
+			       )          		                     	    	  		
+    	  	   )						
+
+	)		
+
+	(!prove Lemma3-step4_4 [Lemma3-step4_3])
+
+
+
+
+	define Lemma3-step4_5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>    
+			    (
+  		     	  (
+
+	  		  		  (available (rho T i) p)
+	  		  		  & (forall a . 
+  		  		  			(inQ a Q) 
+  		  		  				==> 
+  		  		  					(exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))))  
+  		  		  		)
+                  )
+    	  		| (exists j .
+                             (i N.<= j)
+    	  				   & (available (rho T j) p)
+						   & (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+			                    		(exists v . (ready-to (rho T j) p (send p (consM p a 2a b v))))
+			                 )						   
+			                 
+			       )          		                     	    	  		
+    	  	   )						
+
+	)		
+
+	(!prove Lemma3-step4_5 [Lemma3-step4_4 synod-ready-to-send-axioms synod-has-promises-def-axiom])
+
+
+	define Lemma3-step5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>    
+			    (
+    	  		  (exists j .
+                             (i N.<= j)
+    	  				   & (available (rho T j) p)
+						   & (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+			                    		(exists v . (ready-to (rho T j) p (send p (consM p a 2a b v))))
+			                 )						   
+			                 
+			       )          		                     	    	  		
+    	  	   )						
+
+	)
+
+	(!prove Lemma3-step5 [Lemma3-step4_5 N.Less=.Implied-by-equal])
+
+
+
+	define Lemma3-step5_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+			     (forall a .
+                    (inQ a Q) 
+                    	==> 
+                    		(exists j v . 
+		                             (i N.<= j)
+		    	  				   & (available (rho T j) p)
+                    			   & (ready-to (rho T j) p (send p (consM p a 2a b v)))
+                    	    )
+                 )						   
+
+	)
+
+	(!prove Lemma3-step5_1 [Lemma3-step5])
+
+	define Lemma3-step6 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+			     (forall a .
+                    (inQ a Q) 
+                    	==> 
+                    		(exists j v k . 
+		                             (i N.<= j)
+		                           & (j N.<= k)  
+		    	  				   & (available (rho T j) p)
+                    			   & (= (rho T k) (then (rho T j) (send p (consM p a 2a b v))))	
+                    	    )
+                 )						   
+
+	)
+
+	(!prove Lemma3-step6 [Lemma3-step5_1 IOE->Fair-Snd-Theorem])
+
+
+
+	define Lemma3-step7 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>    
+			     (forall a .
+                    (inQ a Q) 
+                    	==> 
+                    		(exists j v k . 
+		                             (i N.<= j)
+		                           & (j N.<= k)  
+		                           & (i N.<= k)  
+		    	  				   & (available (rho T j) p)
+                    			   & (= (rho T k) (then (rho T j) (send p (consM p a 2a b v))))
+                    			   & (inMSet (consM p a 2a b v) (mu (config (rho T k))) )	
+                    	    )
+                 )						   
+
+	)			
+
+	(!prove Lemma3-step7 [Lemma3-step6 N.Less=.transitive model-step-axioms])
+
+
+
+	define Lemma3-step8 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>    
+			     (forall a .
+                    (inQ a Q) 
+                    	==> 
+                    		(exists v j . 
+		                             (i N.<= j)
+                    			   & (inMSet (consM p a 2a b v) (mu (config (rho T j))) )
+
+			        	  		  & (
+			        	  		  		  (available (rho T j) a)
+
+			    		    	  		| (exists k .
+		                                             (j N.< k)
+			    		    	  				   & (available (rho T k) a))
+			    		    	  	  )	
+                    	    )
+                 )						   
+
+	)	
+
+	(!prove Lemma3-step8 [Lemma3-step7 dependable-def-axioms acceptor-dependable1 synod-quorum-axioms])
+
+
+
+	define Lemma3-step10 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  & (
+							        	  		  
+							        	  		  ( 
+							        	  		  	   #(~(lock (als (config (rho T j)) a)))
+							        	  		  	  (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  		  	 & (available (rho T j) a)
+
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists k . (j N.<= k)
+										  				  # & ~(lock (als (config (rho T k)) a))
+										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+										  		           & (available (rho T k) a)
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step10 [Lemma3-step8 N.Less=.Implied-by-<])	
+
+
+	
+
+	define Lemma3-step11 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>  
+				(forall a . 
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  & (
+							        	  		  
+							        	  		  ( 
+							        	  		  	   (available (rho T j) a)
+							        	  		  	 & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists k . (j N.<= k)
+										  				   & (available (rho T k) a)
+										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+  	   													   & (
+							            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+													  				)
+
+						            	    		  	      )
+
+
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step11 [Lemma3-step10 synod-msg-persistance-axioms])
+
+
+
+
+
+	define Lemma3-step13 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>  
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  & (
+							        	  		  
+							        	  		  ( 
+							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  		  	 & (dependable a)
+							        	  		  	 & (available (rho T j) a)
+							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))	
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists k . (j N.<= k)
+										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+  	   													   & (
+  	   													   		  (
+								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
+								            	    		  		   & (dependable a)
+								            	    		  		   & (available (rho T k) a)
+								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
+
+  	   													   		  )	
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+													  				)
+
+						            	    		  	      )
+
+
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step13 [Lemma3-step11 synod-ready-to-receive-lemmas synod-quorum-axioms])	
+
+
+	define Lemma3-step14 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  & (
+							        	  		  
+							        	  		  ( 
+							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  		  	 & (dependable a)
+							        	  		  	 & (available (rho T j) a)
+							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
+						            	    		 & (exists z .
+		            	    		  	      			  (j N.<= z) 
+				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 2a b v))))									            	    		    
+						            	    		   )							        	  		  	 	
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists k y . (j N.<= k)
+										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+  	   													   & (
+  	   													   		  (
+								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
+								            	    		  		   & (dependable a)
+								            	    		  		   & (available (rho T k) a)
+								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
+											            	    	   & (
+							            	    		  	      			  (k N.<= y) 
+									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 2a b v))))									            	    		    
+											            	    		 )								            	    		  		   
+
+  	   													   		  )	
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+													  				)
+
+						            	    		  	      )
+
+
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step14 [Lemma3-step13 IOE->Fair-Rcv-Theorem])
+
+
+	define Lemma3-step15 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>  
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  & (
+							        	  		  
+							        	  		  ( 
+							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  		  	 & (dependable a)
+							        	  		  	 & (available (rho T j) a)
+							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
+						            	    		 & (exists z .
+		            	    		  	      			  (j N.<= z) 
+				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 2a b v))))
+				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
+						            	    		   )							        	  		  	 	
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists k y . (j N.<= k)
+										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+  	   													   & (
+  	   													   		  (
+								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
+								            	    		  		   & (dependable a)
+								            	    		  		   & (available (rho T k) a)
+								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
+											            	    	   & (
+							            	    		  	      			  (k N.<= y) 
+									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 2a b v))))
+									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
+											            	    		 )								            	    		  		   
+
+  	   													   		  )	
+
+							            	    		  		| (exists l . (j N.<= l) 
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+													  				)
+
+						            	    		  	      )
+
+
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step15 [Lemma3-step14 model-step-axioms])	
+
+
+	define Lemma3-step16 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>
+				(forall a . 
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  & (
+							        	  		  
+							        	  		  ( 
+							        	  		  	  (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  		  	 & (dependable a)
+							        	  		  	 & (available (rho T j) a)
+							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
+						            	    		 & (exists z .
+		            	    		  	      			  (j N.<= z)
+		            	    		  	      			& (i N.<= z)   
+				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 2a b v))))
+				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
+						            	    		   )							        	  		  	 	
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists k y . (j N.<= k)
+										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+  	   													   & (
+  	   													   		  (
+								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
+								            	    		  		   & (dependable a)
+								            	    		  		   & (available (rho T k) a)
+								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
+											            	    	   & (
+							            	    		  	      			  (k N.<= y)
+							            	    		  	      			& (i N.<= y)   
+									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 2a b v))))
+									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
+											            	    		 )								            	    		  		   
+
+  	   													   		  )	
+
+							            	    		  		| (exists l . (j N.<= l)
+							            	    		  		 			& (i N.<= l)
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+													  				)
+
+						            	    		  	      )
+
+
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step16 [Lemma3-step15 N.Less=.transitive])
+
+
+	define Lemma3-step17 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (
+							        	  		  
+							        	  		  ( 
+						            	    		   (exists z .
+		            	    		  	      			  (i N.<= z)   
+				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
+						            	    		   )							        	  		  	 	
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists y . 
+							        	  			         (
+  	   													   		  (
+								            	    		  		     (
+							            	    		  	      			  (i N.<= y)   
+									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
+											            	    		 )								            	    		  		   
+
+  	   													   		  )	
+
+							            	    		  		| (exists l . (j N.<= l)
+							            	    		  		 			& (i N.<= l)
+								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+													  				)
+
+						            	    		  	      )
+
+
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step17 [Lemma3-step16])
+
+
+
+	define Lemma3-step18 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j v . (i N.<= j) 
+							        	  & (
+							        	  		  
+							        	  		  ( 
+						            	    		   (exists z .
+		            	    		  	      			  (i N.<= z)   
+				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
+						            	    		   )							        	  		  	 	
+							        	  		  )
+							        	  		  	 
+							        	  		| (exists y . 
+								            	    		  		     (
+							            	    		  	      			  (i N.<= y)   
+									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
+											            	    		 )								            	    		  		   
+						            	    		  	      
+										  		  )	   
+							        	  	) 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step18 [Lemma3-step17 model-step-axioms])
+
+
+	define Lemma3-step19 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists z v .  
+		            	    		  	      			  (i N.<= z)   
+				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
+							        	  		  	 
+							    )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma3-step19 [Lemma3-step18])
+
+	(!prove Lemma3 [Lemma3-step19])
+
+
+
+
+	#-- LEMMA2
+	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
+	#-- then 2b messages will be received by p from all members of Q for the ballot proposed by p
+	#------------------------------------------------------------------------
+
+
+	define Lemma4 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+				(exists j .
+						  (i N.<= j)	
+		  			    & (has-votes (als (config (rho T j)) p) b Q) 
+				)			
+
+	)
+
+
+
+
+	define Lemma4-step1 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (dependable a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+								)	       
+						)	
+				  )		
+	)			
+
+
+	(!prove Lemma4-step1 [Lemma3 synod-quorum-axioms])
+
+
+	define Lemma4-step2 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (dependable a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) =< b) 
+								)	       
+						)	
+				  )		
+	)		
+
+
+	(!prove Lemma4-step2 [Lemma4-step1 highest-beta-def-axioms])	
+
+
+
+
+	define Lemma4-step4 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (dependable a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   & (
+					        	  		  		  (available (rho T j) a)
+
+					    		    	  		| (exists k .
+				                                             (j N.< k)
+					    		    	  				   & (available (rho T k) a))
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step4 [Lemma4-step2 acceptor-dependable2])	
+
+
+
+	define Lemma4-step5 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (dependable a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   & (
+					        	  		   		  (
+							        	  		  		 (available (rho T j) a)					        	  		   		  	
+												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+												       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   		  )	
+
+					    		    	  		| (exists k .
+				                                             (j N.<= k)
+					    		    	  				   & (available (rho T k) a)
+													       & (inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a))) 
+													       & ((beta (als (config (rho T k)) a)) =< b)
+					    		    	  		  )
+
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )		
+	)
+
+
+
+	(!prove Lemma4-step5 [Lemma4-step4 N.Less=.Implied-by-< synod-state-axioms highest-beta-def-axioms])
+
+
+
+
+	define Lemma4-step6 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (dependable a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   & (
+					        	  		   		  (
+							        	  		  		 (available (rho T j) a)					        	  		   		  	
+												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+												       & ((beta (als (config (rho T j)) a)) =< b)
+												       & (ready-to (rho T j) a (send a (consM a p 2b b nilV) ) )
+					        	  		   		  )	
+
+					    		    	  		| (exists k .
+				                                             (j N.<= k)
+					    		    	  				   & (available (rho T k) a)
+													       & (inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a))) 
+													       & ((beta (als (config (rho T k)) a)) =< b)
+													       & (ready-to (rho T k) a (send a (consM a p 2b b nilV) ) )
+
+					    		    	  		  )
+
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step6 [Lemma4-step5 synod-ready-to-send-axioms])	
+
+
+	define Lemma4-step6_1 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (dependable a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   & (
+					        	  		   		  (
+							        	  		  		 (available (rho T j) a)					        	  		   		  	
+												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+												       & ((beta (als (config (rho T j)) a)) =< b)
+												       & (ready-to (rho T j) a (send a (consM a p 2b b nilV) ) )
+												       & ( exists y .
+													         (j N.<= y)
+													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b nilV))))												       	
+												       	 )
+					        	  		   		  )	
+
+					    		    	  		| (exists k z .
+				                                             (j N.<= k)
+					    		    	  				   & (available (rho T k) a)
+													       & (inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a))) 
+													       & ((beta (als (config (rho T k)) a)) =< b)
+													       & (ready-to (rho T k) a (send a (consM a p 2b b nilV) ) )
+													       & (k N.<= z)
+													       & (= (rho T z) (then (rho T k) (send a (consM a p 2b b nilV))))
+
+					    		    	  		  )
+
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step6_1 [Lemma4-step6 IOE->Fair-Snd-Theorem])	
+
+
+	define Lemma4-step6_2 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists v .
+					        	  		     (
+										         ( exists y .
+											         (i N.<= y)  
+											       & (inMSet (consM a p 2b b nilV) (mu (config (rho T y))) )												       	
+										       	 )
+
+					    		    	  		| (exists z .
+													         (i N.<= z)
+													       & (inMSet (consM a p 2b b nilV) (mu (config (rho T z))) )
+
+					    		    	  		  )
+
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step6_2 [Lemma4-step6_1 N.Less=.transitive model-step-axioms])
+
+	define Lemma4-step7 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+							(exists k .
+				 	       			     (i N.<= k) 
+		            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) ) 									       
+								       	 
+							)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step7 [Lemma4-step6_2])		
+
+
+
+
+	define Lemma4-step8 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+							(exists k .
+				 	       			     (i N.<= k) 
+		            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+				        	  		   & (
+				        	  		  		  (available (rho T k) p)
+
+				    		    	  		| (exists j .
+			                                             (k N.< j)
+				    		    	  				   & (available (rho T j) p))
+				    		    	  	  )			            	    		   
+
+								       	 
+							)	       
+						)	
+				  )		
+	)		
+
+
+	(!prove Lemma4-step8 [Lemma4-step7 proposer-dependable1])	
+
+
+	define Lemma4-step9 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+							(exists k .
+				 	       			     (i N.<= k) 
+				        	  		   & (
+				        	  		   		(
+				        	  		  		     (available (rho T k) p)
+				            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+				        	  		   		)
+
+				    		    	  		| (exists j .
+			                                             (k N.<= j)
+				    		    	  				   & (available (rho T j) p)
+						            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+				    		    	  		  )
+				    		    	  	  )			            	    		   
+
+								       	 
+							)	       
+						)	
+				  )		
+	)		
+
+
+	(!prove Lemma4-step9 [Lemma4-step8 N.Less=.Implied-by-<])
+
+
+
+	define Lemma4-step12 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+							(exists k .
+				 	       			     (i N.<= k) 
+				        	  		   & (
+				        	  		   		(
+				        	  		  		     (available (rho T k) p)
+				            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+				        	  		   		)
+
+				    		    	  		| (exists j .
+			                                             (k N.<= j)
+				    		    	  				   & (available (rho T j) p)
+						            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+												       & (
+						            	    		  		   (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+												  			   )
+
+				            	    		  	         )						            	    		   
+				    		    	  		  )
+				    		    	  	  )			            	    		          	 
+							)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step12 [Lemma4-step9 2b-model-msg-persists-until-read-axiom-lemma])				
+
+
+
+	define Lemma4-step14 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+							(exists k .
+				 	       			     (i N.<= k) 									       
+						        	   & (
+							        	   	      (
+							        	   	      	      #(~(lock (als (config (rho T k)) p)))
+							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		& (available (rho T k) p)
+							        	   	      )
+						        	  		  
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	  	 
+							        	 )								       	 
+							)	       
+					)	
+				)
+	)		
+
+
+	(!prove Lemma4-step14 [Lemma4-step12 proposer-dependable1])	
+
+
+	define Lemma4-step15 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+							(exists k .
+				 	       			     (i N.<= k) 									       
+						        	   & (
+							        	   	      (
+							        	   	      	     # (~(lock (als (config (rho T k)) p)))
+							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		& (available (rho T k) p)
+							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b nilV)))
+							        	   	      )
+						        	  		  
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+
+							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+							        	  		     			#	& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b nilV)))
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	  	 
+							        	 )								       	 
+							)	       
+					)	
+				)
+	)		
+
+
+	(!prove Lemma4-step15 [Lemma4-step14 synod-ready-to-receive-lemmas synod-quorum-axioms])	
+
+
+	define Lemma4-step16 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+				(forall a . 
+					((inQ a Q) 
+						==> 
+							(exists k .
+				 	       			     (i N.<= k) 									       
+						        	   & (
+							        	   	      (
+							        	   	      	     # (~(lock (als (config (rho T k)) p)))
+							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		& (available (rho T k) p)
+							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b nilV)))
+				        	  		     				& (exists z . 
+				        	  		     				 	         (k N.<= z)
+				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b nilV)))) 
+
+				        	  		     				  )							        	   	      		
+							        	   	      )
+						        	  		  
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+
+							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b nilV)))
+							        	  		     				& (exists y . 
+							        	  		     				 	         (j N.<= y)
+							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b nilV)))) 
+
+							        	  		     				  )							        	  		     				
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	  	 
+							        	 )								       	 
+							)	       
+					)	
+				)
+	)		
+
+
+	(!prove Lemma4-step16 [Lemma4-step15 IOE->Fair-Rcv-Theorem])	
+
+
+	define Lemma4-step17 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==>  
+				(forall a .
+					((inQ a Q) 
+						==> 
+							(exists k .
+				 	       			     (i N.<= k) 									       
+						        	   & (
+							        	   	      (
+							        	   	      	      #(~(lock (als (config (rho T k)) p)))
+							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		& (available (rho T k) p)
+							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b nilV)))
+				        	  		     				& (exists z . 
+				        	  		     				 	         (k N.<= z)
+				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b nilV))))
+				        	  		     				 	       & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+
+				        	  		     				  )							        	   	      		
+							        	   	      )
+						        	  		  
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+
+							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+												     & (
+												     		   (
+												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+							        	  		     				#& (~(lock (als (config (rho T j)) p)))
+							        	  		     				& (available (rho T j) p)
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b nilV)))
+							        	  		     				& (exists y . 
+							        	  		     				 	         (j N.<= y)
+							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b nilV))))
+							        	  		     				 	       & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T y)) p)))  
+
+							        	  		     				  )							        	  		     				
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l) 
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))
+							            	    				         & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T l)) p)))   
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	  	 
+							        	 )								       	 
+							)	       
+					)	
+				)
+	)		
+
+
+	(!prove Lemma4-step17 [Lemma4-step16 model-step-axioms])		
+
+
+	define Lemma4-step18 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+							(
+				        	  		     				  (exists z .  (i N.<= z)
+				        	  		     				 	        &  (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+
+				        	  		     				  )							        	   	      		
+						        	  		  
+							        	  		| (
+							        	  		     				  (exists y . (i N.<= y)
+							        	  		     				 	        & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T y)) p)))  
+
+							        	  		     				  )							        	  		     				
+						            	    		  		 
+						            	    		  		|  (exists l . (i N.<= l) 
+							            	    				         & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T l)) p)))   
+												  			   )
+
+										  		  )								        	  	 
+							)	       
+					)	
+				)
+	)		
+
+
+	(!prove Lemma4-step18 [Lemma4-step17 N.Less=.transitive])	
+
+
+
+	define Lemma4-step19 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+							(
+  		     				  (exists z .  (i N.<= z)
+  		     				 	        &  (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+
+  		     				  )							        	   	      		
+						        	  		  							        	  	 
+							)	       
+					)	
+				)
+	)		
+
+
+	(!prove Lemma4-step19 [Lemma4-step18])
+
+
+
+	define Lemma4-step20 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> (
+					(forall a .
+						((inQ a Q) 
+							==> 
+								(
+	  		     				  (exists z .  (i N.<= z)
+	  		     				 	          &  (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+
+	  		     				  )							        	   	      		
+							        	  		  							        	  	 
+								)	       
+						)	
+					)
+					& (exists k . (i N.<= k) 
+						        & (forall a . 
+						        	 (inQ a Q) ==> 
+						        	         (exists j . 
+						        	         	      (j N.<= k) 
+						        	         	      & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T j)) p))) 
+						        	          )
+						          ) 
+					  )
+
+
+				)
+
+	)		
+
+
+	(!prove Lemma4-step20 [Lemma4-step19 collect-2b-from-quorum])
+
+	(!prove Lemma4 [Lemma4-step20 synod-has-votes-def-axiom persistent-state-msg-variable])
+
+
+
+#----------------------------------------------------------------------------
+#-- PROVING THE MAIN PROGRESS THEOREM
+#----------------------------------------------------------------------------
+
+	define Main-Lemma1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)	
+			==> 
+  							(exists j .
+  									  (i N.<= j)	
+						  			& (has-promises (als (config (rho T j)) p) b Q) 
+  							)
+	)
+
+	(!prove Main-Lemma1 [Lemma2])
+
+
+
+	define Main-Lemma2 := 
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (highest b)
+			& (dependable p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (dependable a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+				(exists j .
+						  (i N.<= j)	
+		  			    & (has-votes (als (config (rho T j)) p) b Q) 
+				)			
+
+	)
+
+
+	(!prove Main-Lemma2 [Lemma4])
+
+	define Progress-Theorem-step1 :=
+	( progress_conditions
+		==>
+		(forall T .
+			(exists i p b Q . 
+				( 
+					  (prp p) 
+					& (highest b)
+					& (dependable p) 
+					& (forall a . (inQ a Q) 
+						                ==> 
+		                                      (dependable a) 
+						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+					  )
+				)
+					 
+			& 
+				(exists j .
+						  (i N.<= j)	
+		  			& (has-promises (als (config (rho T j)) p) b Q) 
+				)
+			)		 
+		)
+
+	)	 
+
+
+	(!prove Progress-Theorem-step1 [Main-Lemma1])	
+
+
+
+	define Progress-Theorem-step2 := 
+	( progress_conditions
+		==>
+		(forall T .
+			(exists i p b Q . 
+				( 
+					  (prp p) 
+					& (highest b)
+					& (dependable p) 
+					& (has-promises (als (config (rho T i)) p) b Q)
+					& (forall a . (inQ a Q) 
+						                ==> 
+		                                      (dependable a) 
+			  		  )						 
+				)					 
+
+			&	(exists j .
+						  (i N.<= j)	
+		  			& (has-votes (als (config (rho T j)) p) b Q) 
+				)
+				
+			)		 
+		)
+	)	
+
+
+	(!prove Progress-Theorem-step2 [Progress-Theorem-step1 Main-Lemma2])
+
+
+	(!prove Progress-Theorem [Progress-Theorem-step1 Progress-Theorem-step2 synod-learn-def-axiom])
+
+
+}#close module	

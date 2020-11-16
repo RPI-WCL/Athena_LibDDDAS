@@ -1,34 +1,19 @@
-# Athena_LibDDDAS
+# SYNOD
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Applications Systems
-
-
-#### Contents:
-
-* `consensus` -- theory and proofs about consensus protocols
-
-* `nmac` -- theory and proofs about a nmac-aware flight planning algorithm 
-
-* `statistics` -- theory and proofs about random variables, probability distributions, etc  
-
+### This repository contains theory and proofs about the Synod consensus algorithm
 
 
 ##### Instructions:
 
-* [Download and install ATHENA](https://proofcentral.org/athena/1.4/) and place this directory in the `ATHENA_HOME` directory created during installation.
+* The `progress-proof.ath` file contains the proof of eventual progress for the Synod consensus protocol using the failure-aware actor model under asynchronous conditions.
 
-* Any ATHENA file in the library can then be run by the command `.\athena <relative_address_of_file>`.
+* The proof makes use of the SPASS Automatic Theorem Prover for proving the proof obligation at each step.
 
+* Refer to the [Athena Download Instructions](https://proofcentral.org/athena/1.4/) to properly set up SPASS in your operating system.
 
-##### ATHENA Resources:
+* Once ATHENA has been installed and set up, load `progress-proof.ath` to verify the proofs using ATHENA.
 
-* [ATHENA Website](http://proofcentral.org/)
-
-* [Athena Library](http://proofcentral.org/athena/lib/)
-
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017.
+* The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA.
 
 
 ##### DISCLAIMER: 

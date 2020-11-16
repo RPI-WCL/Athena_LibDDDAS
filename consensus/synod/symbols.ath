@@ -1,0 +1,168 @@
+#****************************************************************************
+# The symbols needed to express the Synod algorithm using the actor model 
+#****************************************************************************
+
+module Synod{
+
+	#-- Actors
+	domain Actor
+
+	#-- Values that can be proposed
+	domain Value
+	declare nilV : Value
+	declare equal-val : (Value) [Value Value] -> Value [=]
+
+	#-- Ballot (not directly using natural numbers)
+	domain Ballot 
+
+	#-- Syntactic Sugar Predicate that returns true if the ballot shows highest properties for progress
+	declare highest: (Ballot) [Ballot] -> Boolean	
+
+	#-- Some basic relations that will be required for ballots (similar to natural numbers)
+	declare less-than : (Ballot) [Ballot Ballot] -> Boolean [<]
+	declare less-than-equal : (Ballot) [Ballot Ballot] -> Boolean [=<]
+	declare greater-than : (Ballot) [Ballot Ballot] -> Boolean [>]
+	declare greater-than-equal : (Ballot) [Ballot Ballot] -> Boolean [>=]
+	declare equal : (Ballot) [Ballot Ballot] -> Boolean [=]
+
+	#-- Predicates that check the type of agent an actor is implementing
+	declare prp: (Actor) [Actor] -> Boolean
+	declare acc: (Actor) [Actor] -> Boolean
+
+	#-- Syntactic Sugar Predicate that returns true if the actor shows ioe properties for Synod
+	declare ioe: (Actor) [Actor] -> Boolean		
+
+
+	#-- Syntactic Sugar Predicate that returns true if an actor displays the required availability conditions for progress
+	declare dependable: (Actor) [Actor] -> Boolean
+
+	#-- Non-empty Quorums
+	datatype Quorum := Actor 
+					| (consQ Quorum Actor)
+
+	declare inQ : (Actor, Quorum) [Actor Quorum] -> Boolean 
+
+	#-- Set of Quorums
+	datatype QuorumSet := nilQSet 
+						| (consQS QuorumSet Quorum)
+
+	declare inQSet : (Quorum, QuorumSet) [Quorum QuorumSet] -> Boolean 
+
+	#-- Message types
+	domain Type
+
+	#-- Datatype of messages
+	datatype Message := (consM frm:Actor to:Actor typ:Type bal:Ballot val:Value)
+
+	#-- get functions for messages
+	declare msgSndr: (Message) [Message] -> Actor
+	declare msgRcpnt: (Message) [Message] -> Actor
+	declare msgTyp: (Message) [Message] -> Actor
+	declare msgBal: (Message) [Message] -> Actor
+	declare msgVal: (Message) [Message] -> Actor
+
+
+	#-- Datatype Set of messages
+	datatype MessageSet := nilMSet 
+						| (consMSet MessageSet Message)
+
+	declare inMSet : (Message, MessageSet) [Message MessageSet] -> Boolean [in]
+
+	#-- Actor Local State 
+	datatype ALS := (consALS ms:MessageSet bal:Ballot bal':Ballot val':Value lck:Boolean)
+
+	#-- Functions that return values from actor local state
+	declare amu: (ALS) [ALS]-> MessageSet
+	declare beta: (ALS) [ALS]-> Ballot
+	declare beta_cap: (ALS) [ALS]-> Ballot
+	declare value: (ALS) [ALS]-> Value
+	declare lock: (ALS) [ALS]-> Boolean
+	declare init: (ALS) [ALS]-> Boolean # to store if it has initiated any ballot yet (used for livelock proof)
+	declare has-promises : (ALS, Quorum) [ALS Ballot Quorum]-> Boolean #retruns true if it has received 1b from a quorum
+	declare decide-value : (ALS) [ALS]-> Value #Selects the value to be proposed depending on values sent by quorum. Otherwise returns some new value.
+	declare has-votes : (ALS, Quorum) [ALS Ballot Quorum]-> Boolean #returns true if it has received 2b from a quorum
+
+	#-- Set of actors (for storing unavailable and available actors in a configuration)
+	datatype ActorSet := nilASet 
+					| (consASet ActorSet Actor)
+
+	declare inASet : (Actor, ActorSet) [Actor ActorSet] -> Boolean 
+
+	#-- Domain Configuration
+	domain Configuration
+
+	#-- Functions that return the set of in-transit messages an actors local states in a configuration 
+	declare mu : (Configuration) [Configuration] -> MessageSet
+	declare als: (Configuration, Actor) [Configuration Actor] -> ALS # keepingt it as a mapping from configuration in orcer to make the expressions more concise
+	declare alpha: (Configuration) [Configuration] -> ActorSet
+	declare alpha_bar: (Configuration) [Configuration] -> ActorSet # The name beta is already in use
+
+#>>> have a third component that shows the set of available actors
+
+	#-- Datatype of transition steps (create not needed for our purpose)
+	datatype Step := (receive a:Actor m:Message) 
+	               | (send a:Actor m:Message) 
+	               | (create old:Actor new:Actor)
+	               | (stop a:Actor )
+	               | (start a:Actor ) # "begin" keyword taken in Athena
+
+	#-- look at fairness.ath to understand what they were doing
+	#-- Datatype of transition paths borrowed from Musser
+	datatype (TP Id LS) := Initial 
+	                     | (then (TP Id LS) Step)
+
+	declare config : (Id, LS) [(TP Id LS)] -> Configuration
+	declare ready-to : (Id, LS) [(TP Id LS) Actor Step] -> Boolean
+	declare available : (Id, LS) [(TP Id LS) Actor] -> Boolean
+
+#--- ready to will not apply to beta actors	
+
+	#-- The following Maps a transition path and a natural unmber to some transition path
+	#-- used for accessing indexed positions in transition paths
+	declare rho : (Id, LS, N) [(TP Id LS) N] -> (TP Id LS)
+
+
+	#-- Predicate that checks if a proposer has obtained 
+	#-- votes from a quorum for a ballot (learnt of successful consensus)
+	declare learn: (Actor, Id, LS, Ballot) [Actor (TP Id LS) Ballot] -> Boolean
+
+
+	#-- Declaring all constants and variables used in the rest of the proofs 
+	#-- There are four types of messages
+	declare 1a, 1b, 2a, 2b, failT : Type     
+
+    #-- There is only one constant set of quorums 
+	declare QSet : QuorumSet
+
+	# -- Set of variable symbols used throughout module Synod
+	define [p a x Q b bH b2 b3 v v2 m m2 ms1 ms2 c s T i j k l y z p2 a2 typ sender' recipient'] :=
+																					 	        [   ?p:Actor 
+																					 	        	?a:Actor 
+																					 	        	?x:Actor 
+																					 	        	?Q:Quorum 
+																					 	        	?b:Ballot 
+																					 	        	?bH:Ballot 
+																					 	        	?b2:Ballot
+																					 	        	?b3:Ballot
+																					   	        	?v:Value
+																					   	        	?v2:Value 
+																					   	        	?m:Message 
+																					   	        	?m2:Message
+																					   	        	?ms1:MessageSet 
+																					   	        	?ms2:MessageSet 
+																					   	        	?c:Configuration 
+																					   	        	?s:Step
+																					   	        	?T:(TP 'Id 'Ls) 
+																					   	        	?i:N 
+																					   	        	?j:N 
+																					   	        	?k:N
+																					   	        	?l:N
+																					   	        	?y:N
+																					   	        	?z:N
+																					   	        	?p2:Actor
+																					   	        	?a2:Actor
+																					   	        	?typ:Type
+																					   	        	?sender':Actor
+																					   	        	?recipient':Actor  ]
+
+}#close module Synod	

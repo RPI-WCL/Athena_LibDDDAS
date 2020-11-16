@@ -1,0 +1,123 @@
+#****************************************************************************
+# Constraints/rules defining the general system model following the actor model and paxos 
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+
+
+extend-module Synod{
+
+
+#----------------------------------------------------------------------------
+#-- Availability syntactic sugar (unused for progress)
+
+	#-- An actor is available iff it it in the alpha set of the configuration
+	define availability-axiom :=
+		(forall T i x .
+			(available (rho T i) x)
+				<==> 
+					(inASet x (alpha (config (rho T i))))
+		)
+	 
+
+#----------------------------------------------------------------------------
+#-- Ready-to fair-axioms (unused for progress)
+
+	#-- An actor must only be ready for a transition if it is available
+	define ready-to-axiom :=
+		(forall T i x s .
+			(ready-to (rho T i) x s)
+				==> 
+					(available (rho T i) x)
+		)
+
+#----------------------------------------------------------------------------
+#-- Transition Step Syntactic Sugar 
+
+	#-- If a receive trasition happens at an indexed position, the message exists 
+	#-- in the local state of the actor at that position 
+	define rcv-affect :=
+			(forall x m T i j .
+			        (= (rho T i) (then (rho T j) (receive x m))) 
+	            	==>
+		            	  (inMSet m (amu (als (config (rho T i)) x))) 
+             )
+
+	#-- If a Send trasition happens at an indexed position, the message exists  
+	#-- in the channel at that position 
+	define snd-affect :=
+			(forall x m T i j .
+			        (= (rho T i) (then (rho T j) (send x m)))
+	            	==>
+		            	(inMSet m (mu (config (rho T i))) )
+             )
+
+
+	define model-step-axioms := [ rcv-affect
+								  snd-affect
+							    ]
+	 
+
+#----------------------------------------------------------------------------
+#-- Actor Fairness theory 
+
+	#-- The fair receive and fair send requirements of the actor model
+	define fair-rcv :=
+			(forall x m T i .
+			        ((inMSet m (mu (config (rho T i)))) 
+			        & (ready-to (rho T i) x (receive x m)))  
+		            	==>
+		            	(
+		            		   (exists j . (i N.<= j) 
+		            		   				& (= (rho T j) (then (rho T i) (receive x m))) )
+		            	    | ~(exists j . (i N.< j) 
+		            	    				& (inMSet m (mu (config (rho T j)))) 
+		            	    				& (ready-to (rho T j) x (receive x m))) 
+		            	) 
+             )
+
+
+	define fair-snd :=
+			(forall x m T i .
+			        (ready-to (rho T i) x (send x m))  
+		            	==>
+		            	(
+		            		   (exists j . (i N.<= j) 
+		            		   				& (= (rho T j) (then (rho T i) (send x m))) )
+		            	    | ~(exists j . (i N.< j) 
+		            	    				& (ready-to (rho T j) x (send x m))) 
+		            	) 
+             )
+
+
+	define model-fair-axioms := [ fair-rcv 
+							fair-snd]				
+
+
+
+#----------------------------------------------------------------------------
+#-- Channel Message Persistance Property
+
+	# If a message exists in the channel in an indexed position in a path, 
+	# then it either exists in the channel at all non-lower indexed positions in the same path
+	# or is received by the recipient at a higher indexed position
+
+	define model-msg-persists-until-read-axiom :=
+			(forall T i a p typ b v .
+				(inMSet (consM p a typ b v) (mu (config (rho T i))))
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) )
+
+							| (exists k . (   (i N.< k) 
+		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
+		            	    			  )
+							  )
+						)	
+			)
+
+
+}#close module

@@ -1,6 +1,6 @@
-load "LibDDDAS/distributions"
-load "LibDDDAS/probability"
-load "LibDDDAS/randomVars"
+load "distributions"
+load "probability"
+load "randomVars"
 
 ##########################################################################
 # Trying to express and prove the high level progress property here

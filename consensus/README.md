@@ -1,34 +1,11 @@
-# Athena_LibDDDAS
+# CONSENSUS
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Applications Systems
+### This repository contains theory and proofs about consensus algorithms
 
 
 #### Contents:
 
-* `consensus` -- theory and proofs about consensus protocols
-
-* `nmac` -- theory and proofs about a nmac-aware flight planning algorithm 
-
-* `statistics` -- theory and proofs about random variables, probability distributions, etc  
-
-
-
-##### Instructions:
-
-* [Download and install ATHENA](https://proofcentral.org/athena/1.4/) and place this directory in the `ATHENA_HOME` directory created during installation.
-
-* Any ATHENA file in the library can then be run by the command `.\athena <relative_address_of_file>`.
-
-
-##### ATHENA Resources:
-
-* [ATHENA Website](http://proofcentral.org/)
-
-* [Athena Library](http://proofcentral.org/athena/lib/)
-
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017.
+* `synod` -- theory and proofs about the Synod consensus protocol
 
 
 ##### DISCLAIMER: 
