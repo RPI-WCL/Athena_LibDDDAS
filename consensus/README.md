@@ -1,6 +1,6 @@
 # CONSENSUS
 
-### This repository contains theory and proofs about consensus algorithms
+#### This repository contains theory and proofs about consensus algorithms
 
 
 #### Contents:
