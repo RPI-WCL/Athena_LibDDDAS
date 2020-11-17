@@ -7,10 +7,9 @@
 
 * `consensus` -- theory and proofs about consensus protocols
 
-* `nmac` -- theory and proofs about a nmac-aware flight planning algorithm 
+* `nmac` -- theory and proofs about a NMAC-aware flight planning algorithm 
 
 * `statistics` -- theory and proofs about random variables, probability distributions, etc  
-
 
 
 ##### Instructions:
