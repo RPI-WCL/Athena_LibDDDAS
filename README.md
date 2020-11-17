@@ -16,7 +16,7 @@
 
 * [Download and install ATHENA](https://proofcentral.org/athena/1.4/) and place this directory in the `ATHENA_HOME` directory created during installation.
 
-* Any ATHENA file in the library can then be run by the command `.\athena <relative_address_of_file>`.
+* Any ATHENA file in the library can then be run by the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory.
 
 
 ##### ATHENA Resources:
