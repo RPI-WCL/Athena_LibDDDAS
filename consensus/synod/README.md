@@ -13,7 +13,7 @@
 
 * Refer to [this PDF](https://proofcentral.org/book/Appendix_D.pdf) to learn more about using ATPs with ATHENA.
 
-* Once ATHENA has been installed and set up, load `progress-proof.ath` to verify the proofs using ATHENA.
+* Once ATHENA and SPASS have been installed and set up, load `progress-proof.ath` to verify the proofs using ATHENA.
 
 * The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA.
 
