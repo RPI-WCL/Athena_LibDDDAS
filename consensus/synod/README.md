@@ -1,6 +1,6 @@
 # SYNOD
 
-### This repository contains theory and proofs about the Synod consensus algorithm
+##### This repository contains theory and proofs about the Synod consensus algorithm
 
 
 ##### Instructions:
