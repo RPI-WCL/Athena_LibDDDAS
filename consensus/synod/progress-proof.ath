@@ -2307,8 +2307,6 @@ extend-module Synod{
 
 
 
-
-
 	define Lemma3-step4 := 
 	(forall p T b i Q .
 		( 

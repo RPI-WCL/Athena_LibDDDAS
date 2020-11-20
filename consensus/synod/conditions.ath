@@ -20,12 +20,12 @@ extend-module Synod{
 	#-- A dependable acceptor is available if there is a 1a or a 2a message for it in the channel
 	#-- and its read-lock is free
 	define acceptor-dependable1 :=
-	(forall p T b i a v typ .
+	(forall a .
 		( (   (acc a) 
 			& (dependable a) 
 		  )
 				==>
-					(
+					(forall p T b i v typ .
 
 	  		  	       (inMSet (consM p a typ b v) (mu (config (rho T i))))
 	        	  		  ==> (
@@ -43,12 +43,12 @@ extend-module Synod{
 	#-- An dependable acceptor is available if its local state satisfies conditions for it to send a 
 	#-- 1b or 2b message 
 	define acceptor-dependable2 :=
-	(forall p T b i a v typ .
+	(forall a .
 		( (   (acc a) 
 			& (dependable a) 
 		  )
 				==>
-					(
+					(forall p T b i  v typ .
 					  	(inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
 
 	        	  		  ==> (
@@ -66,12 +66,12 @@ extend-module Synod{
 	#-- A dependable proposer is available if there is a 1b or a 2b (or failed) message for it in the channel
 	#-- and its read-lock is free
 	define proposer-dependable1 :=
-	(forall p T i a typ b v .
+	(forall p .
 		( (   (prp p) 
 			& (dependable p) 
 		  )
 				==>
-					(   
+					(forall T i a typ b v .   
         	   		  	  (inMSet (consM a p typ b v) (mu (config (rho T i))) )
 		
 	        	  		  ==> (
@@ -89,15 +89,17 @@ extend-module Synod{
 	#-- A dependable proposer is available if its local state satisfies conditions for it to send a 
 	#-- 2a message (or failed message)
 	define proposer-dependable2 :=
-	(forall p T b i a Q .
+	(forall p .
 		( (   (prp p) 
 			& (dependable p) 
 		  )	
 				==>
-					(
-							((inQ a Q) 
-								==> 
-									(exists j v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )	       
+					(forall T i typ b v Q .
+						(
+							(forall a .
+								(inQ a Q) 
+									==> 
+										(exists j v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )	       
 							)
 	        	  		  ==> (
 	        	  		  		  (available (rho T i) p)
@@ -106,6 +108,7 @@ extend-module Synod{
                                              (i N.< j)
 	    		    	  				   & (available (rho T j) p))
 	    		    	  	  )			    
+	        	  		)  
 					)
 		) 
 	)
@@ -116,9 +119,9 @@ extend-module Synod{
 	#-- This allows us to selectively allow actor transitions to be IOE instead of
 	#-- all of them implicitly being IOE as per the actor mddel
 	define dependable->IOE-rcv :=
-		(forall x m T i .
+		(forall x .
 			(dependable x) ==>
-			(
+			(forall m T i .
 		        ((inMSet m (mu (config (rho T i)))) 
 		        & (ready-to (rho T i) x (receive x m)))  
 	            	==>
@@ -171,28 +174,32 @@ extend-module Synod{
  	#-- This can be said because ballots are UNIQUE in Synod and we do not repeat messages
 
  	define highest-1a-beta :=                                                                  # change it to use transition occurence instead of local state msg -- for all acceptors, there is an indexed position where the node is and acceptor and there is a 1a message and beta <
- 		(forall p T a i b . 
+ 		(forall b . 
  			 	(highest b)                                                                    #Make it a property of the ballot and not the proposer
 				 ==> 
-				 	(
+				 	(forall p T a i .
 				 		(
-				 			  (acc a) 
-					 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
-						)
-						==>	((beta (als (config (rho T i)) a)) < b) 
+					 		(
+					 			  (acc a) 
+						 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+							)
+							==>	((beta (als (config (rho T i)) a)) < b) 
+				 		)
 				 	)
 		)		 	
 
  	define highest-2a-beta :=
- 		(forall p T v b i a . 
+ 		(forall b . 
  			(highest b)
 				 ==> 
-				 	(
+				 	(forall p T a i v .
 				 		(
-				 			  (acc a) 
-					 		& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
-						)
-						==>	((beta (als (config (rho T i)) a)) =< b) 
+					 		(
+					 			  (acc a) 
+						 		& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+							)
+							==>	((beta (als (config (rho T i)) a)) =< b)
+						) 
 				 	)
 	 	)
 
