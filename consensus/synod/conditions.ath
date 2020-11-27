@@ -148,6 +148,36 @@ extend-module Synod{
 	            )	
         )						   	
 
+#----------------------------------------------------------------------------
+#-- Channel Message Persistance Property
+
+	# Messages sent by agents in a good set persist until received
+	define dependable-msg-persists-until-read :=
+			(forall T i a p typ b v .
+				(
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))	
+				  & (dependable p)		
+			    )
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k . (   (i N.< k) 
+		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
+											& (forall j .
+											        (k N.<= j) 
+											  		      ==> 
+											  			     ~(inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+											  )
+		            	    			  )
+							  )
+						)	
+			)
+
 
 	define dependable-def-axioms := [ proposer-dependable1
 	                            	  proposer-dependable2
@@ -155,6 +185,7 @@ extend-module Synod{
 	                              	  acceptor-dependable2 
 	                              	  dependable->IOE-snd
 	                              	  dependable->IOE-rcv
+	                              	  dependable-msg-persists-until-read
 	                            	]
 
 
@@ -173,9 +204,9 @@ extend-module Synod{
  	#--        the ballot should be >= beta of every acceptor
  	#-- This can be said because ballots are UNIQUE in Synod and we do not repeat messages
 
- 	define highest-1a-beta :=                                                                  # change it to use transition occurence instead of local state msg -- for all acceptors, there is an indexed position where the node is and acceptor and there is a 1a message and beta <
+ 	define highest-1a-beta :=                                                                  
  		(forall b . 
- 			 	(highest b)                                                                    #Make it a property of the ballot and not the proposer
+ 			 	(highest b)                                                                    
 				 ==> 
 				 	(forall p T a i .
 				 		(
@@ -183,9 +214,9 @@ extend-module Synod{
 					 			  (acc a) 
 						 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
 							)
-							==>	((beta (als (config (rho T i)) a)) < b) 
-				 		)
-				 	)
+							==>	((beta (als (config (rho T i)) a)) < b) # In an actual implementation, the beta will be updated after responding to a message
+				 		)												# and if a message has been responded to, it will be removed from local state
+				 	)													# Therefore, this cannot lead to a fallacy when beta is updated
 		)		 	
 
  	define highest-2a-beta :=

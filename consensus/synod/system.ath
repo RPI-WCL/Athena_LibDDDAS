@@ -95,29 +95,7 @@ extend-module Synod{
 
 
 
-#----------------------------------------------------------------------------
-#-- Channel Message Persistance Property
 
-	# If a message exists in the channel in an indexed position in a path, 
-	# then it either exists in the channel at all non-lower indexed positions in the same path
-	# or is received by the recipient at a higher indexed position
-
-	define model-msg-persists-until-read-axiom :=
-			(forall T i a p typ b v .
-				(inMSet (consM p a typ b v) (mu (config (rho T i))))
-					==>
-						(
-							  (forall j .
-							        (i N.<= j) 
-							  		      ==> 
-							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) )
-
-							| (exists k . (   (i N.< k) 
-		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
-		            	    			  )
-							  )
-						)	
-			)
 
 
 }#close module

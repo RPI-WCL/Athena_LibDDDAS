@@ -81,6 +81,7 @@ module Synod{
 	declare has-promises : (ALS, Quorum) [ALS Ballot Quorum]-> Boolean #retruns true if it has received 1b from a quorum
 	declare decide-value : (ALS) [ALS]-> Value #Selects the value to be proposed depending on values sent by quorum. Otherwise returns some new value.
 	declare has-votes : (ALS, Quorum) [ALS Ballot Quorum]-> Boolean #returns true if it has received 2b from a quorum
+	declare sent2A : (ALS, Quorum, Ballot, Value) [ALS Ballot Value Quorum N N]-> Boolean #proposer has sent 2A mssages to a quorum
 
 	#-- Set of actors (for storing unavailable and available actors in a configuration)
 	datatype ActorSet := nilASet 
@@ -135,7 +136,7 @@ module Synod{
 	declare QSet : QuorumSet
 
 	# -- Set of variable symbols used throughout module Synod
-	define [p a x Q b bH b2 b3 v v2 m m2 ms1 ms2 c s T i j k l y z p2 a2 typ sender' recipient'] :=
+	define [p a x Q b bH b2 b3 v v2 m m2 ms1 ms2 c s T i j k l y z t p2 a2 typ sender' recipient'] :=
 																					 	        [   ?p:Actor 
 																					 	        	?a:Actor 
 																					 	        	?x:Actor 
@@ -159,6 +160,7 @@ module Synod{
 																					   	        	?l:N
 																					   	        	?y:N
 																					   	        	?z:N
+																					   	        	?t:N
 																					   	        	?p2:Actor
 																					   	        	?a2:Actor
 																					   	        	?typ:Type

@@ -145,23 +145,92 @@ extend-module Synod{
 
 
 #----------------------------------------------------------------------------
-#-- Properties of acceptor state variables specific to Synod actors
+#-- Since actors are assumed to have stable storage, we use the following
+#-- Persistance properties for unresponded messages in local state
 
-	define persistent-state-msg-variable :=
-	(forall T m i x .
+	define sent2A-def :=
+    (forall p T b i k Q v .
+
+    	(sent2A (als (config (rho T i)) p) b v Q k i) <==>
+						      (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+									 (= (rho T k) (then (rho T i) (send p (consM p a 2a b v))))	
+			                  )	
+    )
+
+
+	define persistent-unresponded-local-1a-msgs :=
+	(forall T i a p b .
 		(
-		 (inMSet m (amu (als (config (rho T i)) x))) 
+		 (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
 		 	==>
 					  (forall j .
 					        (i N.<= j) 
 					  		      ==> 
-					  			      (inMSet m (amu (als (config (rho T j)) x))) )
+					  			      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k . 
+							(i N.< k)
+							& (= (rho T k) (then (rho T i) (send a (consM a p 1b b (value (als (config (rho T i)) a)))))) 
+							& (forall j .
+							        (k N.<= j) 
+							  		      ==> 
+							  			      ~(inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+							  )
+					  )
+		)
+    )
+
+	define persistent-unresponded-local-2a-msgs :=
+	(forall T i a p b v .
+		(
+		 (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k . 
+							(i N.< k)
+							& (= (rho T k) (then (rho T i) (send a (consM a p 2b b nilV)))) 
+							& (forall j .
+							        (k N.<= j) 
+							  		      ==> 
+							  			      ~(inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+							  )
+					  )
+		)
+    )    
+
+	define persistent-unresponded-local-promises :=
+	(forall T i p Q b .
+		(
+		 (has-promises (als (config (rho T i)) p) b Q) 
+		 	==>
+		 		(
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (has-promises (als (config (rho T j)) p) b Q) 
+					  )
+					| (exists k v . 
+							  (i N.< k)
+						    & (sent2A (als (config (rho T i)) p) b v Q k i)	
+							& (forall j .
+							        (k N.<= j) 
+							  		      ==> 
+							  			      ~(has-promises (als (config (rho T j)) p) b Q) 
+							  )
+					  )
+				)	
 		)
     )
 
 
 	# if receive messages from all members of a quorum at higher times, then
-	# there will be one of those times which is not less than the others
+	# there will be one of those times which is not less than the others when messages from all members of quorum will be there
 	# this is because we expect a Synod  actor to only receive one message at a time for serializability
 	define collect-1b-from-quorum :=
 	(forall T i p b Q .
@@ -169,7 +238,7 @@ extend-module Synod{
   			(forall a . (inQ a Q) ==> (exists j v . (i N.<= j) & (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) ))
 			==>
 				(exists k . (i N.<= k) 
-					      & (forall a . (inQ a Q) ==> (exists j v . (j N.<= k) & (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )) )
+					      & (forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T k)) p))) )) )
 	  	)					  
     )
 
@@ -179,12 +248,15 @@ extend-module Synod{
   			(forall a . (inQ a Q) ==> (exists j . (i N.<= j) & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T j)) p))) ))
 			==>
 				(exists k . (i N.<= k) 
-					      & (forall a . (inQ a Q) ==> (exists j . (j N.<= k) & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T j)) p))) )) )
+					      & (forall a . (inQ a Q) ==> ((inMSet (consM a p 2b b nilV) (amu (als (config (rho T k)) p))) )) )
 	  	)					  
     )
 
 
-	define synod-state-axioms := [	persistent-state-msg-variable
+	define synod-state-axioms := [	sent2A-def
+									persistent-unresponded-local-1a-msgs
+									persistent-unresponded-local-2a-msgs
+									persistent-unresponded-local-promises
 									collect-1b-from-quorum
 									collect-2b-from-quorum
 								 ]
