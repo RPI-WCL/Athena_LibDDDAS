@@ -29,7 +29,7 @@ extend-module Synod{
 
 
 	#SANITY CHECK: There is no contradiction in the assertions -- FAILS
-	#(!prove false [model-fair-axioms model-step-axioms dependable-def-axioms quorum-axioms synod-behavior-axioms highest-beta-def-axioms])
+	#(!prove false [model-fair-axioms synod-quorum-axioms synod-ready-to-send-axioms synod-ready-to-receive-general-axiom synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom dependable-def-axioms highest-beta-def-axioms ])
 
 
 #---------------------------------------------------------------------------- 
