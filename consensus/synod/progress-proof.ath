@@ -14,6 +14,7 @@ extend-module Synod{
 	#-- model specific axioms
 	assert model-fair-axioms
 	assert model-step-axioms
+	assert msg-persists-until-read # can be proven, but asserting for now
 	#-- Synod behavior specific axioms
 	assert synod-quorum-axioms
 	assert synod-ready-to-send-axioms
@@ -23,13 +24,13 @@ extend-module Synod{
 	assert synod-has-promises-def-axiom	
 	assert synod-has-votes-def-axiom
 	assert synod-learn-def-axiom		
-	assert dependable-def-axioms
-	assert highest-beta-def-axioms 
+	assert nonfaulty-def-axioms
+	assert P1+P2-True-beta-def-axioms 
 
 
 
 	#SANITY CHECK: There is no contradiction in the assertions -- FAILS
-	#(!prove false [model-fair-axioms synod-quorum-axioms synod-ready-to-send-axioms synod-ready-to-receive-general-axiom synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom dependable-def-axioms highest-beta-def-axioms ])
+	#(!prove false [model-fair-axioms synod-quorum-axioms synod-ready-to-send-axioms synod-ready-to-receive-general-axiom synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom nonfaulty-def-axioms P1+P2-True-beta-def-axioms ])
 
 
 #---------------------------------------------------------------------------- 
@@ -61,7 +62,7 @@ extend-module Synod{
 	#-- for an actor that is IOE, then it eventually happens at some index in the same path
 	define IOE->Fair-Rcv-Theorem :=
 			(forall x m T i .
-				(dependable x) 
+				(nonfaulty x) 
 					==>
 					(
 				        ((inMSet m (mu (config (rho T i)))) 
@@ -76,7 +77,7 @@ extend-module Synod{
 
 	define IOE->Fair-Rcv-Theorem-step1 :=
 			(forall x m T i .
-				(dependable x) 
+				(nonfaulty x) 
 					==>
 					(
 				        ((inMSet m (mu (config (rho T i)))) 
@@ -88,7 +89,7 @@ extend-module Synod{
 					)            	 
              )
 
-	(!prove IOE->Fair-Rcv-Theorem-step1 [dependable-def-axioms model-fair-axioms])
+	(!prove IOE->Fair-Rcv-Theorem-step1 [nonfaulty-def-axioms model-fair-axioms])
 
 	(!prove IOE->Fair-Rcv-Theorem [IOE->Fair-Rcv-Theorem-step1 N.Less=.S3])
 
@@ -97,7 +98,7 @@ extend-module Synod{
 	#-- for an actor that is IOE,then it eventually happens at some index in the same path
 	define IOE->Fair-Snd-Theorem :=
 			(forall x m T i .
-				(dependable x) 
+				(nonfaulty x) 
 					==>
 					(
 				        ((ready-to (rho T i) x (send x m)))  
@@ -110,7 +111,7 @@ extend-module Synod{
 
 	define IOE->Fair-Snd-Theorem-step1 :=
 			(forall x m T i .
-				(dependable x) 
+				(nonfaulty x) 
 					==>
 					(
 				        ( (ready-to (rho T i) x (send x m)))  
@@ -121,18 +122,43 @@ extend-module Synod{
 	    			)        	 
              )
 
-	(!prove IOE->Fair-Snd-Theorem-step1 [dependable-def-axioms model-fair-axioms])
+	(!prove IOE->Fair-Snd-Theorem-step1 [nonfaulty-def-axioms model-fair-axioms])
 
 	(!prove IOE->Fair-Snd-Theorem [IOE->Fair-Snd-Theorem-step1 N.Less=.S3]) 
 #----------------------------------------------------------------------------
 #-- Message persistance proofs for different types of Synod messages
 
 
+	# Messages sent by agents in a good set persist until received
+	define nonfaulty-msg-persists-until-read :=
+			(forall T i a p typ b v .
+				(
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))	
+				  & (nonfaulty p)		
+			    )
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k . (   (i N.< k) 
+		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
+		            	    			  )
+							  )
+						)	
+			)
+
+    (!prove nonfaulty-msg-persists-until-read [msg-persists-until-read N.Less=.Implied-by-<])
+
+
 	define 1a-model-msg-persists-until-read-axiom-lemma :=
 			(forall T i j p a b .
 				(					
 					(inMSet (consM p a 1a b nilV) (mu (config (rho T i))))
-				 & (dependable p)	
+				 & (nonfaulty p)	
 				)	
 					==>
 						(
@@ -150,14 +176,14 @@ extend-module Synod{
 
 		
 	
-	(!prove 1a-model-msg-persists-until-read-axiom-lemma [ dependable-msg-persists-until-read N.Less=.Implied-by-<])		
+	(!prove 1a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])		
 
 
 	define 1b-model-msg-persists-until-read-axiom-lemma :=
 			(forall T i j p a b v .
 				(					
 					(inMSet (consM a p 1b b v) (mu (config (rho T i))))
-				 & (dependable a)	
+				 & (nonfaulty a)	
 				)
 					==>
 						(
@@ -173,14 +199,14 @@ extend-module Synod{
 			)
 
 	
-	(!prove 1b-model-msg-persists-until-read-axiom-lemma [ dependable-msg-persists-until-read N.Less=.Implied-by-<])		
+	(!prove 1b-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])		
 
 
 	define 2a-model-msg-persists-until-read-axiom-lemma :=
 			(forall T i j p a b v .
 				(					
 					(inMSet (consM p a 2a b v) (mu (config (rho T i))))
-				 & (dependable p)	
+				 & (nonfaulty p)	
 				)
 					==>
 						(
@@ -196,13 +222,13 @@ extend-module Synod{
 
 			)
 
-	(!prove 2a-model-msg-persists-until-read-axiom-lemma [ dependable-msg-persists-until-read N.Less=.Implied-by-<])
+	(!prove 2a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])
 
 	define 2b-model-msg-persists-until-read-axiom-lemma :=
 			(forall T i j p a b .
 				(					
 					(inMSet (consM a p 2b b nilV) (mu (config (rho T i))))
-				 & (dependable a)	
+				 & (nonfaulty a)	
 				)
 					==>
 						(
@@ -217,7 +243,7 @@ extend-module Synod{
 
 			)
 
-	(!prove 2b-model-msg-persists-until-read-axiom-lemma [ dependable-msg-persists-until-read N.Less=.Implied-by-<])			
+	(!prove 2b-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])			
 
 	define synod-msg-persistance-axioms := [1a-model-msg-persists-until-read-axiom-lemma 
 							  				1b-model-msg-persists-until-read-axiom-lemma
@@ -225,6 +251,8 @@ extend-module Synod{
 							  				2b-model-msg-persists-until-read-axiom-lemma 
 							  				]
 
+
+   
 #----------------------------------------------------------------------------
 # Intermediate lemmas for ready-to receive behavior by message 
 
@@ -305,7 +333,7 @@ extend-module Synod{
 
 
 	#-- LEMMA1
-	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
 	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
 	#-- then 1a messages will be eventually received by all members of Q
 	#------------------------------------------------------------------------
@@ -314,11 +342,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -341,11 +369,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -366,11 +394,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -393,11 +421,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -423,18 +451,18 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
 			==> 
 				(forall a .
 					((inQ a Q) 
-						==> 	(dependable a) & (acc a)
+						==> 	(nonfaulty a) & (acc a)
 							  & (exists j . (i N.<= j) 
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -452,11 +480,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -464,7 +492,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j) 
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -481,18 +509,18 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step5 [Lemma1-step4 dependable-def-axioms acceptor-dependable1])
+	(!prove Lemma1-step5 [Lemma1-step4 nonfaulty-def-axioms acceptor-nonfaulty1])
 
 
 	define Lemma1-step6 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -500,7 +528,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -527,11 +555,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -539,7 +567,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 				        	  		      & (
@@ -571,11 +599,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -583,13 +611,13 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j) 
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (   #(~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
-							        	  		  	& (dependable a)
+							        	  		  	& (nonfaulty a)
 							        	  		  	& (acc a)
 							        	  		  	& (available (rho T j) a)
 							        	  		  )	
@@ -601,7 +629,7 @@ extend-module Synod{
 							            	    		  		 (  
 							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 							            	    		  		 #& (~(lock (als (config (rho T k)) a)))
-							            	    		  		 & (dependable a)
+							            	    		  		 & (nonfaulty a)
 							            	    		  		 & (acc a)
 							            	    		  		 & (available (rho T k) a)  
 							            	    		  		 )
@@ -627,11 +655,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -639,13 +667,13 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (   #(~(lock (als (config (rho T j)) a)))
 							        	  		  	  (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
-							        	  		  	& (dependable a)
+							        	  		  	& (nonfaulty a)
 							        	  		  	& (available (rho T j) a)
 							        	  		  )	
 
@@ -656,7 +684,7 @@ extend-module Synod{
 							            	    		  		 (  
 							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 							            	    		  		 #& (~(lock (als (config (rho T k)) a)))
-							            	    		  		 & (dependable a)
+							            	    		  		 & (nonfaulty a)
 							            	    		  		 & (available (rho T k) a)  
 							            	    		  		 )
 
@@ -674,7 +702,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step9 [Lemma1-step8 acceptor-dependable1])	
+	(!prove Lemma1-step9 [Lemma1-step8 acceptor-nonfaulty1])	
 
 
 
@@ -682,11 +710,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -694,13 +722,13 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (  # (~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
-							        	  		  	& (dependable a)
+							        	  		  	& (nonfaulty a)
 							        	  		  	& (available (rho T j) a)
 							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
 							        	  		  )	
@@ -712,7 +740,7 @@ extend-module Synod{
 							            	    		  		 (  
 							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 							            	    		  		# & (~(lock (als (config (rho T k)) a)))
-							            	    		  		 & (dependable a)
+							            	    		  		 & (nonfaulty a)
 							            	    		  		 & (available (rho T k) a)
 							            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV)))  
 							            	    		  		 )
@@ -738,11 +766,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -750,13 +778,13 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (  # (~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
-							        	  		  	& (dependable a)
+							        	  		  	& (nonfaulty a)
 							        	  		  	& (available (rho T j) a)
 							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
 						            	    		& (exists z .
@@ -772,7 +800,7 @@ extend-module Synod{
 							            	    		  		 (  
 								            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 								            	    		  		 #& (~(lock (als (config (rho T k)) a)))
-								            	    		  		 & (dependable a)
+								            	    		  		 & (nonfaulty a)
 								            	    		  		 & (available (rho T k) a)
 								            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV))) 
 										            	    		 & (
@@ -802,11 +830,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -814,7 +842,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j) 
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
@@ -858,11 +886,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -870,7 +898,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
@@ -916,11 +944,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -928,7 +956,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
@@ -969,11 +997,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -981,7 +1009,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))   
 							    )	       
@@ -996,7 +1024,7 @@ extend-module Synod{
 
 
 	#-- LEMMA2 
-	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
 	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
 	#-- then 1b messages will be received by p from all members of Q for the ballot proposed by p
 	#------------------------------------------------------------------------	 
@@ -1006,11 +1034,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1027,11 +1055,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1039,7 +1067,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 							        	  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))
 							        	  & (acc a)   
@@ -1056,11 +1084,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1068,7 +1096,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1079,7 +1107,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step2 [Lemma2-step1 highest-beta-def-axioms])
+	(!prove Lemma2-step2 [Lemma2-step1 P1+P2-True-beta-def-axioms])
 
 
 
@@ -1087,11 +1115,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1099,7 +1127,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1124,11 +1152,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1136,12 +1164,12 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
 									       & ((beta (als (config (rho T j)) a)) < b)
-									       & (dependable a)
+									       & (nonfaulty a)
 									       #& (available (rho T j) a)
 									       & (
 												(available (rho T j) a)
@@ -1162,11 +1190,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1174,7 +1202,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1197,18 +1225,18 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step5 [Lemma2-step4 acceptor-dependable2])	
+	(!prove Lemma2-step5 [Lemma2-step4 acceptor-nonfaulty2])	
 
 
 	define Lemma2-step5_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1216,7 +1244,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1248,11 +1276,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1260,7 +1288,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1290,11 +1318,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1302,7 +1330,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1344,11 +1372,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1356,7 +1384,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
 									       & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
 									       & (acc a)
@@ -1393,7 +1421,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step6_1 [Lemma2-step6 highest-beta-def-axioms])
+	(!prove Lemma2-step6_1 [Lemma2-step6 P1+P2-True-beta-def-axioms])
 
 
 
@@ -1401,11 +1429,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1413,7 +1441,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & (exists j . 
 				        	  		         (
 				        	  		       		(   (i N.<= j)
@@ -1458,11 +1486,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1470,7 +1498,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & ( 
 				        	  		         (exists j .
 				        	  		       		(   (i N.<= j)
@@ -1516,11 +1544,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1528,7 +1556,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & ( 
 				        	  		         (exists j y .
 				        	  		       		(   (i N.<= j)
@@ -1576,11 +1604,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1588,7 +1616,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & ( 
 				        	  		         (exists j y v .
 				        	  		       		(   (i N.<= j)
@@ -1636,11 +1664,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1648,7 +1676,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & ( 
 				        	  		         (exists j y v .
 				        	  		       		(   
@@ -1687,11 +1715,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1699,7 +1727,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & ( 
 				        	  		         (exists j y v .
 				        	  		       		(   
@@ -1741,11 +1769,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1753,7 +1781,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 							  & ( 
 				        	  		         (exists y v .
 				        	  		       		(   
@@ -1791,11 +1819,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1803,7 +1831,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 
+								(nonfaulty a) & (acc a) 
 								& (exists v k .
 											 (i N.<= k) 
 			            	    		   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )  									             	 
@@ -1821,11 +1849,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1833,7 +1861,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k) 
 			            	    		   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )  									             	 
@@ -1851,11 +1879,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1863,7 +1891,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k) 
 				            	    	   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
@@ -1880,7 +1908,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step13 [Lemma2-step10 proposer-dependable1])	
+	(!prove Lemma2-step13 [Lemma2-step10 proposer-nonfaulty1])	
 
 
 
@@ -1888,11 +1916,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1900,7 +1928,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k) 
 				            	    	   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
@@ -1930,11 +1958,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1942,7 +1970,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k)
 										   & (inMSet (consM a p 1b b v) (mu (config (rho T k))))	  
@@ -1978,11 +2006,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -1990,7 +2018,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k)
 							        	   & (
@@ -2029,11 +2057,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2041,7 +2069,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k)
 							        	   & (
@@ -2083,11 +2111,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2095,7 +2123,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k)
 							        	   & (
@@ -2130,7 +2158,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step18 [Lemma2-step15 proposer-dependable1])	
+	(!prove Lemma2-step18 [Lemma2-step15 proposer-nonfaulty1])	
 
 
 
@@ -2138,11 +2166,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2150,7 +2178,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k)
 							        	   & (
@@ -2193,11 +2221,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2205,7 +2233,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k) 
 							        	   & (
@@ -2260,11 +2288,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2272,7 +2300,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k) 
 							        	   & (
@@ -2330,11 +2358,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2342,7 +2370,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											 (i N.<= k) 
 							        	   & (
@@ -2389,11 +2417,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2401,7 +2429,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v k .
 											  (i N.<= k) 
 							        	   & (
@@ -2446,11 +2474,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2458,7 +2486,7 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(dependable a) & (acc a) 	
+								(nonfaulty a) & (acc a) 	
 								& (exists v z k . 
 	  		     				 	          (i N.<= z)                                                     # for each a, exists k . (rho T z) = then (rho T k) ... implies that
 	  		     				 	       &  (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v))))  # Receive transition happened at different times for each
@@ -2477,11 +2505,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2504,11 +2532,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)
@@ -2526,7 +2554,7 @@ extend-module Synod{
 
 
 	#-- LEMMA3
-	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
 	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
 	#-- then 2a messages will be eventually received by all members of Q
 	#------------------------------------------------------------------------
@@ -2535,11 +2563,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2561,11 +2589,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -2581,11 +2609,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2617,11 +2645,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2647,18 +2675,18 @@ extend-module Synod{
 	    	  	   )				
 	)		
 
-	(!prove Lemma3-step4 [Lemma3-step2 proposer-dependable2])
+	(!prove Lemma3-step4 [Lemma3-step2 proposer-nonfaulty2])
 
 
 	define Lemma3-step4_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2694,11 +2722,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2740,11 +2768,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2790,11 +2818,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2831,11 +2859,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2880,11 +2908,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2910,11 +2938,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -2960,11 +2988,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3017,11 +3045,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3067,11 +3095,11 @@ extend-module Synod{
 	 (forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3093,11 +3121,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3121,7 +3149,7 @@ extend-module Synod{
 
 	)	
 
-	(!prove Lemma3-step8 [Lemma3-step7 dependable-def-axioms acceptor-dependable1 synod-quorum-axioms])
+	(!prove Lemma3-step8 [Lemma3-step7 nonfaulty-def-axioms acceptor-nonfaulty1 synod-quorum-axioms])
 
 
 
@@ -3129,11 +3157,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3173,11 +3201,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3226,11 +3254,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3244,7 +3272,7 @@ extend-module Synod{
 							        	  		  
 							        	  		  ( 
 							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (dependable a)
+							        	  		  	 & (nonfaulty a)
 							        	  		  	 & (available (rho T j) a)
 							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))	
 							        	  		  )
@@ -3254,7 +3282,7 @@ extend-module Synod{
   	   													   & (
   	   													   		  (
 								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (dependable a)
+								            	    		  		   & (nonfaulty a)
 								            	    		  		   & (available (rho T k) a)
 								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
 
@@ -3282,11 +3310,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3300,7 +3328,7 @@ extend-module Synod{
 							        	  		  
 							        	  		  ( 
 							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (dependable a)
+							        	  		  	 & (nonfaulty a)
 							        	  		  	 & (available (rho T j) a)
 							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
 						            	    		 & (exists z .
@@ -3314,7 +3342,7 @@ extend-module Synod{
   	   													   & (
   	   													   		  (
 								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (dependable a)
+								            	    		  		   & (nonfaulty a)
 								            	    		  		   & (available (rho T k) a)
 								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
 											            	    	   & (
@@ -3346,11 +3374,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3364,7 +3392,7 @@ extend-module Synod{
 							        	  		  
 							        	  		  ( 
 							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (dependable a)
+							        	  		  	 & (nonfaulty a)
 							        	  		  	 & (available (rho T j) a)
 							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
 						            	    		 & (exists z .
@@ -3379,7 +3407,7 @@ extend-module Synod{
   	   													   & (
   	   													   		  (
 								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (dependable a)
+								            	    		  		   & (nonfaulty a)
 								            	    		  		   & (available (rho T k) a)
 								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
 											            	    	   & (
@@ -3412,11 +3440,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3430,7 +3458,7 @@ extend-module Synod{
 							        	  		  
 							        	  		  ( 
 							        	  		  	  (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (dependable a)
+							        	  		  	 & (nonfaulty a)
 							        	  		  	 & (available (rho T j) a)
 							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
 						            	    		 & (exists z .
@@ -3446,7 +3474,7 @@ extend-module Synod{
   	   													   & (
   	   													   		  (
 								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (dependable a)
+								            	    		  		   & (nonfaulty a)
 								            	    		  		   & (available (rho T k) a)
 								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
 											            	    	   & (
@@ -3481,11 +3509,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3537,11 +3565,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3580,11 +3608,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3610,7 +3638,7 @@ extend-module Synod{
 
 
 	#-- LEMMA2
-	#-- For all indexed transition positions, if a proposer p is the highest proposer P
+	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
 	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
 	#-- then 2b messages will be received by p from all members of Q for the ballot proposed by p
 	#------------------------------------------------------------------------
@@ -3620,11 +3648,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3643,11 +3671,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3658,7 +3686,7 @@ extend-module Synod{
 								(exists j v .
 											 (i N.<= j)
 										   & (acc a)
-										   & (dependable a) 
+										   & (nonfaulty a) 
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 								)	       
 						)	
@@ -3673,11 +3701,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3688,7 +3716,7 @@ extend-module Synod{
 								(exists j v .
 											 (i N.<= j)
 										   & (acc a)
-										   & (dependable a) 
+										   & (nonfaulty a) 
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 									       & ((beta (als (config (rho T j)) a)) =< b) 
 								)	       
@@ -3697,7 +3725,7 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step2 [Lemma4-step1 highest-beta-def-axioms])	
+	(!prove Lemma4-step2 [Lemma4-step1 P1+P2-True-beta-def-axioms])	
 
 
 
@@ -3706,11 +3734,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3721,7 +3749,7 @@ extend-module Synod{
 								(exists j v .
 											 (i N.<= j)
 										   & (acc a)
-										   & (dependable a) 
+										   & (nonfaulty a) 
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
@@ -3737,7 +3765,7 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step4 [Lemma4-step2 acceptor-dependable2])	
+	(!prove Lemma4-step4 [Lemma4-step2 acceptor-nonfaulty2])	
 
 
 
@@ -3745,11 +3773,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3760,7 +3788,7 @@ extend-module Synod{
 								(exists j v .
 											 (i N.<= j)
 										   & (acc a)
-										   & (dependable a) 
+										   & (nonfaulty a) 
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
@@ -3794,7 +3822,7 @@ extend-module Synod{
 
 
 
-	(!prove Lemma4-step5 [Lemma4-step4 N.Less=.Implied-by-< persistent-unresponded-local-2a-msgs highest-beta-def-axioms])
+	(!prove Lemma4-step5 [Lemma4-step4 N.Less=.Implied-by-< persistent-unresponded-local-2a-msgs P1+P2-True-beta-def-axioms])
 
 
 
@@ -3802,11 +3830,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -3817,7 +3845,7 @@ extend-module Synod{
 								(exists j v .
 											 (i N.<= j)
 										   & (acc a)
-										   & (dependable a) 
+										   & (nonfaulty a) 
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
@@ -3852,18 +3880,18 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6 [Lemma4-step5 synod-ready-to-send-axioms highest-beta-def-axioms])	
+	(!prove Lemma4-step6 [Lemma4-step5 synod-ready-to-send-axioms P1+P2-True-beta-def-axioms])	
 
 
 	define Lemma4-step6_1 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3874,7 +3902,7 @@ extend-module Synod{
 								(exists j v .
 											 (i N.<= j)
 										   & (acc a)
-										   & (dependable a) 
+										   & (nonfaulty a) 
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
@@ -3923,11 +3951,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -3980,11 +4008,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4028,11 +4056,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4066,11 +4094,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -4096,11 +4124,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4126,18 +4154,18 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step8 [Lemma4-step7 proposer-dependable1])	
+	(!prove Lemma4-step8 [Lemma4-step7 proposer-nonfaulty1])	
 
 
 	define Lemma4-step9 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -4175,11 +4203,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -4222,11 +4250,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4267,18 +4295,18 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step14 [Lemma4-step12 proposer-dependable1])	
+	(!prove Lemma4-step14 [Lemma4-step12 proposer-nonfaulty1])	
 
 
 	define Lemma4-step15 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -4329,11 +4357,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -4394,11 +4422,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
@@ -4462,11 +4490,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4505,11 +4533,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4537,11 +4565,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4582,11 +4610,11 @@ extend-module Synod{
 	(forall p T b i Q .
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 			  )
 		)	
@@ -4605,11 +4633,11 @@ extend-module Synod{
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
-			& (highest b)
-			& (dependable p)
+			& (P1+P2-True b)
+			& (nonfaulty p)
 			& (forall a . (inQ a Q) 
 				                ==> 
-                                      (dependable a) 
+                                      (nonfaulty a) 
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
@@ -4631,11 +4659,11 @@ extend-module Synod{
 			(exists i p b Q . 
 				( 
 					  (prp p) 
-					& (highest b)
-					& (dependable p) 
+					& (P1+P2-True b)
+					& (nonfaulty p) 
 					& (forall a . (inQ a Q) 
 						                ==> 
-		                                      (dependable a) 
+		                                      (nonfaulty a) 
 						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
 					  )
 				)
@@ -4662,12 +4690,12 @@ extend-module Synod{
 			(exists i p b Q . 
 				( 
 					  (prp p) 
-					& (highest b)
-					& (dependable p) 
+					& (P1+P2-True b)
+					& (nonfaulty p) 
 					& (has-promises (als (config (rho T i)) p) b Q)
 					& (forall a . (inQ a Q) 
 						                ==> 
-		                                      (dependable a) 
+		                                      (nonfaulty a) 
 			  		  )						 
 				)					 
 

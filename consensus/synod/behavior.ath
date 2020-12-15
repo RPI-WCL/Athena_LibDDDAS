@@ -10,7 +10,7 @@ extend-module Synod{
 #----------------------------------------------------------------------------
 #-- Quorum theory 
 
-	#-- Non-empty quorums (UNUSED)
+	#-- Non-empty quorums (Unused for progress)
 	define synod-non-empty-Q :=
 			(forall Q . (exists a . (inQ a Q)))		
 

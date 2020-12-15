@@ -23,7 +23,7 @@ extend-module Synod{
 #----------------------------------------------------------------------------
 #-- Ready-to fair-axioms (unused for progress)
 
-	#-- An actor must only be ready for a transition if it is available
+	#-- An actor can only be ready for a transition if it is available
 	define ready-to-axiom :=
 		(forall T i x s .
 			(ready-to (rho T i) x s)
@@ -95,6 +95,28 @@ extend-module Synod{
 
 
 
+
+#----------------------------------------------------------------------------
+#-- Message Persistance Property
+
+	# Messages in the multi-set persist until received (can e proven, but currently taking as an axiom)
+	define msg-persists-until-read :=
+			(forall T i a p typ b v .
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))			
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k . (   (i N.< k) 
+		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
+		            	    			  )
+							  )
+						)	
+			)
 
 
 

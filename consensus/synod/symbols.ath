@@ -15,8 +15,8 @@ module Synod{
 	#-- Ballot (not directly using natural numbers)
 	domain Ballot 
 
-	#-- Syntactic Sugar Predicate that returns true if the ballot shows highest properties for progress
-	declare highest: (Ballot) [Ballot] -> Boolean	
+	#-- Syntactic Sugar Predicate that returns true if the ballot satisfies P1+P2-True properties for progress
+	declare P1+P2-True: (Ballot) [Ballot] -> Boolean	
 
 	#-- Some basic relations that will be required for ballots (similar to natural numbers)
 	declare less-than : (Ballot) [Ballot Ballot] -> Boolean [<]
@@ -25,28 +25,17 @@ module Synod{
 	declare greater-than-equal : (Ballot) [Ballot Ballot] -> Boolean [>=]
 	declare equal : (Ballot) [Ballot Ballot] -> Boolean [=]
 
-	#-- Predicates that check the type of agent an actor is implementing
+	#-- Predicates over the set of actors (creates two subests, one each for proposers and acceptors)
 	declare prp: (Actor) [Actor] -> Boolean
 	declare acc: (Actor) [Actor] -> Boolean
 
-	#-- Syntactic Sugar Predicate that returns true if the actor shows ioe properties for Synod
-	declare ioe: (Actor) [Actor] -> Boolean		
+	#-- Syntactic Sugar Predicate that returns true if an actor satisfies the required nonfaulty behavior for progress 
+	declare nonfaulty: (Actor) [Actor] -> Boolean
 
-
-	#-- Syntactic Sugar Predicate that returns true if an actor displays the required availability conditions for progress
-	declare dependable: (Actor) [Actor] -> Boolean
-
-	#-- Non-empty Quorums
+	#-- Set od all Non-empty Quorums
 	datatype Quorum := Actor 
 					| (consQ Quorum Actor)
-
-	declare inQ : (Actor, Quorum) [Actor Quorum] -> Boolean 
-
-	#-- Set of Quorums
-	datatype QuorumSet := nilQSet 
-						| (consQS QuorumSet Quorum)
-
-	declare inQSet : (Quorum, QuorumSet) [Quorum QuorumSet] -> Boolean 
+	declare inQ : (Actor, Quorum) [Actor Quorum] -> Boolean
 
 	#-- Message types
 	domain Type
@@ -61,7 +50,6 @@ module Synod{
 	declare msgBal: (Message) [Message] -> Actor
 	declare msgVal: (Message) [Message] -> Actor
 
-
 	#-- Datatype Set of messages
 	datatype MessageSet := nilMSet 
 						| (consMSet MessageSet Message)
@@ -72,18 +60,18 @@ module Synod{
 	datatype ALS := (consALS ms:MessageSet bal:Ballot bal':Ballot val':Value lck:Boolean)
 
 	#-- Functions that return values from actor local state
-	declare amu: (ALS) [ALS]-> MessageSet
-	declare beta: (ALS) [ALS]-> Ballot
-	declare beta_cap: (ALS) [ALS]-> Ballot
-	declare value: (ALS) [ALS]-> Value
-	declare lock: (ALS) [ALS]-> Boolean
+	declare amu: (ALS) [ALS]-> MessageSet # set of messages received but not responded to yet 
+	declare beta: (ALS) [ALS]-> Ballot    # highest ballot seen
+	declare beta_cap: (ALS) [ALS]-> Ballot # highest ballot accepted
+	declare value: (ALS) [ALS]-> Value    # value corresponding to beta_cap
+	declare lock: (ALS) [ALS]-> Boolean  #
 	declare init: (ALS) [ALS]-> Boolean # to store if it has initiated any ballot yet (used for livelock proof)
-	declare has-promises : (ALS, Quorum) [ALS Ballot Quorum]-> Boolean #retruns true if it has received 1b from a quorum
-	declare decide-value : (ALS) [ALS]-> Value #Selects the value to be proposed depending on values sent by quorum. Otherwise returns some new value.
-	declare has-votes : (ALS, Quorum) [ALS Ballot Quorum]-> Boolean #returns true if it has received 2b from a quorum
+	declare has-promises : (ALS, Ballot, Quorum) [ALS Ballot Quorum]-> Boolean # returns true if it has received 1b from a quorum
+	declare decide-value : (ALS) [ALS]-> Value # Selects the value to be proposed depending on values sent by quorum. Otherwise returns some new value.
+	declare has-votes : (ALS, Ballot, Quorum) [ALS Ballot Quorum]-> Boolean #returns true if it has received 2b from a quorum
 	declare sent2A : (ALS, Quorum, Ballot, Value) [ALS Ballot Value Quorum N N]-> Boolean #proposer has sent 2A mssages to a quorum
 
-	#-- Set of actors (for storing unavailable and available actors in a configuration)
+	#-- Set of actors 
 	datatype ActorSet := nilASet 
 					| (consASet ActorSet Actor)
 
@@ -93,12 +81,11 @@ module Synod{
 	domain Configuration
 
 	#-- Functions that return the set of in-transit messages an actors local states in a configuration 
-	declare mu : (Configuration) [Configuration] -> MessageSet
-	declare als: (Configuration, Actor) [Configuration Actor] -> ALS # keepingt it as a mapping from configuration in orcer to make the expressions more concise
-	declare alpha: (Configuration) [Configuration] -> ActorSet
-	declare alpha_bar: (Configuration) [Configuration] -> ActorSet # The name beta is already in use
+	declare mu : (Configuration) [Configuration] -> MessageSet # gets the multiset of messages "en route" 
+	declare als: (Configuration, Actor) [Configuration Actor] -> ALS # gets actor local state from configuration 
+	declare alpha: (Configuration) [Configuration] -> ActorSet # gets the mapping of available actors
+	declare alpha_bar: (Configuration) [Configuration] -> ActorSet # gets the mapping of failed actors
 
-#>>> have a third component that shows the set of available actors
 
 	#-- Datatype of transition steps (create not needed for our purpose)
 	datatype Step := (receive a:Actor m:Message) 
@@ -116,7 +103,6 @@ module Synod{
 	declare ready-to : (Id, LS) [(TP Id LS) Actor Step] -> Boolean
 	declare available : (Id, LS) [(TP Id LS) Actor] -> Boolean
 
-#--- ready to will not apply to beta actors	
 
 	#-- The following Maps a transition path and a natural unmber to some transition path
 	#-- used for accessing indexed positions in transition paths
@@ -131,9 +117,6 @@ module Synod{
 	#-- Declaring all constants and variables used in the rest of the proofs 
 	#-- There are four types of messages
 	declare 1a, 1b, 2a, 2b, failT : Type     
-
-    #-- There is only one constant set of quorums 
-	declare QSet : QuorumSet
 
 	# -- Set of variable symbols used throughout module Synod
 	define [p a x Q b bH b2 b3 v v2 m m2 ms1 ms2 c s T i j k l y z t p2 a2 typ sender' recipient'] :=
