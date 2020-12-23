@@ -1,5 +1,9 @@
 #****************************************************************************
 # Proof of progress
+
+# NOTES: 
+#      1. Lemma2 and Lemma4 correspond to "Lemma 1" and "Lemma 2" in NFM21 paper 
+#      2. Progress-Theorem corresponds to "Theorem 1" in NFM21 paper
 #****************************************************************************
 load "lib/main/nat-less"
 load "symbols.ath"
@@ -30,7 +34,7 @@ extend-module Synod{
 
 
 	#SANITY CHECK: There is no contradiction in the assertions -- FAILS
-	#(!prove false [model-fair-axioms synod-quorum-axioms synod-ready-to-send-axioms synod-ready-to-receive-general-axiom synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom nonfaulty-def-axioms P1+P2-True-beta-def-axioms ])
+	#(!prove false [model-fair-axioms model-step-axioms msg-persists-until-read synod-quorum-axioms synod-ready-to-send-axioms synod-ready-to-receive-general-axiom synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom nonfaulty-def-axioms P1+P2-True-beta-def-axioms])
 
 
 #---------------------------------------------------------------------------- 
@@ -47,7 +51,7 @@ extend-module Synod{
 		==>
 			(forall T . 
 				(exists p i b .
-					 (learn p (rho T i) b)	
+					 (learn p (config (rho T i)) b)	
 				)
 			)
 	)
@@ -225,19 +229,19 @@ extend-module Synod{
 	(!prove 2a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])
 
 	define 2b-model-msg-persists-until-read-axiom-lemma :=
-			(forall T i j p a b .
+			(forall T i j p a b v .
 				(					
-					(inMSet (consM a p 2b b nilV) (mu (config (rho T i))))
+					(inMSet (consM a p 2b b v) (mu (config (rho T i))))
 				 & (nonfaulty a)	
 				)
 					==>
 						(
 							  ( (i N.<= j) 
 							  		==> 
-							  			(inMSet (consM a p 2b b nilV) (mu (config (rho T j)))) )
+							  			(inMSet (consM a p 2b b v) (mu (config (rho T j)))) )
 
 							| (exists k .   (i N.<= k) 
-		            	    			  & (= (rho T k) (then (rho T i) (receive p (consM a p 2b b nilV))))
+		            	    			  & (= (rho T k) (then (rho T i) (receive p (consM a p 2b b v))))
 							  )
 						)	
 
@@ -305,15 +309,15 @@ extend-module Synod{
 	(!prove synod-ready-to-receive-lemma2a [synod-ready-to-receive-general-axiom])
 
 	define synod-ready-to-receive-lemma2b :=
-		(forall T i b p a .
+		(forall T i b p a v .
 				  (	
 				  	#	(prp p)
 				  	#  & (acc a)	
 					    (available (rho T i) p)
-					  & (inMSet (consM a p 2b b nilV) (mu (config (rho T i))))
+					  & (inMSet (consM a p 2b b v) (mu (config (rho T i))))
 				  )
 					<==>
-						(ready-to (rho T i) p (receive p (consM a p 2b b nilV)))
+						(ready-to (rho T i) p (receive p (consM a p 2b b v)))
 					
 		)
 
@@ -325,17 +329,41 @@ extend-module Synod{
 								  			  synod-ready-to-receive-lemma2b
 								  			]
 
+#----------------------------------------------------------------------------
+# Collecting responses from quorum 
 
+	define collect-1b-from-quorum :=
+	(forall T i p b Q .
+	    (
+  			(forall a . (inQ a Q) ==> (exists j v . (i N.<= j) & (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) ))
+			==>
+				(exists k . (i N.<= k) 
+					      & (forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T k)) p))) )) )
+	  	)					  
+    )
+
+	define collect-2b-from-quorum :=
+	(forall T i p b Q .
+	    (
+  			(forall a . (inQ a Q) ==> (exists j v . (i N.<= j) & (inMSet (consM a p 2b b v) (amu (als (config (rho T j)) p))) ))
+			==>
+				(exists k . (i N.<= k) 
+					      & (forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 2b b v) (amu (als (config (rho T k)) p))) )) )
+	  	)					  
+    )
+
+
+	(!prove collect-1b-from-quorum [received-from-quorum-general])
+	(!prove collect-2b-from-quorum [received-from-quorum-general])
 
 #----------------------------------------------------------------------------
 # Some intermediate Lemmas 
 
 
 
-	#-- LEMMA1
-	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
-	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
-	#-- then 1a messages will be eventually received by all members of Q
+	#-- Lemma1
+	#-- In a fair transition path, if eventually a nonfaulty proposer P becomes ready to propose a ballot b that satisfies P1+P2-True, 
+	#-- to a quorum Q of nonfaulty acceptors, then the 1a messages will be eventually received by all members of Q
 	#------------------------------------------------------------------------
 
 	define Lemma1 := 
@@ -1023,10 +1051,9 @@ extend-module Synod{
 	(!prove Lemma1 [Lemma1-step15])	
 
 
-	#-- LEMMA2 
-	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
-	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
-	#-- then 1b messages will be received by p from all members of Q for the ballot proposed by p
+	#-- Lemma2 (corresponds to Lemma 1 in NFM21 paper)
+	#-- In a fair transition path, if eventually a nonfaulty proposer P becomes ready to propose a ballot b that satisfies P1+P2-True, 
+	#-- to a quorum Q of nonfaulty acceptors, then 1b messages will be eventually received by P from all members of Q for the ballot b
 	#------------------------------------------------------------------------	 
 		
 
@@ -2553,10 +2580,9 @@ extend-module Synod{
 	(!prove Lemma2 [Lemma2-step24_1 synod-has-promises-def-axiom])
 
 
-	#-- LEMMA3
-	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
-	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
-	#-- then 2a messages will be eventually received by all members of Q
+	#-- Lemma3	
+	#-- In a fair transition path, if eventually a nonfaulty proposer P receives promises for a ballot b that satisfies P1+P2-True,
+	#-- from a quorum Q of nonfaulty acceptors, then 2a messages from P will be eventually received by all members of Q for b 
 	#------------------------------------------------------------------------
 
 	define Lemma3 := 
@@ -3637,10 +3663,9 @@ extend-module Synod{
 
 
 
-	#-- LEMMA2
-	#-- For all indexed transition positions, if a proposer p is the P1+P2-True proposer P
-	#-- and it follows the availability conditions and a quorum Q of acceptors follow the availability conditions, 
-	#-- then 2b messages will be received by p from all members of Q for the ballot proposed by p
+	#-- Lemma4 (corresponds to Lemma 2 in NFM21 paper)
+	#-- In a fair transition path, if eventually a nonfaulty proposer P receives promises for a ballot b that satisfies P1+P2-True,
+	#-- from a quorum Q of nonfaulty acceptors, then P will eventually receive 2b messages from all members of Q for b 
 	#------------------------------------------------------------------------
 
 
@@ -3807,7 +3832,7 @@ extend-module Synod{
                                                                    )
 																| (exists t . 
 																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b nilV)))) 
+																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b v)))) 
 																  )
 
 					    		    	  				   	 )
@@ -3853,7 +3878,7 @@ extend-module Synod{
 							        	  		  		 (available (rho T j) a)					        	  		   		  	
 												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 												       & ((beta (als (config (rho T j)) a)) =< b)
-												       & (ready-to (rho T j) a (send a (consM a p 2b b nilV) ) )
+												       & (ready-to (rho T j) a (send a (consM a p 2b b v) ) )
 					        	  		   		  )	
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
@@ -3863,11 +3888,11 @@ extend-module Synod{
 					    		    	  				   	      		(inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a)))
 					    		    	  				   	      		& (available (rho T k) a) 
 					    		    	  				   	      		 & ((beta (als (config (rho T k)) a)) =< b)
-					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b nilV) ) )
+					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b v) ) )
                                                                   )
 																| (exists t . 
 																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b nilV)))) 
+																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b v)))) 
 																  )
 
 					    		    	  				   	 )
@@ -3910,10 +3935,10 @@ extend-module Synod{
 							        	  		  		 (available (rho T j) a)					        	  		   		  	
 												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 												       & ((beta (als (config (rho T j)) a)) =< b)
-												       & (ready-to (rho T j) a (send a (consM a p 2b b nilV) ) )
+												       & (ready-to (rho T j) a (send a (consM a p 2b b v) ) )
 												       & ( exists y .
 													         (j N.<= y)
-													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b nilV))))												       	
+													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b v))))												       	
 												       	 )
 					        	  		   		  )	
 					    		    	  		| (exists k .
@@ -3924,13 +3949,13 @@ extend-module Synod{
 					    		    	  				   	      		(inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a)))
 					    		    	  				   	      		& (available (rho T k) a) 
 					    		    	  				   	      		 & ((beta (als (config (rho T k)) a)) =< b)
-					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b nilV) ) )
+					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b v) ) )
 																       & (k N.<= z)
-																       & (= (rho T z) (then (rho T k) (send a (consM a p 2b b nilV))))
+																       & (= (rho T z) (then (rho T k) (send a (consM a p 2b b v))))
                                                                   )
 																| (exists t . 
 																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b nilV)))) 
+																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b v)))) 
 																  )
 
 					    		    	  				   	 )
@@ -3971,8 +3996,8 @@ extend-module Synod{
 												        ( exists y .
 													         (j N.<= y)
 													       & (i N.<= y)  
-													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b nilV))))
-													       & (inMSet (consM a p 2b b nilV) (mu (config (rho T y))) )												       	
+													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b v))))
+													       & (inMSet (consM a p 2b b v) (mu (config (rho T y))) )												       	
 												       	 )
 					        	  		   		  )	
 					    		    	  		| (exists k .
@@ -3983,12 +4008,12 @@ extend-module Synod{
 																         (k N.<= z)
 																       & (i N.<= k)  
 																       & (i N.<= z)  
-																       & (inMSet (consM a p 2b b nilV) (mu (config (rho T z))) )
+																       & (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
                                                                   )
 																| (exists t . 
 																		  (j N.<= t)
                                                                         & (i N.<= t) 
-																		& (inMSet (consM a p 2b b nilV) (mu (config (rho T t))) ) 
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) ) 
 																  )
 
 					    		    	  				   	 )
@@ -4026,18 +4051,18 @@ extend-module Synod{
 					        	  		   		  	
 												        ( exists y .
 													         (i N.<= y)  
-													       & (inMSet (consM a p 2b b nilV) (mu (config (rho T y))) )												       	
+													       & (inMSet (consM a p 2b b v) (mu (config (rho T y))) )												       	
 												       	 )
 					        	  		   		  )	
 					    		    	  		| (
 					    		    	  				     (    
 					    		    	  				   	      (exists z .
 																         (i N.<= z)  
-																       & (inMSet (consM a p 2b b nilV) (mu (config (rho T z))) )
+																       & (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
                                                                   )
 																| (exists t . 
                                                                           (i N.<= t) 
-																		& (inMSet (consM a p 2b b nilV) (mu (config (rho T t))) ) 
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) ) 
 																  )
 
 					    		    	  				   	 )
@@ -4072,12 +4097,12 @@ extend-module Synod{
 					        	  		     (
 										         ( exists y .
 											         (i N.<= y)  
-											       & (inMSet (consM a p 2b b nilV) (mu (config (rho T y))) )												       	
+											       & (inMSet (consM a p 2b b v) (mu (config (rho T y))) )												       	
 										       	 )
 
 					    		    	  		| (exists z .
 													         (i N.<= z)
-													       & (inMSet (consM a p 2b b nilV) (mu (config (rho T z))) )
+													       & (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
 
 					    		    	  		  )
 
@@ -4106,9 +4131,9 @@ extend-module Synod{
 		    	 (forall a .
 						((inQ a Q) 
 							==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 
-		            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) ) 									       
+		            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) ) 									       
 								       	 
 							)	       
 						)	
@@ -4136,9 +4161,9 @@ extend-module Synod{
 		    	 (forall a .
 						((inQ a Q) 
 							==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 
-		            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+		            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				        	  		   & (
 				        	  		  		  (available (rho T k) p)
 
@@ -4173,18 +4198,18 @@ extend-module Synod{
 		    	 (forall a .
 						((inQ a Q) 
 							==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 
 				        	  		   & (
 				        	  		   		(
 				        	  		  		     (available (rho T k) p)
-				            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+				            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				        	  		   		)
 
 				    		    	  		| (exists j .
 			                                             (k N.<= j)
 				    		    	  				   & (available (rho T j) p)
-						            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+						            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				    		    	  		  )
 				    		    	  	  )			            	    		   
 
@@ -4215,23 +4240,23 @@ extend-module Synod{
 		    	 (forall a .
 						((inQ a Q) 
 							==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 
 				        	  		   & (
 				        	  		   		(
 				        	  		  		     (available (rho T k) p)
-				            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+				            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				        	  		   		)
 
 				    		    	  		| (exists j .
 			                                             (k N.<= j)
 				    		    	  				   & (available (rho T j) p)
-						            	    		   & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+						            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												       & (
-						            	    		  		   (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+						            	    		  		   (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 
 						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
 												  			   )
 
 				            	    		  	         )						            	    		   
@@ -4262,27 +4287,27 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 									       
 						        	   & (
 							        	   	      (
 							        	   	      	      #(~(lock (als (config (rho T k)) p)))
-							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 							        	   	      		& (available (rho T k) p)
 							        	   	      )
 						        	  		  
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
-							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   		  	 & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
-												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 							        	  		     				#& (~(lock (als (config (rho T j)) p)))
 							        	  		     				& (available (rho T j) p)
 												     		   )
 						            	    		  		 
 						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
 												  			   )
 
 				            	    		  	       )
@@ -4314,30 +4339,30 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 									       
 						        	   & (
 							        	   	      (
 							        	   	      	     # (~(lock (als (config (rho T k)) p)))
-							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 							        	   	      		& (available (rho T k) p)
-							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b nilV)))
+							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b v)))
 							        	   	      )
 						        	  		  
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
 
-							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   		  	 & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
-												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 							        	  		     			#	& (~(lock (als (config (rho T j)) p)))
 							        	  		     				& (available (rho T j) p)
-							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b nilV)))
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
 												     		   )
 						            	    		  		 
 						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
 												  			   )
 
 				            	    		  	       )
@@ -4369,17 +4394,17 @@ extend-module Synod{
 				(forall a . 
 					((inQ a Q) 
 						==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 									       
 						        	   & (
 							        	   	      (
 							        	   	      	     # (~(lock (als (config (rho T k)) p)))
-							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 							        	   	      		& (available (rho T k) p)
-							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b nilV)))
+							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b v)))
 				        	  		     				& (exists z . 
 				        	  		     				 	         (k N.<= z)
-				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b nilV)))) 
+				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b v)))) 
 
 				        	  		     				  )							        	   	      		
 							        	   	      )
@@ -4387,22 +4412,22 @@ extend-module Synod{
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
 
-							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   		  	 & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
-												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 							        	  		     				#& (~(lock (als (config (rho T j)) p)))
 							        	  		     				& (available (rho T j) p)
-							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b nilV)))
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
 							        	  		     				& (exists y . 
 							        	  		     				 	         (j N.<= y)
-							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b nilV)))) 
+							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b v)))) 
 
 							        	  		     				  )							        	  		     				
 												     		   )
 						            	    		  		 
 						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))   
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
 												  			   )
 
 				            	    		  	       )
@@ -4434,18 +4459,18 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-							(exists k .
+							(exists k v .
 				 	       			     (i N.<= k) 									       
 						        	   & (
 							        	   	      (
 							        	   	      	      #(~(lock (als (config (rho T k)) p)))
-							        	   	      		  (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 							        	   	      		& (available (rho T k) p)
-							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b nilV)))
+							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b v)))
 				        	  		     				& (exists z . 
 				        	  		     				 	         (k N.<= z)
-				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b nilV))))
-				        	  		     				 	       & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b v))))
+				        	  		     				 	       & (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))) 
 
 				        	  		     				  )							        	   	      		
 							        	   	      )
@@ -4453,24 +4478,24 @@ extend-module Synod{
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
 
-							        	   		  	 & (inMSet (consM a p 2b b nilV) (mu (config (rho T k))) )
+							        	   		  	 & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
-												     		   	      (inMSet (consM a p 2b b nilV) (mu (config (rho T j))))
+												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 							        	  		     				#& (~(lock (als (config (rho T j)) p)))
 							        	  		     				& (available (rho T j) p)
-							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b nilV)))
+							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
 							        	  		     				& (exists y . 
 							        	  		     				 	         (j N.<= y)
-							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b nilV))))
-							        	  		     				 	       & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T y)) p)))  
+							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b v))))
+							        	  		     				 	       & (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p)))  
 
 							        	  		     				  )							        	  		     				
 												     		   )
 						            	    		  		 
 						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b nilV))))
-							            	    				         & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T l)) p)))   
+							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))
+							            	    				         & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))   
 												  			   )
 
 				            	    		  	       )
@@ -4503,19 +4528,19 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 
 							(
-				        	  		     				  (exists z .  (i N.<= z)
-				        	  		     				 	        &  (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+				        	  		     				  (exists z v .  (i N.<= z)
+				        	  		     				 	        &  (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))) 
 
 				        	  		     				  )							        	   	      		
 						        	  		  
 							        	  		| (
-							        	  		     				  (exists y . (i N.<= y)
-							        	  		     				 	        & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T y)) p)))  
+							        	  		     				  (exists y v . (i N.<= y)
+							        	  		     				 	        & (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p)))  
 
 							        	  		     				  )							        	  		     				
 						            	    		  		 
-						            	    		  		|  (exists l . (i N.<= l) 
-							            	    				         & (inMSet (consM a p 2b b nilV) (amu (als (config (rho T l)) p)))   
+						            	    		  		|  (exists l v . (i N.<= l) 
+							            	    				         & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))   
 												  			   )
 
 										  		  )								        	  	 
@@ -4546,8 +4571,8 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 
 							(
-  		     				  (exists z .  (i N.<= z)
-  		     				 	        &  (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+  		     				  (exists z v .  (i N.<= z)
+  		     				 	        &  (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))) 
 
   		     				  )							        	   	      		
 						        	  		  							        	  	 
@@ -4578,8 +4603,8 @@ extend-module Synod{
 						((inQ a Q) 
 							==> 
 								(
-	  		     				  (exists z .  (i N.<= z)
-	  		     				 	          &  (inMSet (consM a p 2b b nilV) (amu (als (config (rho T z)) p))) 
+	  		     				  (exists z v .  (i N.<= z)
+	  		     				 	          &  (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))) 
 
 	  		     				  )							        	   	      		
 							        	  		  							        	  	 
@@ -4587,7 +4612,7 @@ extend-module Synod{
 						)	
 					)
 				& (exists k . (i N.<= k) 
-					      & (forall a . (inQ a Q) ==> ((inMSet (consM a p 2b b nilV) (amu (als (config (rho T k)) p))) ))
+					      & (forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 2b b v) (amu (als (config (rho T k)) p))) ))
 				  )
 
 

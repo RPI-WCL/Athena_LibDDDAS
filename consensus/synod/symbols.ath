@@ -111,7 +111,7 @@ module Synod{
 
 	#-- Predicate that checks if a proposer has obtained 
 	#-- votes from a quorum for a ballot (learnt of successful consensus)
-	declare learn: (Actor, Id, LS, Ballot) [Actor (TP Id LS) Ballot] -> Boolean
+	declare learn: (Actor, Configuration, Ballot) [Actor Configuration Ballot] -> Boolean
 
 
 	#-- Declaring all constants and variables used in the rest of the proofs 
