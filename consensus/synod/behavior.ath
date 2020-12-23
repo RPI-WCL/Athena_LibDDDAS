@@ -240,7 +240,7 @@ extend-module Synod{
 	# If a proposer P receives a particular type of message from all members of a quorum Q at different times, then
 	# eventually that message will exist in P's set of unresponded messages from all members of Q. 
 	# This is because P can only respond to 1b or 2b messages after it has received them from an entire quorum. 
-    assert received-from-quorum-general :=
+    define received-from-quorum-general :=
 	(forall T i p b Q typ .
 	    (
   			(forall a . (inQ a Q) ==> (exists j v . (i N.<= j) & (inMSet (consM a p typ b v) (amu (als (config (rho T j)) p))) ))
