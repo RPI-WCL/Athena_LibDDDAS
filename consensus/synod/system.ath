@@ -35,7 +35,7 @@ extend-module Synod{
 #-- Transition Step Syntactic Sugar 
 
 	#-- If a receive trasition happens at an indexed position, the message exists 
-	#-- in the local state of the actor at that position 
+	#-- in the set of unresponded messages in the local state of the actor at that position 
 	define rcv-affect :=
 			(forall x m T i j .
 			        (= (rho T i) (then (rho T j) (receive x m))) 
@@ -44,7 +44,7 @@ extend-module Synod{
              )
 
 	#-- If a Send trasition happens at an indexed position, the message exists  
-	#-- in the channel at that position 
+	#-- in the multiset at that position 
 	define snd-affect :=
 			(forall x m T i j .
 			        (= (rho T i) (then (rho T j) (send x m)))
@@ -61,7 +61,7 @@ extend-module Synod{
 #----------------------------------------------------------------------------
 #-- Actor Fairness theory 
 
-	#-- The fair receive and fair send requirements of the actor model
+	#-- The fair receive and fair send assumptions of the actor model
 	define fair-rcv :=
 			(forall x m T i .
 			        ((inMSet m (mu (config (rho T i)))) 
@@ -91,7 +91,8 @@ extend-module Synod{
 
 
 	define model-fair-axioms := [ fair-rcv 
-							fair-snd]				
+							      fair-snd
+							    ]				
 
 
 
@@ -99,7 +100,7 @@ extend-module Synod{
 #----------------------------------------------------------------------------
 #-- Message Persistance Property
 
-	# Messages in the multi-set persist until received (can e proven, but currently taking as an axiom)
+	# Messages in the multiset persist until received (can be proven, but currently taking as an axiom)
 	define msg-persists-until-read :=
 			(forall T i a p typ b v .
 					(inMSet (consM p a typ b v) (mu (config (rho T i))))			

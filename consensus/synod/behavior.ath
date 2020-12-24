@@ -23,11 +23,12 @@ extend-module Synod{
 
 
 	define synod-quorum-axioms := [ synod-non-empty-Q
-									synod-only-acc-inQ ]	
+									synod-only-acc-inQ 
+								  ]	
 
 
 #----------------------------------------------------------------------------
-#Definitions of the has-promises, has-votes, and learn predicates
+#-- Definitions of the has-promises, has-votes, and learn predicates
 
 	define synod-has-promises-def-axiom :=
         (forall p T b i Q . 
@@ -40,7 +41,7 @@ extend-module Synod{
 
 	define synod-has-votes-def-axiom :=
         (forall p T b i Q . 
-				(forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 2b b v) (amu (als (config (rho T i)) p))) )) # To ensure safety, the v should be same for all a in Q 
+				(forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 2b b v) (amu (als (config (rho T i)) p))) )) # To ensure safety, v should be same for all a in Q
 	    			<==> 
 	    			    (has-votes (als (config (rho T i)) p) b  Q) 
 
@@ -48,7 +49,7 @@ extend-module Synod{
 
 
 	#-- A proposer learns a ballot has been chosen if there is a time when its local
-	#-- state has 2b messages for that ballot from any quorum of acceptors	
+	#-- state has 2b messages for that ballot from a quorum of acceptors	
 	define synod-learn-def-axiom :=
 	(forall T i p b Q .
 	    (
@@ -84,7 +85,7 @@ extend-module Synod{
 
 
 	#-- If an actor is an acceptor and it receives an 1a message from a proposer for a ballot greater than any ballot it has seen, 
-	#-- then it updates its local state and becomes ready to send 1b message to the proposer
+	#-- then it becomes ready to send 1b message to the proposer
 
 	define synod-1b-msg-rule := 
 		(forall p T b i a . 
@@ -149,8 +150,8 @@ extend-module Synod{
 #----------------------------------------------------------------------------
 #-- Some axioms that are a consequence of Stable Storage in FAL  
 #-- FAL only allows failures in which stable storage of actors persists 
-#-- We use some axioms that assert that unresponded messages in local state of synod actors
-#-- Will persist until they have been responded to 
+#-- We use an axiom that asserts that any message in the set of unresponded messages
+#-- in the local state of synod actors will persist in the set until it has been responded to 
 
 	#-- sent2A predicate is a syntactic sugar
 	define sent2A-def :=
@@ -239,7 +240,7 @@ extend-module Synod{
 
 	# If a proposer P receives a particular type of message from all members of a quorum Q at different times, then
 	# eventually that message will exist in P's set of unresponded messages from all members of Q. 
-	# This is because P can only respond to 1b or 2b messages after it has received them from an entire quorum. 
+	# This is because P can only respond to a message after it has received a version of it from all members of a quorum. 
     define received-from-quorum-general :=
 	(forall T i p b Q typ .
 	    (

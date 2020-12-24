@@ -18,7 +18,7 @@ module Synod{
 	#-- Syntactic Sugar Predicate that returns true if the ballot satisfies P1+P2-True properties for progress
 	declare P1+P2-True: (Ballot) [Ballot] -> Boolean	
 
-	#-- Some basic relations that will be required for ballots (similar to natural numbers)
+	#-- Some basic relations over ballots (similar to natural numbers)
 	declare less-than : (Ballot) [Ballot Ballot] -> Boolean [<]
 	declare less-than-equal : (Ballot) [Ballot Ballot] -> Boolean [=<]
 	declare greater-than : (Ballot) [Ballot Ballot] -> Boolean [>]
@@ -40,17 +40,17 @@ module Synod{
 	#-- Message types
 	domain Type
 
-	#-- Datatype of messages
+	#-- Messages
 	datatype Message := (consM frm:Actor to:Actor typ:Type bal:Ballot val:Value)
 
-	#-- get functions for messages
+	#-- Get functions for messages
 	declare msgSndr: (Message) [Message] -> Actor
 	declare msgRcpnt: (Message) [Message] -> Actor
 	declare msgTyp: (Message) [Message] -> Actor
 	declare msgBal: (Message) [Message] -> Actor
 	declare msgVal: (Message) [Message] -> Actor
 
-	#-- Datatype Set of messages
+	#-- Set of messages
 	datatype MessageSet := nilMSet 
 						| (consMSet MessageSet Message)
 
@@ -87,24 +87,25 @@ module Synod{
 	declare alpha_bar: (Configuration) [Configuration] -> ActorSet # gets the mapping of failed actors
 
 
-	#-- Datatype of transition steps (create not needed for our purpose)
+	#-- Datatype of transition steps (create not needed for Synod proof)
 	datatype Step := (receive a:Actor m:Message) 
 	               | (send a:Actor m:Message) 
 	               | (create old:Actor new:Actor)
 	               | (stop a:Actor )
 	               | (start a:Actor ) # "begin" keyword taken in Athena
 
-	#-- look at fairness.ath to understand what they were doing
+
 	#-- Datatype of transition paths borrowed from Musser
 	datatype (TP Id LS) := Initial 
 	                     | (then (TP Id LS) Step)
 
-	declare config : (Id, LS) [(TP Id LS)] -> Configuration
-	declare ready-to : (Id, LS) [(TP Id LS) Actor Step] -> Boolean
-	declare available : (Id, LS) [(TP Id LS) Actor] -> Boolean
+
+	declare config : (Id, LS) [(TP Id LS)] -> Configuration # last configuration in a given path
+	declare ready-to : (Id, LS) [(TP Id LS) Actor Step] -> Boolean # if actor is ready to perform some step in the last configuration in a given path
+	declare available : (Id, LS) [(TP Id LS) Actor] -> Boolean # if actor is available in last configuration in a given path 
 
 
-	#-- The following Maps a transition path and a natural unmber to some transition path
+	#-- The following creates a sub-transition path upto the given index
 	#-- used for accessing indexed positions in transition paths
 	declare rho : (Id, LS, N) [(TP Id LS) N] -> (TP Id LS)
 
@@ -118,7 +119,7 @@ module Synod{
 	#-- There are four types of messages
 	declare 1a, 1b, 2a, 2b, failT : Type     
 
-	# -- Set of variable symbols used throughout module Synod
+	# -- Set of variables used throughout module Synod
 	define [p a x Q b bH b2 b3 v v2 m m2 ms1 ms2 c s T i j k l y z t p2 a2 typ sender' recipient'] :=
 																					 	        [   ?p:Actor 
 																					 	        	?a:Actor 

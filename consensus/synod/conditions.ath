@@ -17,8 +17,7 @@ extend-module Synod{
 #-- nonfaulty actor is available whenever it is supposed to send a message or receive
 #-- a message that had been sent to it 
 
-	#-- A nonfaulty acceptor is available if there is a 1a or a 2a message for it in the channel
-	#-- and its read-lock is free
+	#-- A nonfaulty acceptor is available if there is a message for it in the multiset
 	define acceptor-nonfaulty1 :=
 	(forall a .
 		( (   (acc a) 
@@ -48,9 +47,12 @@ extend-module Synod{
 			& (nonfaulty a) 
 		  )
 				==>
-					(forall p T b i  v typ .
-					  	(inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
-
+					(forall p T b i v typ .
+					  	(  (inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
+					  	 & (   ((beta (als (config (rho T i)) a)) < b)
+                             | ((beta (als (config (rho T i)) a)) =< b)
+					  	   )	
+                        )
 	        	  		  ==> (
 	        	  		  		  (available (rho T i) a)
 
@@ -63,8 +65,7 @@ extend-module Synod{
 	)
 
 
-	#-- A nonfaulty proposer is available if there is a 1b or a 2b (or failed) message for it in the channel
-	#-- and its read-lock is free
+	#-- A nonfaulty proposer is available if there is a message for it in the multiset
 	define proposer-nonfaulty1 :=
 	(forall p .
 		( (   (prp p) 
@@ -87,7 +88,7 @@ extend-module Synod{
 
 
 	#-- A nonfaulty proposer is available if its local state satisfies conditions for it to send a 
-	#-- 2a message (or failed message)
+	#-- 2a message 
 	define proposer-nonfaulty2 :=
 	(forall p .
 		( (   (prp p) 
@@ -115,9 +116,8 @@ extend-module Synod{
 
 
 #----------------------------------------------------------------------------
-	#-- (ioe x) implies that the IOE condition is valid for the actor x
-	#-- This allows us to selectively allow actor transitions to be IOE instead of
-	#-- all of them implicitly being IOE as per the actor mddel
+#-- Send and receive transitions for a nonfaulty actor are IOE
+
 	define nonfaulty->IOE-rcv :=
 		(forall x .
 			(nonfaulty x) ==>
@@ -161,10 +161,8 @@ extend-module Synod{
 
 
 #----------------------------------------------------------------------------
-#-- PROPERTIES OF A PROPOSAL NECESSARY FOR IT TO SUCCESSFULLY GET VOTES 
+#-- PROPERTIES OF A BALLOT NECESSARY FOR IT TO SUCCESSFULLY GET VOTES 
 
-#-- Since actor model does not support message loss, there is no need to repeat messages
-#-- Consequences of having finite and unique ballots, and not-repeating messages, but taking as defineions. Actually prove later
 #-- 
 
 	#-- We can call it the "P1+P2-True" since it requires >= properties
@@ -173,7 +171,6 @@ extend-module Synod{
  	#--        the ballot should be > beta of every acceptor 
  	#-- 	2. if an acceptor receives 2a message at some indexed position with the ballot, 
  	#--        the ballot should be >= beta of every acceptor
- 	#-- This can be said because ballots are UNIQUE in Synod and we do not repeat messages
 
  	define P1+P2-True-1a-beta :=                                                                  
  		(forall b . 
@@ -207,18 +204,16 @@ extend-module Synod{
 
 
 	define P1+P2-True-beta-def-axioms := [ P1+P2-True-1a-beta 
-				  					    P1+P2-True-2a-beta ]
+				  					       P1+P2-True-2a-beta 
+				  					     ]
 
 
 #----------------------------------------------------------------------------
-#-- REQUIREMENTS FOR PROVING PROGRESS
+#-- CONDITIONS FOR PROVING PROGRESS
 #----------------------------------------------------------------------------
  	#-- The following conditions are necessary:
- 	#-- 1. For every transaction path:
- 	#-- 	1. There is an indexed position such that some proposer is ready to propose 
- 	#--        the P1+P2-True proposal number at that index
- 	#--     2. The P1+P2-True proposer is also IOE
- 	#-- 2. There is a quorum such that all its acceptors are IOE (may be empty, but for safety, needs to be non-empty)
+ 	#-- In every transaction path, some nonfaulty proposer will eventually be ready to propose a ballot 
+ 	#-- that satisfies P1+P2 to some quorum of nonfaulty acceptors
 
  	define progress_conditions :=
 	(forall T .
