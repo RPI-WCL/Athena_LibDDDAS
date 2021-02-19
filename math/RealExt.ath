@@ -1,0 +1,9 @@
+#-------------------------------------------------------------------------
+#-- Extension of Real domain
+module RealExt { # for some reason, cannot extend built-in module Real using extend-module
+
+	declare sqrt : [Real] -> Real
+
+}# end module
+
+

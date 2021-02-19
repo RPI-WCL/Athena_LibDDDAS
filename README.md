@@ -9,7 +9,7 @@
 
 * `nmac` -- theory and proofs about a NMAC-aware flight planning algorithm 
 
-* `statistics` -- theory and proofs about random variables, probability distributions, etc  
+* `math` -- theory and proofs about mathematical concepts like random variables, probability distributions, etc  
 
 
 ##### Instructions:

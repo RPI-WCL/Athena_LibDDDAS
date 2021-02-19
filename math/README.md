@@ -3,10 +3,17 @@
 ##### This repository contains ATHENA theory and proofs about random variables, probability distributions, etc  
 
 
-##### Instructions:
+##### Description:
 
-* The `sample_mpaxos_progress.ath` file contains the sample proof about stochastic progress of Paxos provided in the paper [Dynamic Data-Driven Formal Progress Envelopes for Distributed Algorithms](http://wcl.cs.rpi.edu/papers/DDDAS2020_paul.pdf).
+* `CharFun.ath` - Module, Charecteristc Function
 
+* `Prob.ath` - Module, Probability Theory
+
+* `RandVar.ath` - Module, Random Variables
+
+* `RealExt.ath` - Module, Reals 
+
+###### Note: This library is under development and many modules may be currently just stubs.
 
 ##### DISCLAIMER: 
 Copyright &copy; 2020 WCL
