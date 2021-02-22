@@ -1,9 +1,27 @@
 #-------------------------------------------------------------------------
-#-- Extension of Real domain
-module RealExt { # for some reason, cannot extend built-in module Real using extend-module
+#-- Extension of the Real domain
+#-- For some reason, cannot extend built-in module Real using extend-module
 
+module RealExt { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	# square root function for real numbers
+	
 	declare sqrt : [Real] -> Real
 
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
 }# end module
-
-

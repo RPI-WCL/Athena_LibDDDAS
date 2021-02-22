@@ -1,0 +1,181 @@
+#-------------------------------------------------------------------------
+#-- Theory of network for modelling MANETS
+#-- Inspiration - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
+
+load "Athena_LibDDDAS/math/Random.ath"
+load "lib/main/nat-less.ath"
+
+module Netwrk { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	# domain of all time durations
+
+	domain Duration	
+
+	# The domain of all Packets
+
+	domain Packet	
+
+	# The domain of all mobile nodes
+
+	domain MobileNode
+
+	#-- set of all sets of MobileNodes
+
+	structure MobileNodeSet := MobileNode | (consMNS MobileNodeSet MobileNode)
+
+	# The domain of all mobility models
+
+	domain MobilityModel
+
+	# The domain of all networks
+
+	domain Network
+
+	# The domain of all protocol names
+
+	domain ProtocolName
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	# Every duration has an associated random variable which maps it to its value
+
+	declare durRandVar: [Duration] -> Random.RandVar
+
+	# Membership operator for MobileNodeSet
+
+	declare inMNS: [MobileNodeSet MobileNode] -> Boolean
+
+	# Intermeeting of all nodes in a set are independent (intermeeting is not a scalar or quantifiable concept, so a high level function captures)  
+
+	declare intrmtngOfNodsInd: [MobileNodeSet] -> Boolean
+
+	# Network property: set of of Mobile nodes in the network
+
+	declare netNodeSet: [Network] -> MobileNodeSet
+
+	# Network property: restriction on the number of packets in the network
+
+	declare netMaxPckts: [Network] -> N	
+
+	# Function that returns protocol in use 
+
+	declare netPrtInUse: [Network] -> ProtocolName
+
+	# Node A can transmit to node B 
+
+	declare nodeCanTrnsmt: [MobileNode MobileNode] -> Boolean
+
+	# Node eligible to receive a message 
+
+	declare nodeElgbl2Rcv: [MobileNode Packet] -> Boolean
+
+	# Two nodes follow same random mobility model
+
+	declare nodeFllwSameMobMod: [MobileNode MobileNode] -> Boolean
+
+	# Node has copy of a message 
+
+	declare nodeHasCpy: [MobileNode Packet] -> Boolean
+
+	# Get random variables representing the intermeeting times of two nodes 
+
+	declare nodeIntrMtngTmes: [MobileNode MobileNode] -> Random.RandVarSet
+
+	# Node is a destination node 
+
+	declare nodeIsDst: [MobileNode] -> Boolean
+
+	# Node is a source node 
+
+	declare nodeIsSrc: [MobileNode] -> Boolean
+
+	# Node is a relay node 
+
+	declare nodeIsRly: [MobileNode] -> Boolean
+
+	# Two nodes move independently
+
+	declare nodeMovInd: [MobileNode MobileNode] -> Boolean
+
+	# Mobility model of a node
+
+	declare nodeMobMod: [MobileNode] -> MobilityModel	
+
+	# Transmission time of a node
+
+	declare nodeTrnsTm: [MobileNode] -> Duration
+
+	# number of nodes in a set of nodes
+
+	declare numNodes: [MobileNodeSet] -> N
+
+	# Function that returns time to live of a packet at a node
+
+	declare pcktTTL: [Packet MobileNode] -> Duration	
+
+	# Protocol property: source can directly transmit to the destination
+
+	declare prtSrcCanTrnsmt2Dst: [ProtocolName MobileNode] -> Boolean
+
+	# Protocol property: source can directly transmit to any realy
+
+	declare prtSrcCanTrnsmt2Rlys: [ProtocolName MobileNode] -> Boolean
+
+	# Protocol property: source can directly transmit to only one realy
+
+	declare prtSrcCanTrnsmt2OneRly: [ProtocolName MobileNode] -> Boolean	
+
+	# Protocol property: source can transmit to relay with copy
+
+	declare prtSrcCanTrnsmt2RlyWthCpy: [ProtocolName MobileNode] -> Boolean	
+
+	# Protocol property: relay can only transmit to destination
+
+	declare prtRlyOnlyTrnsmt2Dst: [ProtocolName MobileNode] -> Boolean		
+
+	# Protocol property: relay can transmit to other realys
+
+	declare prtRlyCanTrnsmt2Rlys: [ProtocolName MobileNode] -> Boolean				
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	# The network that is being talked about 
+	# (we will only need to reason about one network at a time
+	# but we needed to create a separate domain for networks
+	# in order to express some properties on that domain)
+
+	declare NETWORK: Network
+
+	# constant protocol names
+
+	declare MTR_AIMCT, TREC: ProtocolName
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	# only one protocol can be in use at a time
+
+	assert onlyOneProtocolInUse :=
+		(forall ?net:Network ?pn1:ProtocolName . 
+			(= (netPrtInUse ?net:Network) ?pn1:ProtocolName) ==>	
+				(~(exists ?pn2:ProtocolName . 
+					( ~(= ?pn1:ProtocolName ?pn2:ProtocolName) 
+					 & (= (netPrtInUse ?net:Network) ?pn2:ProtocolName) ))) 
+		)
+
+	# General rules about the transmission predicates
+	assert trnsmssnPrdRls :=
+	(forall ?prtName:ProtocolName ?node:MobileNode .
+			(
+				  ( (prtSrcCanTrnsmt2Rlys ?prtName:ProtocolName ?node:MobileNode) <==> (~ (prtSrcCanTrnsmt2OneRly ?prtName:ProtocolName ?node:MobileNode)))
+				& ( (prtRlyCanTrnsmt2Rlys ?prtName:ProtocolName ?node:MobileNode) <==> (~ (prtRlyOnlyTrnsmt2Dst ?prtName:ProtocolName ?node:MobileNode)))	
+			)
+	)
+
+}# end module

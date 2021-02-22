@@ -4,25 +4,67 @@ load "Prob.ath"
 #-------------------------------------------------------------------------
 #-- Theories of Random Variables
 
-module RandVar {
+module Random {
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
 
 	#-- set of all random variables
 
 	domain RandVar
 
-	#-- Variables 
+	#-- set of all sets of random variables
 
-	define [x y z] := [?x:RandVar ?y:RandVar ?z:RandVar]
+	structure RandVarSet := RandVar | (consRVS RandVarSet RandVar)
 
-	define [T] := [?T:Real]
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- cdf returns the Probability Distribution Function of a random variable
+
+	declare cdf: [RandVar]-> CharFun.Dist
+
+	#-- iDist returns True if two random variables are identically distributed
+
+	declare iDist: [RandVar RandVar]-> Boolean
+
+	#-- iID returns True for a collection of random variables if each random variable in the collection has the same probability distribution as the others and all are mutually independent.
+
+	declare iID: [RandVarSet]-> Boolean
+
+	#-- ind returns True if two random variables are independent
+
+	declare ind: [RandVar RandVar]-> Boolean
+
+	#-- membership opertaor for RandVarSet
+
+	declare inRVS: [RandVarSet RandVar] -> Boolean 
 
 	#-- pdf returns the Probability Distribution Function of a random variable
 
 	declare pdf: [RandVar]-> CharFun.Dist
 
+	#-- probability-randVar function takes a random varible z and a Real T and finds the probability that z<=T by using its pdf
+
+	declare probability-randVar: [RandVar Real] -> Real	
+
 	#-- sum returns the sum of two random variables
 
 	declare sum: [RandVar RandVar]-> RandVar
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [x y z] := [?x:RandVar ?y:RandVar ?z:RandVar]
+
+	define [T] := [?T:Real]
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------	
+
+	assert* probability-randVar-axiom :=
+	          (= (probability-randVar z T)
+	             (Prob.probability (pdf z) T)  )
+
 
 	#-- Postulate: The probability distribution of the sum of two independent random variables is the convolution of each of their probability distributions.
 
@@ -35,14 +77,6 @@ module RandVar {
 	)
 
 	assert sum-randVars
-
-	#-- probability-randVar function takes a random varible z and a Real T and finds the probability that z<=T by using its pdf
-
-	declare probability-randVar: [RandVar Real] -> Real
-
-	assert* probability-randVar-axiom :=
-	          (= (probability-randVar z T)
-	             (Prob.probability (pdf z) T)  )
 
 
 	#-- RandVar-Theorem1 states that the sum of two normally distributed random variablesx and y being at most a given real T is equal to the integral of the SND upto the z-score of T wrt the convolution of the pdfs of x and y

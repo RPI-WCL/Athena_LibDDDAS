@@ -4,14 +4,59 @@
 
 module CharFun {
 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
 	#-- Declaring a datatype CF about Charecteristic Functions
 	#-- NormalCF is the constructor for datatype CF and OtherCF is the base case
 
 	(datatype CF (NormalCF Real Real) OtherCF)
 
-	#-- mul-cf-normal takes two normal CFs and creates a new normal CF 
+
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#-- DISTRIBUTIONS NEED TO BE IN A SEPARATE MODULE
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	#-- Dist is the set of all distributions  
+	(domain Dist)
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- charecteristic-fuction takes a distribution ad returns its CF
+
+	(declare characteristic-function (-> (Dist) CF))
+
+	#-- convolution takes two distributions and returns their linear combination
+
+	(declare convolution (-> (Dist Dist) Dist))
+
+	#-- is-normal takes a distribution and returns True iff it is a normal distribution
+
+	(declare is-normal (-> (Dist) Boolean))
+
+	#-- mean takes a distribution and returns its real mean
+
+	(declare mean (-> (Dist) Real))
+
+	#-- mul-cf takes two normal CFs and creates a new normal CF 
 
 	(declare mul-cf (-> (CF CF) CF))
+
+	#-- variance takes a distribution and returns its real variance
+
+	(declare variance (-> (Dist) Real))
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	
+
+	#-------------------------  RELEVANT THEORY  -------------------------	
+
 	(define mul-cf-normal
 	  (forall ?m1:Real
 	    (forall ?v1:Real
@@ -21,29 +66,6 @@ module CharFun {
 	             (NormalCF (+ ?m1:Real ?m2:Real) (+ ?v1:Real ?v2:Real))))))))
 	(assert mul-cf-normal)
 
-
-	#-- Dist is the set of all distributions
-	(domain Dist)
-
-	#-- mean takes a distribution and returns its real mean
-
-	(declare mean (-> (Dist) Real))
-
-	#-- variance takes a distribution and returns its real variance
-
-	(declare variance (-> (Dist) Real))
-
-	#-- charecteristic-fuction takes a distribution ad returns its CF
-
-	(declare characteristic-function (-> (Dist) CF))
-
-	#-- is-normal takes a distribution and returns True iff it is a normal distribution
-
-	(declare is-normal (-> (Dist) Boolean))
-
-	#-- convolution takes two distributions and returns their linear combination
-
-	(declare convolution (-> (Dist Dist) Dist))
 
 	#-- normal-cf-forward states that if x is a normal distribution, then its CF can be expressed by using its real mean and variance
 
@@ -87,11 +109,11 @@ module CharFun {
 	(assert normal-cf-sum)
 
 	#-- Cramér's Decomposition Theoremtheorem 
-	# ****************************************************************
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	#-- MAYBE WRONG SINCE IT DOES NOT CHECK IF x and y are independent
-	# ****************************************************************
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#-- MAYBE WRONG SINCE IT DOES NOT CHECK IF x and y are independent
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	(define Cramers-Decomposition-Theorem
 	  (forall ?x:Dist 

@@ -1,17 +1,13 @@
 # MATH 
 
-##### This repository contains ATHENA theory and proofs about mathematical concepts like random variables, probability distributions, etc  
+##### This repository contains ATHENA theory and proofs about Network theory  
 
 
 ##### Description:
 
-* `CharFun.ath` - Module, Charecteristc Function
+* `MTR-AIMCT` - Module, Multicopy Two-Hop Relay with Arbitrary Inter-meeting and Constant TTLs
 
-* `Prob.ath` - Module, Probability Theory
-
-* `Random.ath` - Module, Random Variables
-
-* `RealExt.ath` - Module, Reals 
+* `Netwrk.ath` - Module, Network fundamentals
 
 ###### Note: This library is under development and many modules may be currently just stubs.
 

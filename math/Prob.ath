@@ -6,21 +6,35 @@ load "RealExt.ath"
 
 module Prob {
 
-	#-- Variables 
 
-	define [t T] := [?t:Real ?T:Real]
 
-	define [X Y Z] := [?X:CharFun.Dist ?Y:CharFun.Dist ?Z:CharFun.Dist]
+	#-------------------------  RELEVANT DOMAINS -------------------------  
 
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
 	#-- An integral function that computes the real integral of cumulative distribution function of a standard normal distribution by taking the real z-score as input (undefined for now)
 
 	declare integral-SND : [Real] -> Real
 
+	#-- A probabiliity function that takes in a normal distribution Z and a Real T, and returns the probability that a random variable that lies in Z will be at most some real T. It returns zero if the distribution is not normal.   
+	#-- If need be, we can overload the probability function according to different input cases
+
+	declare probability : [CharFun.Dist Real]-> Real
 
 	#-- A function that computes the z-score of a value T wrt a normal distribution Z. It returns zero if the distribution is not normal.
 
 	declare z-score : [Real CharFun.Dist] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [t T] := [?t:Real ?T:Real]
+
+	define [X Y Z] := [?X:CharFun.Dist ?Y:CharFun.Dist ?Z:CharFun.Dist]
+	
+
+	#-------------------------  RELEVANT THEORY  -------------------------	
 
 	assert z-score-axioms :=
 	   let{
@@ -37,11 +51,6 @@ module Prob {
 
 	define [z-score-Z-not-normal z-score-result] := z-score-axioms
 
-
-	#-- A probabiliity function that takes in a normal distribution Z and a Real T, and returns the probability that a random variable that lies in Z will be at most some real T. It returns zero if the distribution is not normal.   
-	#-- If need be, we can overload the probability function according to different input cases
-
-	declare probability : [CharFun.Dist Real]-> Real
 
 	assert probability-axioms :=
 	   let{
