@@ -58,6 +58,10 @@ module Netwrk {
 
 	declare netNodeSet: [Network] -> MobileNodeSet
 
+	# Network property: set of the random variables represnting the intermeeting times of each pair of Mobile nodes in the network
+
+	declare netNodeIMTmSet: [Network] -> Random.RandVarSet	
+
 	# Network property: restriction on the number of packets in the network
 
 	declare netMaxPckts: [Network] -> N	
@@ -82,9 +86,9 @@ module Netwrk {
 
 	declare nodeHasCpy: [MobileNode Packet] -> Boolean
 
-	# Get random variables representing the intermeeting times of two nodes 
+#	# Get random variables representing the intermeeting times of two nodes 
 
-	declare nodeIntrMtngTmes: [MobileNode MobileNode] -> Random.RandVarSet
+#	declare nodeIntrMtngTmes: [MobileNode MobileNode] -> Random.RandVarSet
 
 	# Node is a destination node 
 

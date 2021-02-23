@@ -28,15 +28,15 @@ module CharFun {
 
 	#-- charecteristic-fuction takes a distribution ad returns its CF
 
-	(declare characteristic-function (-> (Dist) CF))
+	(declare charFun (-> (Dist) CF))
 
-	#-- convolution takes two distributions and returns their linear combination
+	#-- convotakes two distributions and returns their linear combination
 
-	(declare convolution (-> (Dist Dist) Dist))
+	(declare convo (-> (Dist Dist) Dist))
 
-	#-- is-normal takes a distribution and returns True iff it is a normal distribution
+	#-- is-norm takes a distribution and returns True iff it is a normal distribution
 
-	(declare is-normal (-> (Dist) Boolean))
+	(declare is-norm (-> (Dist) Boolean))
 
 	#-- mean takes a distribution and returns its real mean
 
@@ -46,9 +46,9 @@ module CharFun {
 
 	(declare mul-cf (-> (CF CF) CF))
 
-	#-- variance takes a distribution and returns its real variance
+	#-- var takes a distribution and returns its real variance
 
-	(declare variance (-> (Dist) Real))
+	(declare var (-> (Dist) Real))
 
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
@@ -67,45 +67,45 @@ module CharFun {
 	(assert mul-cf-normal)
 
 
-	#-- normal-cf-forward states that if x is a normal distribution, then its CF can be expressed by using its real mean and variance
+	#-- normal-cf-forward states that if x is a normal distribution, then its CF can be expressed by using its real mean and var
 
 	(define normal-cf-forward
 	  (forall ?x:Dist
-	    (if (is-normal ?x:Dist)
-	        (= (characteristic-function ?x:Dist)
-	           (NormalCF (mean ?x:Dist) (variance ?x:Dist))))))
+	    (if (is-norm ?x:Dist)
+	        (= (charFun ?x:Dist)
+	           (NormalCF (mean ?x:Dist) (var ?x:Dist))))))
 
-	#-- normal-cf-backward states that if the CF of a distribution are expressed using its real mean and variance, then it is a normal distribution
+	#-- normal-cf-backward states that if the CF of a distribution are expressed using its real mean and var, then it is a normal distribution
 
 	(define normal-cf-backward
 	  (forall ?x:Dist
-	    (if (= (characteristic-function ?x:Dist)
-	           (NormalCF (mean ?x:Dist) (variance ?x:Dist)))
-	        (is-normal ?x:Dist))))
+	    (if (= (charFun ?x:Dist)
+	           (NormalCF (mean ?x:Dist) (var ?x:Dist)))
+	        (is-norm ?x:Dist))))
 
-	#-- normal-cf-mean-variance states that if the CF of a distribution is expressed using reals, then the mean and variance can be extracted from it  ????????????????? --- how do you claim this? 
+	#-- normal-cf-mean-var states that if the CF of a distribution is expressed using reals, then the mean and var can be extracted from it  ????????????????? --- how do you claim this? 
 
-	(define normal-cf-mean-variance
+	(define normal-cf-mean-var
 	  (forall ?x:Dist
 	    (forall ?m:Real
 	      (forall ?v:Real
-	        (if (= (characteristic-function ?x:Dist)
+	        (if (= (charFun ?x:Dist)
 	               (NormalCF ?m:Real ?v:Real))
 	            (and (= (mean ?x:Dist) ?m:Real)
-	                 (= (variance ?x:Dist) ?v:Real)))))))
+	                 (= (var ?x:Dist) ?v:Real)))))))
 
 	(assert normal-cf-forward)
 	(assert normal-cf-backward)
-	(assert normal-cf-mean-variance)
+	(assert normal-cf-mean-var)
 
-	#-- normal-cf-sum states that the CF of the convolution of xCramersy distributions can be obtained by the linear combination of the CFs of the xCramersy distributions
+	#-- normal-cf-sum states that the CF of the convoof xCramersy distributions can be obtained by the linear combination of the CFs of the xCramersy distributions
 
 	(define normal-cf-sum
 	  (forall ?x:Dist
 	    (forall ?y:Dist
-	      (if (and (is-normal ?x:Dist) (is-normal ?y:Dist))
-	          (= (characteristic-function (convolution ?x:Dist ?y:Dist))
-	             (mul-cf (characteristic-function ?x:Dist) (characteristic-function ?y:Dist)))))))
+	      (if (and (is-norm ?x:Dist) (is-norm ?y:Dist))
+	          (= (charFun (convo ?x:Dist ?y:Dist))
+	             (mul-cf (charFun ?x:Dist) (charFun ?y:Dist)))))))
 	(assert normal-cf-sum)
 
 	#-- Cramér's Decomposition Theoremtheorem 
@@ -115,46 +115,46 @@ module CharFun {
 # ****************************************************************
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	(define Cramers-Decomposition-Theorem
+	(define THEOREM-Cramers-Decomposition
 	  (forall ?x:Dist 
 	    (forall ?y:Dist
-	      (if (and (is-normal ?x:Dist) (is-normal ?y:Dist))
-	          (is-normal (convolution ?x:Dist ?y:Dist))))))
+	      (if (and (is-norm ?x:Dist) (is-norm ?y:Dist))
+	          (is-norm (convo ?x:Dist ?y:Dist))))))
 
 	#-- Proof of Cramér's Decomposition Theorem
 
-	conclude Cramers-Decomposition-Theorem
+	conclude THEOREM-Cramers-Decomposition
 	pick-any x:Dist
 	pick-any y:Dist
-	assume (and (is-normal x) (is-normal y))
+	assume (and (is-norm x) (is-norm y))
 	(!mp
-	 (!uspec normal-cf-backward (convolution x y))
-	 let {px := (!mp (!uspec normal-cf-forward x) (is-normal x));
-	      py := (!mp (!uspec normal-cf-forward y) (is-normal y));
-	      ncs := (!mp (!uspec (!uspec normal-cf-sum x) y) (and (is-normal x) (is-normal y)));
-	      mcn := (!uspec (!uspec (!uspec (!uspec mul-cf-normal (mean x)) (variance x)) (mean y)) (variance y));
-	      cmv := (!uspec (!uspec (!uspec normal-cf-mean-variance (convolution x y)) (+ (mean x) (mean y))) (+ (variance x) (variance y)))}
+	 (!uspec normal-cf-backward (convo x y))
+	 let {px := (!mp (!uspec normal-cf-forward x) (is-norm x));
+	      py := (!mp (!uspec normal-cf-forward y) (is-norm y));
+	      ncs := (!mp (!uspec (!uspec normal-cf-sum x) y) (and (is-norm x) (is-norm y)));
+	      mcn := (!uspec (!uspec (!uspec (!uspec mul-cf-normal (mean x)) (var x)) (mean y)) (var y));
+	      cmv := (!uspec (!uspec (!uspec normal-cf-mean-var (convo x y)) (+ (mean x) (mean y))) (+ (var x) (var y)))}
 	   let {amv := (!mp 
 	                 cmv
-	                 (!chain [(characteristic-function (convolution x y))
-	                          = (mul-cf (characteristic-function x) (characteristic-function y)) [ncs]
-	                          = (mul-cf (NormalCF (mean x) (variance x)) (characteristic-function y)) [px]
-	                          = (mul-cf (NormalCF (mean x) (variance x)) (NormalCF (mean y) (variance y))) [py]
-	                          = (NormalCF (+ (mean x) (mean y)) (+ (variance x) (variance y))) [mcn]
+	                 (!chain [(charFun (convo x y))
+	                          = (mul-cf (charFun x) (charFun y)) [ncs]
+	                          = (mul-cf (NormalCF (mean x) (var x)) (charFun y)) [px]
+	                          = (mul-cf (NormalCF (mean x) (var x)) (NormalCF (mean y) (var y))) [py]
+	                          = (NormalCF (+ (mean x) (mean y)) (+ (var x) (var y))) [mcn]
 	                          ]))}
-	   (!chain [(characteristic-function (convolution x y))
-	            = (mul-cf (characteristic-function x) (characteristic-function y)) [ncs]
-	            = (mul-cf (NormalCF (mean x) (variance x)) (characteristic-function y)) [px]
-	            = (mul-cf (NormalCF (mean x) (variance x)) (NormalCF (mean y) (variance y))) [py]
-	            = (NormalCF (+ (mean x) (mean y)) (+ (variance x) (variance y))) [mcn]
-	            = (NormalCF (mean (convolution x y)) (+ (variance x) (variance y))) [(!left-and amv)]
-	            = (NormalCF (mean (convolution x y)) (variance (convolution x y))) [(!right-and amv)]
+	   (!chain [(charFun (convo x y))
+	            = (mul-cf (charFun x) (charFun y)) [ncs]
+	            = (mul-cf (NormalCF (mean x) (var x)) (charFun y)) [px]
+	            = (mul-cf (NormalCF (mean x) (var x)) (NormalCF (mean y) (var y))) [py]
+	            = (NormalCF (+ (mean x) (mean y)) (+ (var x) (var y))) [mcn]
+	            = (NormalCF (mean (convo x y)) (+ (var x) (var y))) [(!left-and amv)]
+	            = (NormalCF (mean (convo x y)) (var (convo x y))) [(!right-and amv)]
 	            ]))
 
 
 	#With ATP
-	#(!prove Cramers-Decomposition-Theorem [normal-cf-forward normal-cf-backward 
-	#                                       normal-cf-sum mul-cf-normal normal-cf-mean-variance 
+	#(!prove THEOREM-Cramers-Decomposition [normal-cf-forward normal-cf-backward 
+	#                                       normal-cf-sum mul-cf-normal normal-cf-mean-var 
 	#                                       mul-cf-normal])
 
 } # end module 

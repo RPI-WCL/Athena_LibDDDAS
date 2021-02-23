@@ -14,6 +14,11 @@ module MTR-AIMCT {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
+	# MTR property: set of the random variables represnting the intermeeting times of the source and each relay with respect to the source
+	# (The set {Xsd, D1, ..., DN-1} in equation 8)
+
+	declare mtrImtngTms: [Random.RandVarSet] -> Random.RandVarSet	
+
 
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
@@ -93,27 +98,53 @@ module MTR-AIMCT {
 
 	# Assumtpions in Section 3: Arbitrary intermeeting and Constant TTLS
 
-	# Intermeeting times are IID with a distribution G(t)
-	# (Each pair of nodes may meet 0 or more times. Therefore
-	# there is an intermeeting tie between each meeting. 
-	# Each of those times can be modelled by a random variable)
+# ** THIS IS WRONG **
+#	# Intermeeting times are IID with a distribution G(t)
+#	# (Each pair of nodes may meet 0 or more times. Therefore
+#	# there is an intermeeting tie between each meeting. 
+#	# Each of those times can be modelled by a random variable)
+#
+#
+#	assert intrMtngTmIID :=
+#	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+#		(exists ?gDist:CharFun.Dist .
+#			(
+#				forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
+#					(
+#						(Random.iID (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode))  
+#					  &	(forall ?intrMtngTM:Random.RandVar .
+#					  		(Random.inRVS (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode) ?intrMtngTM:Random.RandVar)
+#					  			==>
+#					  				(= (Random.cdf ?intrMtngTM:Random.RandVar) ?gDist:CharFun.Dist)
+#					  	)
+#					)
+#			)
+#		)
+#	)	
 
-	assert intrMtngTmIID :=
+	
+	# Intermeeting times are IID with a distribution G(t)
+	# (The intermeeting time between each pair of nodes
+	# is represented by a random variable and the times 
+	# for all different pairs are iid with a distribution (cdf) gDist)
+
+	assert intrMtngTmsIID :=
 	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
-		(exists ?gDist:CharFun.Dist .
-			(
-				forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
-					(
-						(Random.iID (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode))  
-					  &	(forall ?intrMtngTM:Random.RandVar .
-					  		(Random.inRVS (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode) ?intrMtngTM:Random.RandVar)
-					  			==>
-					  				(= (Random.cdf ?intrMtngTM:Random.RandVar) ?gDist:CharFun.Dist)
-					  	)
-					)
-			)
+		(
+			(exists ?gDist:CharFun.Dist .
+				(
+					  (Random.iID (mtrImtngTms (Netwrk.netNodeIMTmSet Netwrk.NETWORK)))
+					& (forall ?rv:Random.RandVar .
+						(
+							(Random.inRVS (mtrImtngTms (Netwrk.netNodeIMTmSet Netwrk.NETWORK)) ?rv:Random.RandVar)
+								==>
+									(= (Random.cdf ?rv:Random.RandVar) ?gDist:CharFun.Dist) 
+						)			
+					  )
+				)
+			)	
 		)
-	)	
+	)		
 
 
 	# Intermeetings are mutually independently

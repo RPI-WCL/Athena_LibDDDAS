@@ -19,6 +19,18 @@ module Random {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
+	#-- = returns true iff a random variable X takes a value equal to a real c 
+
+	declare ==: [RandVar Real]-> Boolean
+
+	#-- < returns true iff a random variable X takes a value less than a real c 
+
+	declare <: [RandVar Real]-> Boolean
+
+	#-- <= returns true iff a random variable X takes a value less than or equal to a real c 
+
+	declare <=: [RandVar Real]-> Boolean
+
 	#-- cdf returns the Probability Distribution Function of a random variable
 
 	declare cdf: [RandVar]-> CharFun.Dist
@@ -35,21 +47,38 @@ module Random {
 
 	declare ind: [RandVar RandVar]-> Boolean
 
-	#-- membership opertaor for RandVarSet
+	#-- membership opertaor for RandVarSet 
 
 	declare inRVS: [RandVarSet RandVar] -> Boolean 
+
+	#-- minRandVarSet function takes a set of random varibles S and returns the minimum random Variable
+
+	declare minRandVarSet: [RandVarSet] -> RandVar		
 
 	#-- pdf returns the Probability Distribution Function of a random variable
 
 	declare pdf: [RandVar]-> CharFun.Dist
 
-	#-- probability-randVar function takes a random varible z and a Real T and finds the probability that z<=T by using its pdf
+	#-- probability-RandVar<=c function takes a random varible z and a Real c and finds the probability that z<=c by using its pdf
 
-	declare probability-randVar: [RandVar Real] -> Real	
+	declare probability-RandVar<=c: [RandVar Real] -> Real	
+
+	#-- probability-RandVar>c function takes a random varible z and a Real c and finds the probability that z>c by using its pdf
+
+	declare probability-RandVar>c: [RandVar Real] -> Real		
+
+	#-- probability-RandVarSet<=c function takes a set of random varibles S and a Real c and finds the probability that every random variable in S is <=T by using its pdf
+
+	declare probability-RandVarSet<=c: [RandVarSet Real] -> Real		
+
+	#-- "Reliability Function" or "Survival Function" or "Complementary CDF" of a CDF given by (1 - CDF)
+
+	declare rf: [CharFun.Dist]-> CharFun.Dist	
 
 	#-- sum returns the sum of two random variables
 
 	declare sum: [RandVar RandVar]-> RandVar
+
 
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
@@ -58,51 +87,97 @@ module Random {
 
 	define [T] := [?T:Real]
 
+	define [rvSet] := [?rvSet:RandVarSet]
+
 
 	#-------------------------  RELEVANT THEORY  -------------------------	
 
-	assert* probability-randVar-axiom :=
-	          (= (probability-randVar z T)
-	             (Prob.probability (pdf z) T)  )
+	#-- Axiom defining probability-RandVar<=c function
+
+	assert probability-RandVar<=c-axiom :=
+	(forall z T .
+		(
+	          (= (probability-RandVar<=c z T)
+	             (Prob.probability-Dist<=c (pdf z) T)  )
+	    )      
+    )
+
+	#-- Axioms of relationship between probability-RandVar<=c and 
+	#   probability-RandVar>c
+
+	# probability-RandVar<=c-COMP-RandVar>c : P(X <= c) = 1 - P(X > c) 
+
+	assert probability-RandVar<=c-COMP-RandVar>c :=
+	(forall z T .
+		(
+			(probability-RandVar<=c z T) 
+				=
+					(1.0 - (probability-RandVar>c z T)) 			
+		)
+	)
 
 
-	#-- Postulate: The probability distribution of the sum of two independent random variables is the convolution of each of their probability distributions.
+
+	#-- Postulate: The probability distribution of the sum of two 
+	#   independent random variables is the convolution of each of 
+	#   their probability distributions.
 
 	define sum-randVars :=
 	(
 	forall x y .
 	   (= (pdf (sum x y)) 
-	      (CharFun.convolution (pdf x) 
+	      (CharFun.convo (pdf x) 
 	                   (pdf y) ) ) 
 	)
 
 	assert sum-randVars
 
 
-	#-- RandVar-Theorem1 states that the sum of two normally distributed random variablesx and y being at most a given real T is equal to the integral of the SND upto the z-score of T wrt the convolution of the pdfs of x and y
+	#-- Axiom defining <= 
+	assert* <=-axiom := [(x <= T <==> x < T | x == T)]
 
-	define RandVar-Theorem1 :=
-	(
-	forall x y T .
-	  (and (CharFun.is-normal (pdf x))
-	       (CharFun.is-normal (pdf y)) ) 
-	         ==> 
-	            (= (probability-randVar (sum x y) T) 
-	               (Prob.integral-SND (Prob.z-score T (CharFun.convolution (pdf x) (pdf y) ) ) ) )
+
+	#-- Axiom about the implication of minimum in a set of random variables
+	#  being greater than a given c
+	#  minRandVarSet>c==>AllRandVars>c : min(X1,X2,...,XN) > c ==> all Xi > c 
+
+	assert minRandVarSet>c==>AllRandVars>c :=
+	(forall rvSet T .
+		(
+			((minRandVarSet rvSet) < T) 
+				==>
+				(forall x .
+					(inRVS rvSet x) ==> (x < T) 
+				)
+		)
 	)
 
 
-	conclude RandVar-Theorem1
+	#-- THEOREM-probability-Sum2NormRandVars<=c states that the probability of 
+	#   the sum of two normally distributed random variablesx and y being at most a given real T is equal to the integral of the SND upto the z-score of T wrt the convolution of the pdfs of x and y
+
+	define THEOREM-probability-Sum2NormRandVars<=c :=
+	(
+	forall x y T .
+	  (and (CharFun.is-norm (pdf x))
+	       (CharFun.is-norm (pdf y)) ) 
+	         ==> 
+	            (= (probability-RandVar<=c (sum x y) T) 
+	               (Prob.integral-SND (Prob.z-score T (CharFun.convo (pdf x) (pdf y) ) ) ) )
+	)
+
+
+	conclude THEOREM-probability-Sum2NormRandVars<=c
 	pick-any x:RandVar
 	pick-any y:RandVar
 	pick-any T:Real
-	assume  (and (CharFun.is-normal (pdf x))
-	             (CharFun.is-normal (pdf y)) )
+	assume  (and (CharFun.is-norm (pdf x))
+	             (CharFun.is-norm (pdf y)) )
 	let{
 	    xPDF := (pdf x);
 	    yPDF := (pdf y);
-	    xyPDFnormal := (and  (CharFun.is-normal xPDF) (CharFun.is-normal yPDF) );
-	    convolutionxyPDF := (CharFun.convolution xPDF yPDF);
+	    xyPDFnormal := (and  (CharFun.is-norm xPDF) (CharFun.is-norm yPDF) );
+	    convolutionxyPDF := (CharFun.convo xPDF yPDF);
 	    z := (sum x y);
 	    xySumRandVars := (!uspec (!uspec sum-randVars x) y);
 	    zPDF := (pdf z);
@@ -110,17 +185,42 @@ module Random {
 	                              =  (pdf (sum x y))  [z]
 	                              =  convolutionxyPDF [xySumRandVars]
 	                               ]);
-	    probthm1 := (!uspec (!uspec (!uspec Prob.Probability-Theorem1 xPDF) yPDF) T);                        
+	    probthm1 := (!uspec (!uspec (!uspec Prob.THEOREM-probability-Conv2NormDist<=c xPDF) yPDF) T);                        
 	    probthm1result := (!mp probthm1 xyPDFnormal)     
 	 }
-	(!chain [ (probability-randVar (sum x y) T)
-	        = (Prob.probability (pdf (sum x y) ) T) [probability-randVar-axiom]
-	        = (Prob.probability (pdf z) T)          [z]
-	        = (Prob.probability convolutionxyPDF T) [zPDFConvolution]
-	        = (Prob.probability (CharFun.convolution xPDF yPDF) T) [convolutionxyPDF]
-	        = (Prob.integral-SND (Prob.z-score T (CharFun.convolution (pdf x) (pdf y) ) ) ) [probthm1result]
+	(!chain [ (probability-RandVar<=c (sum x y) T)
+	        = (Prob.probability-Dist<=c (pdf (sum x y) ) T) [probability-RandVar<=c-axiom]
+	        = (Prob.probability-Dist<=c (pdf z) T)          [z]
+	        = (Prob.probability-Dist<=c convolutionxyPDF T) [zPDFConvolution]
+	        = (Prob.probability-Dist<=c (CharFun.convo xPDF yPDF) T) [convolutionxyPDF]
+	        = (Prob.integral-SND (Prob.z-score T (CharFun.convo (pdf x) (pdf y) ) ) ) [probthm1result]
 	        ]
 	)
+
+
+	#-- THEOREM-prob-minRandVarSet-<=c-and->c states that the probability that the 
+	#   minimum of a set of random variables takes a value at most c
+	#   is 1 - the probability that the min takes a value at least c 
+
+	define THEOREM-prob-minRandVarSet-<=c-COMP->c :=
+	(forall rvSet T .
+		( (probability-RandVar<=c (minRandVarSet rvSet) T)
+			=
+			(1.0 - (probability-RandVar>c (minRandVarSet rvSet) T))
+		)
+	)
+
+	conclude THEOREM-prob-minRandVarSet-<=c-COMP->c 
+	pick-any rvSet:RandVarSet
+	pick-any T:Real
+	let{
+		min-rvSet := (minRandVarSet rvSet)
+	}
+	(!chain [ (probability-RandVar<=c min-rvSet T)
+			= (1.0 - (probability-RandVar>c min-rvSet T)) [probability-RandVar<=c-COMP-RandVar>c]
+			]
+	)
+
 
 } # end module	
 
