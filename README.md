@@ -7,6 +7,8 @@
 
 * `consensus` -- theory and proofs about consensus protocols
 
+* `network` -- theory and proofs about network theory
+
 * `nmac` -- theory and proofs about an NMAC-aware flight planning algorithm 
 
 * `math` -- theory and proofs about basic mathematical concepts like random variables, probability, distributions, etc  
