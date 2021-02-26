@@ -5,18 +5,21 @@
 
 ##### Instructions:
 
-* The `progress-proof.ath` file contains the proof of eventual progress for the Synod consensus protocol using the failure-aware actor model under asynchronous conditions.
+* The `progress-proof.ath` file contains the proof of eventual progress for the Synod consensus protocol using the failure-aware actor model under soem specific asynchronous conditions
 
-* The proof makes use of the SPASS Automatic Theorem Prover for proving the proof obligation at each step.
+* The proof makes use of the SPASS Automatic Theorem Prover for proving the proof obligation at each step
 
-* Refer to the ATHENA [Download Instructions](https://proofcentral.org/athena/1.4/) to properly set up SPASS in your operating system.
+* Refer to the ATHENA [Download Instructions](https://proofcentral.org/athena/1.4/) to properly set up SPASS in your operating system
 
-* Refer to [this PDF](https://proofcentral.org/book/Appendix_D.pdf) to learn more about using ATPs with ATHENA.
+* Refer to [this PDF](https://proofcentral.org/book/Appendix_D.pdf) to learn more about using ATPs with ATHENA
 
-* Once ATHENA and SPASS have been installed and set up, load `progress-proof.ath` to verify the proofs using ATHENA.
+* Once ATHENA and SPASS have been installed and set up, load `progress-proof.ath` to verify the proofs using ATHENA
 
-* The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA.
+* The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA
 
+<hr style="border:1px solid gray"> </hr>
+
+###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
 

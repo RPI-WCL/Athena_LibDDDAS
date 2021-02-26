@@ -7,18 +7,16 @@
 
 * `consensus` -- theory and proofs about consensus protocols
 
-* `network` -- theory and proofs about networks, relay protocols, etc
+* `nmac` -- theory and proofs about an NMAC-aware flight planning algorithm 
 
-* `nmac` -- theory and proofs about a NMAC-aware flight planning algorithm 
-
-* `math` -- theory and proofs about mathematical concepts like random variables, probability distributions, etc  
+* `math` -- theory and proofs about basic mathematical concepts like random variables, probability, distributions, etc  
 
 
 ##### Instructions:
 
-* [Download and install ATHENA](https://proofcentral.org/athena/1.4/) and place this directory in the `ATHENA_HOME` directory created during installation.
+* [Download and install ATHENA](https://proofcentral.org/athena/1.4/) and place this directory in the `ATHENA_HOME` directory created during installation
 
-* Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory.
+* Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory
 
 
 ##### ATHENA Resources:
@@ -29,8 +27,11 @@
 
 * [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
 
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017.
+* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
 
+<hr style="border:0.2px solid gray"> </hr>
+
+###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
 

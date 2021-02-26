@@ -25,12 +25,11 @@ module Random {
 
 	#-- < returns true iff a random variable X takes a value less than a real c 
 
-	declare <: [RandVar Real]-> Boolean
+	declare >: [RandVar Real]-> Boolean
 
 	#-- <= returns true iff a random variable X takes a value less than or equal to a real c 
 
 	declare <=: [RandVar Real]-> Boolean
-
 	#-- cdf returns the Probability Distribution Function of a random variable
 
 	declare cdf: [RandVar]-> CharFun.Dist
@@ -47,7 +46,7 @@ module Random {
 
 	declare ind: [RandVar RandVar]-> Boolean
 
-	#-- membership opertaor for RandVarSet 
+	#-- membership opertaor for RandVarSet
 
 	declare inRVS: [RandVarSet RandVar] -> Boolean 
 
@@ -79,8 +78,6 @@ module Random {
 
 	declare sum: [RandVar RandVar]-> RandVar
 
-
-
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
 	define [x y z] := [?x:RandVar ?y:RandVar ?z:RandVar]
@@ -110,9 +107,12 @@ module Random {
 	assert probability-RandVar<=c-COMP-RandVar>c :=
 	(forall z T .
 		(
-			(probability-RandVar<=c z T) 
+			((probability-RandVar<=c z T) 
 				=
-					(1.0 - (probability-RandVar>c z T)) 			
+					(1.0 - (probability-RandVar>c z T)))
+			& ((probability-RandVar>c z T) 
+				=
+					(1.0 - (probability-RandVar<=c z T))) 		 			
 		)
 	)
 
@@ -134,7 +134,7 @@ module Random {
 
 
 	#-- Axiom defining <= 
-	assert* <=-axiom := [(x <= T <==> x < T | x == T)]
+#	assert* <=-axiom := [(x <= T <==> x < T | x == T)]
 
 
 	#-- Axiom about the implication of minimum in a set of random variables
@@ -144,10 +144,10 @@ module Random {
 	assert minRandVarSet>c==>AllRandVars>c :=
 	(forall rvSet T .
 		(
-			((minRandVarSet rvSet) < T) 
+			((minRandVarSet rvSet) > T) 
 				==>
 				(forall x .
-					(inRVS rvSet x) ==> (x < T) 
+					(inRVS rvSet x) ==> (x > T) 
 				)
 		)
 	)
@@ -198,6 +198,7 @@ module Random {
 	)
 
 
+
 	#-- THEOREM-prob-minRandVarSet-<=c-and->c states that the probability that the 
 	#   minimum of a set of random variables takes a value at most c
 	#   is 1 - the probability that the min takes a value at least c 
@@ -214,10 +215,12 @@ module Random {
 	pick-any rvSet:RandVarSet
 	pick-any T:Real
 	let{
-		min-rvSet := (minRandVarSet rvSet)
+		min-rvSet := (minRandVarSet rvSet);
+		comp-rul := (!uspec (!uspec probability-RandVar<=c-COMP-RandVar>c min-rvSet) T);
+		<=COMP> := (!left-and comp-rul)
 	}
 	(!chain [ (probability-RandVar<=c min-rvSet T)
-			= (1.0 - (probability-RandVar>c min-rvSet T)) [probability-RandVar<=c-COMP-RandVar>c]
+			= (1.0 - (probability-RandVar>c min-rvSet T)) [<=COMP>]
 			]
 	)
 

@@ -1,6 +1,6 @@
 # MATH 
 
-##### This repository contains ATHENA theory and proofs about mathematical concepts like random variables, probability distributions, etc  
+##### This repository contains ATHENA theory and proofs about mathematical concepts like random variables, probability, distributions, etc  
 
 
 ##### Description:
@@ -13,7 +13,9 @@
 
 * `RealExt.ath` - Module, Reals 
 
-###### Note: This library is under development and many modules may be currently just stubs.
+<hr style="border:1px solid gray"> </hr>
+
+###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
 Copyright &copy; 2020 WCL

@@ -5,10 +5,13 @@
 
 ##### Instructions:
 
-* Once ATHENA has been installed and set up, load `proofs.ath` to verify the proofs using ATHENA.
+* Once ATHENA has been installed and set up, load `proofs.ath` to verify the proofs using ATHENA
 
-* The `OUTPUT_proofs` file contains preverified output of `proofs.ath` in ATHENA.
+* The `OUTPUT_proofs` file contains preverified output of `proofs.ath` in ATHENA
 
+<hr style="border:1px solid gray"> </hr>
+
+###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
 Copyright &copy; 2020 WCL
