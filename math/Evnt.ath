@@ -262,7 +262,7 @@ module Evnt {
 	(!right-and (!mp comp-rul is-complement))
 
 
-	#-- THEOREM-probability-MIN-<=-&-> states that 
+	#-- THEOREM-probability-MIN-<=-IID-RVS states that 
 	#   P(min[X1,X2,...] <= y) = 1 - P(Xi > y)^N
 
 	define THEOREM-probability-MIN-<=-IID-RVS :=
@@ -303,5 +303,41 @@ module Evnt {
 			 = (1.0 - (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSet) R)) (RealExt.lenRS (get-set-probs (consErvs > rvSet R))))) [cnnct-to-elmntHRS=probE]
 			 = (1.0 - (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSet) R)) (Random.lenRVS rvSet))) [cnnct-to-get-set-probs-len]
 		])	 
+
+
+
+	#-- THEOREM-probability-MIN-<=-IID-RVS-Gx states that 
+	#   P(min[X1,X2,...] <= y) = 1 - (1- G(X))^N
+
+	define THEOREM-probability-MIN-<=-IID-RVS-Gx :=
+	(forall rvSet R . 
+		(Random.iIdRvs rvSet)
+		==> 
+		(
+			(probE (consE <= (Random.minRVS rvSet) R)) 
+				= 
+					(1.0 - (RealExt.pow (1.0 - (Random.cdf (Random.rvSetIdElmnt rvSet) R))  (Random.lenRVS rvSet) ) )
+		)
+	)
+
+	conclude THEOREM-probability-MIN-<=-IID-RVS-Gx 
+	pick-any rvSet
+	pick-any R 
+	assume (Random.iIdRvs rvSet)
+	let{
+		rvSetIid := (Random.iIdRvs rvSet);
+		conn-to-MIN-<=-IID-RVS := (!uspec (!uspec THEOREM-probability-MIN-<=-IID-RVS rvSet) R);
+		remove-iff := (!mp conn-to-MIN-<=-IID-RVS rvSetIid);
+		conn-to-complement := (!uspec (!uspec comp-<=-&-> (Random.rvSetIdElmnt rvSet)) R);
+		conn-to-comp2way := (!uspec (!uspec comp-2-way (consE <= (Random.rvSetIdElmnt rvSet) R)) (consE > (Random.rvSetIdElmnt rvSet) R));
+		conn-to-comp-rul := (!left-and (!mp (!left-iff (!uspec (!uspec complement-rule (consE <= (Random.rvSetIdElmnt rvSet) R)) (consE > (Random.rvSetIdElmnt rvSet) R))) conn-to-complement));
+		conn-to-cdf-prob := (!uspec (!uspec cdf-prob-axiom (Random.rvSetIdElmnt rvSet)) R)
+	}
+	(!chain [ (probE (consE <= (Random.minRVS rvSet) R)) 
+			= (1.0 - (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSet) R)) (Random.lenRVS rvSet) ) ) [conn-to-MIN-<=-IID-RVS]
+			= (1.0 - (RealExt.pow (1.0 - (probE (consE <= (Random.rvSetIdElmnt rvSet) R)) ) (Random.lenRVS rvSet) ) ) [conn-to-comp-rul]
+			= (1.0 - (RealExt.pow (1.0 - (Random.cdf (Random.rvSetIdElmnt rvSet) R)) (Random.lenRVS rvSet) ) ) [conn-to-cdf-prob]
+			])
+
 
 }# end module
