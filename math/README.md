@@ -5,7 +5,9 @@
 
 ##### Description:
 
-* `CharFun.ath` - Module, Charecteristc Function
+* `CharFun.ath` - Module, Charecteristic Functions
+
+* `Evnt.ath` - Module, Events (sets of outcomes of an experiment)
 
 * `Prob.ath` - Module, Probability Theory
 
@@ -13,7 +15,6 @@
 
 * `RealExt.ath` - Module, Reals 
 
-<hr style="border:1px solid gray"> </hr>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

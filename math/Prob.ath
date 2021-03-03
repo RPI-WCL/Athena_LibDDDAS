@@ -18,7 +18,7 @@ module Prob {
 	declare integral-SND : [Real] -> Real
 
 	#-- A probabiliity function that takes in a normal distribution Z and a Real T, and returns the probability-Dist<=c that a random variable that lies in Z will be at most some real T. It returns zero if the distribution is not normal.   
-	#-- If need be, we can overload the probability-Dist<=c function according to different input cases
+	#  If need be, we can overload the probability-Dist<=c function according to different input cases
 
 	declare probability-Dist<=c : [CharFun.Dist Real]-> Real
 
@@ -36,6 +36,9 @@ module Prob {
 
 	#-------------------------  RELEVANT THEORY  -------------------------	
 
+
+	#-- Axiom defining Z-score for a given normal distribution
+
 	assert z-score-axioms :=
 	   let{
 	        mean := (CharFun.mean Z);
@@ -51,6 +54,7 @@ module Prob {
 
 	define [z-score-Z-not-normal z-score-result] := z-score-axioms
 
+	#-- Axiom probability that a distribution will take value <= c
 
 	assert probability-Dist<=c-axioms :=
 	   let{
@@ -67,7 +71,11 @@ module Prob {
 	define [probability-Dist<=c-ZNotNorm probability-Dist<=c-ZNorm] := probability-Dist<=c-axioms
 
 
-	#-- THEOREM-probability-Conv2NormDist<=c states that if two distributions X and Y are normal, then the probability that a random variable that lies in the convolution of X and Y will be at most some real T will be the integral of the SND upto the z score of T wrt the convolution of X and Y
+	#-- THEOREM-probability-Conv2NormDist<=c states that if two 
+	#   distributions X and Y are normal, then the probability that a 
+	#   random variable that lies in the convolution of X and Y will be 
+	#   at most some real T will be the integral of the SND upto the 
+	#   z score of T wrt the convolution of X and Y
 
 	define THEOREM-probability-Conv2NormDist<=c :=
 	(
@@ -91,5 +99,7 @@ module Prob {
 		txPlusyProbability := (!uspec (!uspec probability-Dist<=c-ZNorm t) (CharFun.convo x y) )
 	}
 	(!mp txPlusyProbability xPlusyNormal) 
+
+
 
 } # end module	

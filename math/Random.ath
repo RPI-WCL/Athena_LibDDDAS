@@ -14,25 +14,15 @@ module Random {
 
 	#-- set of all sets of random variables
 
-	structure RandVarSet := RandVar | (consRVS RandVarSet RandVar)
+	structure RandVarSet := emptyRVS | (consRVS RandVarSet RandVar)
 
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
-	#-- = returns true iff a random variable X takes a value equal to a real c 
+	#-- Cumulitive Distribution Function of a random variable X evaluated at a real x
+	#  Since it represents the probability of X <= x, it returns a Real
 
-	declare ==: [RandVar Real]-> Boolean
-
-	#-- < returns true iff a random variable X takes a value less than a real c 
-
-	declare >: [RandVar Real]-> Boolean
-
-	#-- <= returns true iff a random variable X takes a value less than or equal to a real c 
-
-	declare <=: [RandVar Real]-> Boolean
-	#-- cdf returns the Probability Distribution Function of a random variable
-
-	declare cdf: [RandVar]-> CharFun.Dist
+	declare cdf: [RandVar Real]-> Real	
 
 	#-- iDist returns True if two random variables are identically distributed
 
@@ -40,7 +30,7 @@ module Random {
 
 	#-- iID returns True for a collection of random variables if each random variable in the collection has the same probability distribution as the others and all are mutually independent.
 
-	declare iID: [RandVarSet]-> Boolean
+	declare iIdRvs: [RandVarSet]-> Boolean
 
 	#-- ind returns True if two random variables are independent
 
@@ -50,9 +40,13 @@ module Random {
 
 	declare inRVS: [RandVarSet RandVar] -> Boolean 
 
-	#-- minRandVarSet function takes a set of random varibles S and returns the minimum random Variable
+	#-- length for RandVarSet
 
-	declare minRandVarSet: [RandVarSet] -> RandVar		
+	declare lenRVS: [RandVarSet] -> Int 
+
+	#-- minRVS function takes a set of random varibles S and returns the minimum random Variable
+
+	declare minRVS: [RandVarSet] -> RandVar		
 
 	#-- pdf returns the Probability Distribution Function of a random variable
 
@@ -74,9 +68,22 @@ module Random {
 
 	declare rf: [CharFun.Dist]-> CharFun.Dist	
 
+	#-- All rvs in a given set of rvs are independent
+
+	declare rvSetInd: [RandVarSet] -> Boolean 
+
+	#-- All rvs in a given set of rvs are identically distributed
+
+	declare rvSetId: [RandVarSet] -> Boolean 	
+
+	#-- The element of an RandVarSet whose elements are all identical 
+
+	declare rvSetIdElmnt: [RandVarSet] -> RandVar 
+
 	#-- sum returns the sum of two random variables
 
 	declare sum: [RandVar RandVar]-> RandVar
+
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
@@ -88,6 +95,19 @@ module Random {
 
 
 	#-------------------------  RELEVANT THEORY  -------------------------	
+
+	#-- Axiom defining iID function
+
+	assert iIDRvs-axiom :=
+	(forall rvSet .
+		(iIdRvs rvSet) 
+			<==>
+				(
+					(rvSetId rvSet) 
+					& (rvSetInd rvSet)
+				)
+	)
+
 
 	#-- Axiom defining probability-RandVar<=c function
 
@@ -131,26 +151,6 @@ module Random {
 	)
 
 	assert sum-randVars
-
-
-	#-- Axiom defining <= 
-#	assert* <=-axiom := [(x <= T <==> x < T | x == T)]
-
-
-	#-- Axiom about the implication of minimum in a set of random variables
-	#  being greater than a given c
-	#  minRandVarSet>c==>AllRandVars>c : min(X1,X2,...,XN) > c ==> all Xi > c 
-
-	assert minRandVarSet>c==>AllRandVars>c :=
-	(forall rvSet T .
-		(
-			((minRandVarSet rvSet) > T) 
-				==>
-				(forall x .
-					(inRVS rvSet x) ==> (x > T) 
-				)
-		)
-	)
 
 
 	#-- THEOREM-probability-Sum2NormRandVars<=c states that the probability of 
@@ -199,23 +199,23 @@ module Random {
 
 
 
-	#-- THEOREM-prob-minRandVarSet-<=c-and->c states that the probability that the 
+	#-- THEOREM-prob-minRVS-<=c-and->c states that the probability that the 
 	#   minimum of a set of random variables takes a value at most c
 	#   is 1 - the probability that the min takes a value at least c 
 
-	define THEOREM-prob-minRandVarSet-<=c-COMP->c :=
+	define THEOREM-prob-minRVS-<=c-COMP->c :=
 	(forall rvSet T .
-		( (probability-RandVar<=c (minRandVarSet rvSet) T)
+		( (probability-RandVar<=c (minRVS rvSet) T)
 			=
-			(1.0 - (probability-RandVar>c (minRandVarSet rvSet) T))
+			(1.0 - (probability-RandVar>c (minRVS rvSet) T))
 		)
 	)
 
-	conclude THEOREM-prob-minRandVarSet-<=c-COMP->c 
+	conclude THEOREM-prob-minRVS-<=c-COMP->c 
 	pick-any rvSet:RandVarSet
 	pick-any T:Real
 	let{
-		min-rvSet := (minRandVarSet rvSet);
+		min-rvSet := (minRVS rvSet);
 		comp-rul := (!uspec (!uspec probability-RandVar<=c-COMP-RandVar>c min-rvSet) T);
 		<=COMP> := (!left-and comp-rul)
 	}
