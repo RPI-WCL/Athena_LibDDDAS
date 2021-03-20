@@ -1,0 +1,42 @@
+#****************************************************************************
+# Helpful reusable methods
+
+#****************************************************************************
+
+extend-module Synod {
+
+  define (make-cond-def-1 neg) := 
+    method (premise) 
+      match premise {
+        (p ==> q) => let {p' := (neg p);
+                          goal := (p' | q)}
+                       (!by-contradiction goal
+                          assume -goal := (~ goal)
+                            let {_ := (!dm' -goal);
+                                 p := try { (!dn (~ ~ p)) | (!claim p) }}
+                              (!absurd (!mp premise p) 
+                                       (~ q)))
+      }
+
+  define (make-cond-def-2 neg) := 
+    method (premise)
+      match premise {
+         (p | q) => assume p' := (neg p)
+                      (!cases premise
+                              assume p 
+                                (!from-complements q p p')
+                              assume q
+                                (!claim q))
+      }
+
+  define (make-cond-def neg) :=
+    method (premise) 
+       match premise {
+         (_ ==> _) => (!(make-cond-def-1 neg) premise)
+       | (_ | _)   => (!(make-cond-def-2 neg) premise)
+       }
+
+  define cond-def := (make-cond-def complement)	
+
+
+}# close module Synod 

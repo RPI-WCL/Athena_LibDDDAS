@@ -68,11 +68,19 @@ extend-module Synod{
 			        & (ready-to (rho T i) x (receive x m)))  
 		            	==>
 		            	(
-		            		   (exists j . (i N.<= j) 
-		            		   				& (= (rho T j) (then (rho T i) (receive x m))) )
-		            	    | ~(exists j . (i N.< j) 
-		            	    				& (inMSet m (mu (config (rho T j)))) 
-		            	    				& (ready-to (rho T j) x (receive x m))) 
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )
+		            	    | (exists k . (i N.< k)
+		            	    			& (forall j .
+		            	    			   (k N.<= j)
+		            	    			     ==>
+		            	    			     	(~(
+				            	    			   (inMSet m (mu (config (rho T j)))) 
+				            	    			 & (ready-to (rho T j) x (receive x m))		            	    			     		
+		            	    			     	 ))
+		            	    			  )
+
+		            	       )		
 		            	) 
              )
 
@@ -82,10 +90,16 @@ extend-module Synod{
 			        (ready-to (rho T i) x (send x m))  
 		            	==>
 		            	(
-		            		   (exists j . (i N.<= j) 
-		            		   				& (= (rho T j) (then (rho T i) (send x m))) )
-		            	    | ~(exists j . (i N.< j) 
-		            	    				& (ready-to (rho T j) x (send x m))) 
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+		            	    | (exists k . (i N.< k)
+		            	    			& (forall j .
+		            	    			   (k N.<= j)
+		            	    			     ==>
+		            	    			     	(~(ready-to (rho T j) x (send x m)))
+		            	    			  )
+
+		            	       )		
 		            	) 
              )
 
@@ -112,12 +126,13 @@ extend-module Synod{
 							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
 							  )
 
-							| (exists k . (   (i N.< k) 
-		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
+							| (exists k . (   (i N.<= k) 
+		            	    				& (= (rho T (S k)) (then (rho T k) (receive a (consM p a typ b v))))
 		            	    			  )
 							  )
 						)	
 			)
+
 
 
 

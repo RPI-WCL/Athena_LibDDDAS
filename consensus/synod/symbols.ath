@@ -69,7 +69,7 @@ module Synod{
 	declare has-promises : (ALS, Ballot, Quorum) [ALS Ballot Quorum]-> Boolean # returns true if it has received 1b from a quorum
 	declare decide-value : (ALS) [ALS]-> Value # Selects the value to be proposed depending on values sent by quorum. Otherwise returns some new value.
 	declare has-votes : (ALS, Ballot, Quorum) [ALS Ballot Quorum]-> Boolean #returns true if it has received 2b from a quorum
-	declare sent2A : (ALS, Quorum, Ballot, Value) [ALS Ballot Value Quorum N N]-> Boolean #proposer has sent 2A mssages to a quorum
+	declare sent2A : (ALS, Quorum, Ballot, Value) [ALS Ballot Value Quorum N]-> Boolean #proposer has sent 2A mssages to a quorum
 
 	#-- Set of actors 
 	datatype ActorSet := nilASet 
@@ -96,18 +96,18 @@ module Synod{
 
 
 	#-- Datatype of transition paths borrowed from Musser
-	datatype (TP Id LS) := Initial 
-	                     | (then (TP Id LS) Step)
+	datatype TP := Initial 
+	                     | (then TP Step)
 
 
-	declare config : (Id, LS) [(TP Id LS)] -> Configuration # last configuration in a given path
-	declare ready-to : (Id, LS) [(TP Id LS) Actor Step] -> Boolean # if actor is ready to perform some step in the last configuration in a given path
-	declare available : (Id, LS) [(TP Id LS) Actor] -> Boolean # if actor is available in last configuration in a given path 
+	declare config :  [TP ] -> Configuration # last configuration in a given path
+	declare ready-to : [TP  Actor Step] -> Boolean # if actor is ready to perform some step in the last configuration in a given path
+	declare available :  [TP  Actor] -> Boolean # if actor is available in last configuration in a given path 
 
 
 	#-- The following creates a sub-transition path upto the given index
 	#-- used for accessing indexed positions in transition paths
-	declare rho : (Id, LS, N) [(TP Id LS) N] -> (TP Id LS)
+	declare rho :  [TP  N] -> TP
 
 
 	#-- Predicate that checks if a proposer has obtained 
@@ -120,7 +120,7 @@ module Synod{
 	declare 1a, 1b, 2a, 2b, failT : Type     
 
 	# -- Set of variables used throughout module Synod
-	define [p a x Q b bH b2 b3 v v2 m m2 ms1 ms2 c s T i j k l y z t p2 a2 typ sender' recipient'] :=
+	define [p a x Q b bH b2 b3 v v2 v3 m m2 ms1 ms2 c s T i j k l y z w e f t u p2 a2 typ sender' recipient'] :=
 																					 	        [   ?p:Actor 
 																					 	        	?a:Actor 
 																					 	        	?x:Actor 
@@ -130,21 +130,26 @@ module Synod{
 																					 	        	?b2:Ballot
 																					 	        	?b3:Ballot
 																					   	        	?v:Value
-																					   	        	?v2:Value 
+																					   	        	?v2:Value
+																					   	        	?v3:Value 
 																					   	        	?m:Message 
 																					   	        	?m2:Message
 																					   	        	?ms1:MessageSet 
 																					   	        	?ms2:MessageSet 
 																					   	        	?c:Configuration 
 																					   	        	?s:Step
-																					   	        	?T:(TP 'Id 'Ls) 
+																					   	        	?T:TP 
 																					   	        	?i:N 
 																					   	        	?j:N 
 																					   	        	?k:N
 																					   	        	?l:N
 																					   	        	?y:N
 																					   	        	?z:N
+																					   	        	?w:N
+																					   	        	?e:N
+																					   	        	?f:N
 																					   	        	?t:N
+																					   	        	?u:N
 																					   	        	?p2:Actor
 																					   	        	?a2:Actor
 																					   	        	?typ:Type

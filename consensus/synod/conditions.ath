@@ -126,10 +126,16 @@ extend-module Synod{
 		        & (ready-to (rho T i) x (receive x m)))  
 	            	==>
 	            	(
-	            		   (= (rho T (S i)) (then (rho T i) (receive x m))) 
-	            	    |  (exists j . (i N.< j) 
-	            	    				& (inMSet m (mu (config (rho T j)))) 
-	            	    				& (ready-to (rho T j) x (receive x m))) 
+	            		  (exists j . (i N.<= j) 
+	            		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )                  
+	            	    |  (forall k .  (i N.< k)
+	            	    				==>
+	            	    				(exists j .
+		            	    				  (k N.<= j) 
+		            	    				& (inMSet m (mu (config (rho T j)))) 
+		            	    				& (ready-to (rho T j) x (receive x m))
+		            	    			)
+	            	    	)			              
 	            	) 
     		)
      	)	
@@ -141,9 +147,15 @@ extend-module Synod{
 			        (ready-to (rho T i) x (send x m))  
 		            	==>
 		            	(
-		            		   (= (rho T (S i)) (then (rho T i) (send x m))) 
-		            	    |  (exists j . (i N.< j) 
-		            	    				& (ready-to (rho T j) x (send x m))) 
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+		            	    |  (forall k .  (i N.< k)
+		            	    				==>
+		            	    				(exists j .
+			            	    				  (k N.<= j) 
+			            	    				& (ready-to (rho T j) x (send x m))
+			            	    			)
+		            	    	) 
 		            	) 
 	            )	
         )						   	

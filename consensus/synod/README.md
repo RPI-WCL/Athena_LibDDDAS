@@ -17,7 +17,6 @@
 
 * The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA
 
-<hr style="border:1px solid gray"> </hr>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

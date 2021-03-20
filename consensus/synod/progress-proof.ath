@@ -10,6 +10,7 @@ load "symbols.ath"
 load "system.ath"
 load "behavior.ath"
 load "conditions.ath"
+load "methods.ath"
 
 
 
@@ -30,7 +31,6 @@ extend-module Synod{
 	assert synod-learn-def-axiom		
 	assert nonfaulty-def-axioms
 	assert P1+P2-True-beta-def-axioms 
-
 
 
 	#SANITY CHECK: There is no contradiction in the assertions -- FAILS
@@ -73,33 +73,192 @@ extend-module Synod{
 				        & (ready-to (rho T i) x (receive x m)))  
 			            	==>
 				            	(exists j . (i N.<= j) 
-			            	    			& (= (rho T j) (then (rho T i) (receive x m))) ) 						
+		            	    				& (= (rho T (S j)) (then (rho T j) (receive x m))) ) 						
 					)
 
              )	
 
+	define IOErcv-FAIRrcv-rd-absurd :=
+		(forall x m T i .
+	       (forall k .  (i N.< k)
+	    				==>
+	    				(exists j .
+    	    				  (k N.<= j) 
+    	    				& (inMSet m (mu (config (rho T j)))) 
+    	    				& (ready-to (rho T j) x (receive x m))
+    	    			)
+	    	)
+    	    	<==>
+    	     (~ (exists k . (i N.< k)
+    	    			 & (forall j .
+    	    			   (k N.<= j)
+    	    			     ==>
+    	    			     	(~(
+            	    			   (inMSet m (mu (config (rho T j)))) 
+            	    			 & (ready-to (rho T j) x (receive x m))		            	    			     		
+    	    			     	 ))
+    	    			   )
 
-	define IOE->Fair-Rcv-Theorem-step1 :=
+    	       ))   		
+     	)
+
+	(!prove IOErcv-FAIRrcv-rd-absurd [])
+
+	define IOE-FAIRNESS-LD-same-rcv :=
+	(forall x m T i .
+		 (= (rho T (S i)) (then (rho T i) (receive x m))) 
+		 ==> 
+		  (exists j . (i N.<= j) 
+		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )
+	)
+
+	conclude IOE-FAIRNESS-LD-same-rcv
+    pick-any x:Actor
+    pick-any m:Message
+    pick-any T:TP 
+    pick-any i:N 	
+    assume (= (rho T (S i)) (then (rho T i) (receive x m)))
+    let{
+		ld := (= (rho T (S i)) (then (rho T i) (receive x m)));
+		rd := (exists j . (i N.<= j) 
+		   	& (= (rho T (S j)) (then (rho T j) (receive x m))) );
+		i<=Si := (!uspec N.Less=.reflexive i);
+		_ := (!both i<=Si ld)
+    }	
+    (!egen rd i)
+
+	define nonfaulty->IOE-rcv-transformed :=
+		(forall x  m T i .
+			(
+		        (  (nonfaulty x)
+		         & (inMSet m (mu (config (rho T i)))) 
+		         & (ready-to (rho T i) x (receive x m)))  
+	            	==>
+	            	(
+						  (exists j . (i N.<= j) 
+						   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )                
+	            	    |  (forall k .  (i N.< k)
+	            	    				==>
+	            	    				(exists j .
+		            	    				  (k N.<= j) 
+		            	    				& (inMSet m (mu (config (rho T j)))) 
+		            	    				& (ready-to (rho T j) x (receive x m))
+		            	    			)
+	            	    	)			              
+	            	) 
+    		)
+     	)
+
+	(!prove nonfaulty->IOE-rcv-transformed [nonfaulty->IOE-rcv])	
+
+
+    conclude IOE->Fair-Rcv-Theorem
+    pick-any x:Actor
+    pick-any m:Message
+    pick-any T:TP 
+    pick-any i:N 	
+    assume (nonfaulty x)
+    assume ((inMSet m (mu (config (rho T i)))) & (ready-to (rho T i) x (receive x m)))
+    let{
+     	NFx := (nonfaulty x);
+    	inRT := ((inMSet m (mu (config (rho T i)))) & (ready-to (rho T i) x (receive x m)));
+     	IOE-axiom := (!uspec (!uspec (!uspec (!uspec nonfaulty->IOE-rcv-transformed x) m) T) i);
+     	IOE-disjunction := (!mp IOE-axiom (!both NFx inRT));
+     	FAIR-axiom := (!uspec (!uspec (!uspec (!uspec fair-rcv x) m) T) i);
+     	FAIR-disjunction :=  (!mp FAIR-axiom inRT);
+		IOE-rd := (forall k .  (i N.< k)
+						==>
+						(exists j .
+		    				  (k N.<= j) 
+		    				& (inMSet m (mu (config (rho T j)))) 
+		    				& (ready-to (rho T j) x (receive x m))
+		    			)
+			      );
+        FAIR-rd:=   (exists k . (i N.< k)
+        	    			& (forall j .
+        	    			   (k N.<= j)
+        	    			     ==>
+        	    			     	(~(
+	            	    			   (inMSet m (mu (config (rho T j)))) 
+	            	    			 & (ready-to (rho T j) x (receive x m))		            	    			     		
+        	    			     	 ))
+        	    			  )
+
+        	        )	
+    }
+    (!by-contradiction (exists j . (i N.<= j) & (= (rho T (S j)) (then (rho T j) (receive x m))) )
+    	assume (~ (exists j . (i N.<= j) & (= (rho T (S j)) (then (rho T j) (receive x m))) ))
+    		let{ 
+    			assump := (~ (exists j . (i N.<= j) & (= (rho T (S j)) (then (rho T j) (receive x m))) ));
+    			IOE-cond-def := (!cond-def IOE-disjunction);
+    			IOE-rd-true := (!mp IOE-cond-def assump);
+    			FAIR-cond-def := (!cond-def FAIR-disjunction);
+    			FAIR-rd-true := (!mp FAIR-cond-def assump);
+    			IOE-rd-contra-FAIR-rd := (!uspec (!uspec (!uspec (!uspec IOErcv-FAIRrcv-rd-absurd x) m) T) i);
+    			FAIR-rd-false := (!mp (!left-iff IOE-rd-contra-FAIR-rd) IOE-rd-true)
+    		}	
+    (!absurd FAIR-rd-true FAIR-rd-false) 		
+    )
+    # Alternative
+	# (!prove IOE->Fair-Rcv-Theorem [nonfaulty->IOE-rcv-transformed fair-rcv IOErcv-FAIRrcv-rd-absurd])	
+
+
+
+	define Fair-Rcv-Causes-Theorem :=
 			(forall x m T i .
 				(nonfaulty x) 
 					==>
 					(
 				        ((inMSet m (mu (config (rho T i)))) 
 				        & (ready-to (rho T i) x (receive x m)))  
-			            	==>  	
-					        	  (= (rho T (S i)) (then (rho T i) (receive x m)))
-			            	    | (exists j . (i N.<= j) 
-		            	    				& (= (rho T j) (then (rho T i) (receive x m))) ) 
-					)            	 
+			            	==>
+				            	(exists j . (i N.<= j) 
+		            	    				& (inMSet m (amu (als (config (rho T j)) x))))  						
+					)
+
              )
 
-	(!prove IOE->Fair-Rcv-Theorem-step1 [nonfaulty-def-axioms model-fair-axioms])
+	define Fair-Rcv-Causes-Theorem-step1 :=
+			(forall x m T i .
+				(nonfaulty x) 
+					==>
+					(
+				        ((inMSet m (mu (config (rho T i)))) 
+				        & (ready-to (rho T i) x (receive x m)))  
+			            	==>
+				            	(exists j k . (i N.<= j)
+				            				& (j N.<= k) 
+				            				& (= (rho T k) (then (rho T j) (receive x m)))  						
+		            	    				& (= (rho T (S j)) (then (rho T j) (receive x m)))) 						
+					)
+             )	
 
-	(!prove IOE->Fair-Rcv-Theorem [IOE->Fair-Rcv-Theorem-step1 N.Less=.S3])
+    (!prove Fair-Rcv-Causes-Theorem-step1 [IOE->Fair-Rcv-Theorem N.Less=.S3])
+
+	define Fair-Rcv-Causes-Theorem-step2 :=
+			(forall x m T i .
+				(nonfaulty x) 
+					==>
+					(
+				        ((inMSet m (mu (config (rho T i)))) 
+				        & (ready-to (rho T i) x (receive x m)))  
+			            	==>
+				            	(exists j k . (i N.<= j)
+				            				& (j N.<= k) 
+				            				& (= (rho T k) (then (rho T j) (receive x m)))  						
+		            	    				& (= (rho T (S j)) (then (rho T j) (receive x m)))
+		            	    				& (inMSet m (amu (als (config (rho T k)) x)))) 						
+					)
+             )	
+
+    (!prove Fair-Rcv-Causes-Theorem-step2 [Fair-Rcv-Causes-Theorem-step1 model-step-axioms])
+
+
+    (!prove Fair-Rcv-Causes-Theorem [Fair-Rcv-Causes-Theorem-step2 N.Less=.transitive])
 
 #----------------------------------------------------------------------------
 	#-- Fair-send: If at any index in a transition path, a send transition is enabled
-	#-- for an actor that is IOE,then it eventually happens at some index in the same path
+	#-- for an actor that is IOE,then it eventually happens at some index in the same path     
 	define IOE->Fair-Snd-Theorem :=
 			(forall x m T i .
 				(nonfaulty x) 
@@ -108,31 +267,179 @@ extend-module Synod{
 				        ((ready-to (rho T i) x (send x m)))  
 			            	==>
 				            	(exists j . (i N.<= j) 
-			            	    			& (= (rho T j) (then (rho T i) (send x m))) ) 
-				    )        	
+		            	    				& (= (rho T (S j)) (then (rho T j) (send x m))) ) 						
+					)
+
              )	
 
+	define IOEsnd-FAIRsnd-rd-absurd :=
+		(forall x m T i .
+	       (forall k .  (i N.< k)
+	    				==>
+	    				(exists j .
+    	    				  (k N.<= j) 
+    	    				& (ready-to (rho T j) x (send x m))
+    	    			)
+	    	)
+    	    	<==>
+    	     (~ (exists k . (i N.< k)
+    	    			 & (forall j .
+    	    			   (k N.<= j)
+    	    			     ==>
+    	    			     	(~((ready-to (rho T j) x (send x m))))
+    	    			   )
 
-	define IOE->Fair-Snd-Theorem-step1 :=
+    	       ))   		
+     	)
+
+	(!prove IOEsnd-FAIRsnd-rd-absurd [])
+
+	define IOE-FAIRNESS-LD-same-snd :=
+	(forall x m T i .
+		 (= (rho T (S i)) (then (rho T i) (send x m))) 
+		 ==> 
+		  (exists j . (i N.<= j) 
+		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+	)
+
+	conclude IOE-FAIRNESS-LD-same-snd
+    pick-any x:Actor
+    pick-any m:Message
+    pick-any T:TP 
+    pick-any i:N 	
+    assume (= (rho T (S i)) (then (rho T i) (send x m)))
+    let{
+		ld := (= (rho T (S i)) (then (rho T i) (send x m)));
+		rd := (exists j . (i N.<= j) 
+		   	& (= (rho T (S j)) (then (rho T j) (send x m))) );
+		i<=Si := (!uspec N.Less=.reflexive i);
+		_ := (!both i<=Si ld)
+    }	
+    (!egen rd i)
+
+	define nonfaulty->IOE-snd-transformed :=
+		(forall x  m T i .
+			(
+		        (  (nonfaulty x)
+		         & (ready-to (rho T i) x (send x m)))  
+	            	==>
+	            	(
+						  (exists j . (i N.<= j) 
+						   			& (= (rho T (S j)) (then (rho T j) (send x m))) )                
+	            	    |  (forall k .  (i N.< k)
+	            	    				==>
+	            	    				(exists j .
+		            	    				  (k N.<= j) 
+		            	    				& (ready-to (rho T j) x (send x m))
+		            	    			)
+	            	    	)			              
+	            	) 
+    		)
+     	)
+
+	(!prove nonfaulty->IOE-snd-transformed [nonfaulty->IOE-snd])	
+
+    conclude IOE->Fair-Snd-Theorem
+    pick-any x:Actor
+    pick-any m:Message
+    pick-any T:TP 
+    pick-any i:N 	
+    assume (nonfaulty x)
+    assume (ready-to (rho T i) x (send x m))
+    let{
+     	NFx := (nonfaulty x);
+    	inRT := (ready-to (rho T i) x (send x m));
+     	IOE-axiom := (!uspec (!uspec (!uspec (!uspec nonfaulty->IOE-snd-transformed x) m) T) i);
+     	IOE-disjunction := (!mp IOE-axiom (!both NFx inRT));
+     	FAIR-axiom := (!uspec (!uspec (!uspec (!uspec fair-snd x) m) T) i);
+     	FAIR-disjunction :=  (!mp FAIR-axiom inRT);
+		IOE-rd := (forall k . (i N.< k)
+						==>
+						(exists j .
+		    				  (k N.<= j) 
+		    				& (ready-to (rho T j) x (send x m))
+		    			)
+			      );
+        FAIR-rd:=   (exists k . (i N.< k)
+        	    			& (forall j .
+        	    			   (k N.<= j)
+        	    			     ==>
+        	    			     	(~((ready-to (rho T j) x (send x m))))
+        	    			  )
+
+        	        )	
+    }
+    (!by-contradiction (exists j . (i N.<= j) & (= (rho T (S j)) (then (rho T j) (send x m))) )
+    	assume (~ (exists j . (i N.<= j) & (= (rho T (S j)) (then (rho T j) (send x m))) ))
+    		let{ 
+    			assump := (~ (exists j . (i N.<= j) & (= (rho T (S j)) (then (rho T j) (send x m))) ));
+    			IOE-cond-def := (!cond-def IOE-disjunction);
+    			IOE-rd-true := (!mp IOE-cond-def assump);
+    			FAIR-cond-def := (!cond-def FAIR-disjunction);
+    			FAIR-rd-true := (!mp FAIR-cond-def assump);
+    			IOE-rd-contra-FAIR-rd := (!uspec (!uspec (!uspec (!uspec IOEsnd-FAIRsnd-rd-absurd x) m) T) i);
+    			FAIR-rd-false := (!mp (!left-iff IOE-rd-contra-FAIR-rd) IOE-rd-true)
+    		}	
+    (!absurd FAIR-rd-true FAIR-rd-false) 		
+    )
+
+	define Fair-Snd-Causes-Theorem :=
 			(forall x m T i .
 				(nonfaulty x) 
 					==>
 					(
-				        ( (ready-to (rho T i) x (send x m)))  
-			            	==>  	
-					        	  (= (rho T (S i)) (then (rho T i) (send x m)))
-			            	    | (exists j . (i N.<= j) 
-		            	    				& (= (rho T j) (then (rho T i) (send x m))) ) 
-	    			)        	 
+				        ((ready-to (rho T i) x (send x m)))  
+			            	==>
+				            	(exists j . (i N.<= j) 
+		            	    				& (inMSet m (mu (config (rho T j))) )
+								)  						
+					)
+
              )
 
-	(!prove IOE->Fair-Snd-Theorem-step1 [nonfaulty-def-axioms model-fair-axioms])
+	define Fair-Snd-Causes-Theorem-step1 :=
+			(forall x m T i .
+				(nonfaulty x) 
+					==>
+					(
+				        ((ready-to (rho T i) x (send x m)))  
+			            	==>
+				            	(exists j k . (i N.<= j)
+				            				& (j N.<= k) 
+				            				& (= (rho T k) (then (rho T j) (send x m)))  						
+		            	    				& (= (rho T (S j)) (then (rho T j) (send x m)))) 						
+					)
+             )	
 
-	(!prove IOE->Fair-Snd-Theorem [IOE->Fair-Snd-Theorem-step1 N.Less=.S3]) 
+    (!prove Fair-Snd-Causes-Theorem-step1 [IOE->Fair-Snd-Theorem N.Less=.S3])
+
+	define Fair-Snd-Causes-Theorem-step2 :=
+			(forall x m T i .
+				(nonfaulty x) 
+					==>
+					(
+				        ((ready-to (rho T i) x (send x m)))  
+			            	==>
+				            	(exists j k . (i N.<= j)
+				            				& (j N.<= k) 
+				            				& (= (rho T k) (then (rho T j) (send x m)))  						
+		            	    				& (= (rho T (S j)) (then (rho T j) (send x m)))
+		            	    				& (inMSet m (mu (config (rho T k))) )
+) 						
+					)
+             )	
+
+    (!prove Fair-Snd-Causes-Theorem-step2 [Fair-Snd-Causes-Theorem-step1 model-step-axioms])
+
+
+    (!prove Fair-Snd-Causes-Theorem [Fair-Snd-Causes-Theorem-step2 N.Less=.transitive])
+
+
+
 #----------------------------------------------------------------------------
 #-- Message persistance proofs for different types of Synod messages
 
-
+#-------- Multiset
 	# Messages sent by agents in a good set persist until received
 	define nonfaulty-msg-persists-until-read :=
 			(forall T i a p typ b v .
@@ -148,14 +455,118 @@ extend-module Synod{
 							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
 							  )
 
-							| (exists k . (   (i N.< k) 
-		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a typ b v))))
+							| (exists k . (   (i N.<= k) 
+		            	    				& (= (rho T (S k)) (then (rho T k) (receive a (consM p a typ b v))))
 		            	    			  )
 							  )
 						)	
 			)
 
     (!prove nonfaulty-msg-persists-until-read [msg-persists-until-read N.Less=.Implied-by-<])
+
+
+	define nonfaulty-msg-persists-until-read-causes :=
+			(forall T i a p typ b v .
+				(
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))	
+				  & (nonfaulty p)		
+			    )
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k . (   (i N.<= k) 
+		            	    				& (inMSet (consM p a typ b v) (amu (als (config (rho T k)) a)))
+		            	    			  )
+							  )
+						)	
+			)
+
+	define nonfaulty-msg-persists-until-read-causes-step1 :=
+			(forall T i a p typ b v .
+				(
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))	
+				  & (nonfaulty p)		
+			    )
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k  u . (   (i N.<= k) 
+		            	    				& (= (rho T (S k)) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    				& (k N.<= u)
+		            	    				& (= (rho T u) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    			  )
+							  )
+						)	
+			)
+
+    (!prove nonfaulty-msg-persists-until-read-causes-step1 [nonfaulty-msg-persists-until-read N.Less=.S3])    
+
+	define nonfaulty-msg-persists-until-read-causes-step2 :=
+			(forall T i a p typ b v .
+				(
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))	
+				  & (nonfaulty p)		
+			    )
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k  u . (   (i N.<= k) 
+		            	    				& (= (rho T (S k)) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    				& (k N.<= u)
+		            	    				& (= (rho T u) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    				& (inMSet (consM p a typ b v) (amu (als (config (rho T u)) a)))
+		            	    			  )
+							  )
+						)	
+			)
+
+    (!prove nonfaulty-msg-persists-until-read-causes-step2 [nonfaulty-msg-persists-until-read-causes-step1 model-step-axioms])
+
+
+	define nonfaulty-msg-persists-until-read-causes-step3 :=
+			(forall T i a p typ b v .
+				(
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))	
+				  & (nonfaulty p)		
+			    )
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k  u . (   (i N.<= k) 
+		            	    				& (= (rho T (S k)) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    				& (k N.<= u)
+		            	    				& (i N.<= u)
+		            	    				& (= (rho T u) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    				& (inMSet (consM p a typ b v) (amu (als (config (rho T u)) a)))
+		            	    			  )
+							  )
+						)	
+			)
+
+    (!prove nonfaulty-msg-persists-until-read-causes-step3 [nonfaulty-msg-persists-until-read-causes-step2 N.Less=.transitive])
+
+
+    (!prove nonfaulty-msg-persists-until-read-causes [nonfaulty-msg-persists-until-read-causes-step3])
 
 
 	define 1a-model-msg-persists-until-read-axiom-lemma :=
@@ -169,18 +580,17 @@ extend-module Synod{
 							  ( (i N.<= j) 
 							  		==> 
 							  			(inMSet (consM p a 1a b nilV) (mu (config (rho T j)))) )
-
 							| (exists k . (   (i N.<= k) 
-		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a 1a b nilV))))
+		            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 		            	    			  )
-							  )
+							  )							
 						)	
 
 			)
 
 		
 	
-	(!prove 1a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])		
+	(!prove 1a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read-causes  N.Less=.Implied-by-<])		
 
 
 	define 1b-model-msg-persists-until-read-axiom-lemma :=
@@ -194,16 +604,17 @@ extend-module Synod{
 							  ( (i N.<= j) 
 							  		==> 
 							  			(inMSet (consM a p 1b b v) (mu (config (rho T j)))) )
-
-							| (exists k .   (i N.<= k) 
-		            	    			  & (= (rho T k) (then (rho T i) (receive p (consM a p 1b b v))))
+							| (exists k . (   (i N.<= k) 
+		            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T k)) p)))
+		            	    			  )
 							  )
+
 						)	
 
 			)
 
 	
-	(!prove 1b-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])		
+	(!prove 1b-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read-causes  N.Less=.Implied-by-<])		
 
 
 	define 2a-model-msg-persists-until-read-axiom-lemma :=
@@ -217,16 +628,17 @@ extend-module Synod{
 							  ( (i N.<= j) 
 							  		==> 
 							  			(inMSet (consM p a 2a b v) (mu (config (rho T j)))) )
-
 							| (exists k . (   (i N.<= k) 
-		            	    				& (= (rho T k) (then (rho T i) (receive a (consM p a 2a b v))))
+		            	    				& (inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a)))
 		            	    			  )
+
 							  )
+
 						)	
 
 			)
 
-	(!prove 2a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])
+	(!prove 2a-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read-causes  N.Less=.Implied-by-<])
 
 	define 2b-model-msg-persists-until-read-axiom-lemma :=
 			(forall T i j p a b v .
@@ -239,15 +651,15 @@ extend-module Synod{
 							  ( (i N.<= j) 
 							  		==> 
 							  			(inMSet (consM a p 2b b v) (mu (config (rho T j)))) )
-
-							| (exists k .   (i N.<= k) 
-		            	    			  & (= (rho T k) (then (rho T i) (receive p (consM a p 2b b v))))
-							  )
+							| (exists k . (   (i N.<= k) 
+		            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T k)) p)))
+		            	    			  )
+		            	      )			  							
 						)	
 
 			)
 
-	(!prove 2b-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read N.Less=.Implied-by-<])			
+	(!prove 2b-model-msg-persists-until-read-axiom-lemma [ nonfaulty-msg-persists-until-read-causes N.Less=.Implied-by-<])			
 
 	define synod-msg-persistance-axioms := [1a-model-msg-persists-until-read-axiom-lemma 
 							  				1b-model-msg-persists-until-read-axiom-lemma
@@ -255,8 +667,137 @@ extend-module Synod{
 							  				2b-model-msg-persists-until-read-axiom-lemma 
 							  				]
 
+#-------- Local unresponded set
+	define persistent-unresponded-local-2a-msgs-causes :=
+	(forall T i a p b v .
+		(
+		 (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k . 
+							(i N.<= k)
+							& (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 
+					  )
+		)
+    )
+
+	define persistent-unresponded-local-2a-msgs-causes-step1 :=
+	(forall T i a p b v .
+		(
+		 (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k u . 
+							(i N.<= k)
+							& (= (rho T (S k)) (then (rho T k) (send a (consM a p 2b b v))))
+							& (k N.<= u) 
+							& (= (rho T u) (then (rho T k) (send a (consM a p 2b b v))))
+					  )
+		)
+    )
+
+    (!prove persistent-unresponded-local-2a-msgs-causes-step1 [persistent-unresponded-local-2a-msgs N.Less=.S3])
+
+
+	define persistent-unresponded-local-2a-msgs-causes-step2 :=
+	(forall T i a p b v .
+		(
+		 (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k u . 
+							(i N.<= k)
+							& (= (rho T (S k)) (then (rho T k) (send a (consM a p 2b b v))))
+							& (k N.<= u)
+							& (i N.<= u) 
+							& (= (rho T u) (then (rho T k) (send a (consM a p 2b b v))))
+							& (inMSet (consM a p 2b b v) (mu (config (rho T u))) )
+					  )
+		)
+    )
+
+    (!prove persistent-unresponded-local-2a-msgs-causes-step2 [persistent-unresponded-local-2a-msgs-causes-step1 N.Less=.transitive model-step-axioms])
    
+    (!prove persistent-unresponded-local-2a-msgs-causes [persistent-unresponded-local-2a-msgs-causes-step2])
+
+
+	define persistent-unresponded-local-1a-msgs-causes :=
+	(forall T i a p b .
+		(
+		 (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k v . 
+							(i N.<= k)
+							& (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
+					  )
+		)
+    )
+
+	define persistent-unresponded-local-1a-msgs-causes-step1 :=
+	(forall T i a p b .
+		(
+		 (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k u . 
+							(i N.<= k)
+							& (= (rho T (S k)) (then (rho T k) (send a (consM a p 1b b (value (als (config (rho T k)) a))))))
+							& (k N.<= u) 
+							& (= (rho T u) (then (rho T k) (send a (consM a p 1b b (value (als (config (rho T k)) a))))))
+					  )
+		)
+    )
+
+    (!prove persistent-unresponded-local-1a-msgs-causes-step1 [persistent-unresponded-local-1a-msgs N.Less=.S3])
+
+
+	define persistent-unresponded-local-1a-msgs-causes-step2 :=
+	(forall T i a p b .
+		(
+		 (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k u . 
+							(i N.<= k)
+							& (= (rho T (S k)) (then (rho T k) (send a (consM a p 1b b (value (als (config (rho T k)) a))))))
+							& (k N.<= u) 
+							& (i N.<= u)
+							& (= (rho T u) (then (rho T k) (send a (consM a p 1b b (value (als (config (rho T k)) a))))))
+							& (inMSet (consM a p 1b b (value (als (config (rho T k)) a))) (mu (config (rho T u))) )
+					  )
+		)
+    )
+
+    (!prove persistent-unresponded-local-1a-msgs-causes-step2 [persistent-unresponded-local-1a-msgs-causes-step1 N.Less=.transitive model-step-axioms])
+   
+    (!prove persistent-unresponded-local-1a-msgs-causes [persistent-unresponded-local-1a-msgs-causes-step2])
+
 #----------------------------------------------------------------------------
 # Intermediate lemmas for ready-to receive behavior by message 
 
@@ -410,7 +951,7 @@ extend-module Synod{
 					(inQ a Q) 
 						     ==> 
 							(exists j . (i N.<= j) 
-						        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV)))) )	
+						        	  & (= (rho T (S j)) (then (rho T j) (send p (consM p a 1a b nilV)))) )	
 				) 
 	)
 
@@ -434,15 +975,44 @@ extend-module Synod{
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(exists j . (i N.<= j) 
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV)))) )	       
+								(exists j k . (i N.<= j)
+										  & (j N.<= k)
+										  & (= (rho T k) (then (rho T j) (send p (consM p a 1a b nilV)))) 
+							        	  & (= (rho T (S j)) (then (rho T j) (send p (consM p a 1a b nilV)))) )	       
 								)	
 				) 
 	)
 
 
-	(!prove Lemma1-step2 [Lemma1-step1])
+	(!prove Lemma1-step2 [Lemma1-step1 N.Less=.S3])
 
+	define Lemma1-step2_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(exists j k . (i N.<= j)
+										  & (j N.<= k)
+										  & (i N.<= k)
+										  & (= (rho T k) (then (rho T j) (send p (consM p a 1a b nilV)))) 
+							        	  & (= (rho T (S j)) (then (rho T j) (send p (consM p a 1a b nilV)))) )	       
+								)	
+				) 
+	)
+
+
+	(!prove Lemma1-step2_1 [Lemma1-step2 N.Less=.transitive])
 
 
 	define Lemma1-step3 := 
@@ -461,16 +1031,16 @@ extend-module Synod{
 				(forall a . 
 					((inQ a Q) 
 						==> 
-								(exists j . (i N.<= j) 
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
-							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j)))) 
+								(exists j k . (i N.<= k) 
+							        	  & (= (rho T k) (then (rho T j) (send p (consM p a 1a b nilV))))
+							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T k)))) 
 							    )	       
 					)	
 				) 
 	)
 
 
-	(!prove Lemma1-step3 [Lemma1-step2 model-step-axioms])	
+	(!prove Lemma1-step3 [Lemma1-step2_1 model-step-axioms])	
 
 
 
@@ -492,7 +1062,7 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 	(nonfaulty a) & (acc a)
 							  & (exists j . (i N.<= j) 
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 
 							    )	       
@@ -522,7 +1092,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j) 
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 				        	  		      & (
 				        	  		  		  (available (rho T j) a)
@@ -558,7 +1128,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 				        	  		      & (
 				        	  		      	  (
@@ -597,7 +1167,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 				        	  		      & (
 				        	  		      	  (
 					        	  		      	  	(available (rho T j) a)
@@ -608,9 +1178,10 @@ extend-module Synod{
 				    		    	  				   & (available (rho T k) a)
    													   & (
 					            	    		  		  (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
-					            	    		  		| (exists l . (j N.<= l) 
-						            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
-											  			  )
+														| (exists l . (   (j N.<= l) 
+									            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+									            	    			  )
+									            	      )						            	    		  		
 
 				            	    		  	         )				    		    	  				   
 				    		    	  		  )
@@ -641,7 +1212,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j) 
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (   #(~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -662,9 +1233,10 @@ extend-module Synod{
 							            	    		  		 & (available (rho T k) a)  
 							            	    		  		 )
 
-							            	    		  		| (exists l . (j N.<= l) 
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
-													  			  )
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+											            	    			  )
+											            	      )	
 
 						            	    		  	      )
 
@@ -697,7 +1269,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (   #(~(lock (als (config (rho T j)) a)))
 							        	  		  	  (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -716,9 +1288,10 @@ extend-module Synod{
 							            	    		  		 & (available (rho T k) a)  
 							            	    		  		 )
 
-							            	    		  		| (exists l . (j N.<= l) 
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
-													  			  )
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+											            	    			  )
+											            	      )	
 
 						            	    		  	      )
 
@@ -731,8 +1304,6 @@ extend-module Synod{
 
 
 	(!prove Lemma1-step9 [Lemma1-step8 acceptor-nonfaulty1])	
-
-
 
 	define Lemma1-step10 := 
 	(forall p T b i Q .
@@ -752,7 +1323,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (  # (~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -773,9 +1344,10 @@ extend-module Synod{
 							            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV)))  
 							            	    		  		 )
 
-							            	    		  		| (exists l . (j N.<= l) 
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
-													  			  )
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+											            	    			  )
+											            	      )	
 
 						            	    		  	      )
 
@@ -790,7 +1362,7 @@ extend-module Synod{
 	(!prove Lemma1-step10 [Lemma1-step9 synod-ready-to-receive-lemmas synod-quorum-axioms])
 
 
-	define Lemma1-step11 := 
+	define Lemma1-step10_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -808,7 +1380,7 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
+							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
 							        	  		  (  # (~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
@@ -817,7 +1389,7 @@ extend-module Synod{
 							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
 						            	    		& (exists z .
 		            	    		  	      			  (j N.<= z) 
-				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 1a b nilV))))									            	    		    
+				            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a)))
 						            	    		  )							        	  		  	
 							        	  		  )	
 
@@ -826,76 +1398,21 @@ extend-module Synod{
   	   							        	  		  	   #& (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
   	   													   & (
 							            	    		  		 (  
-								            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
-								            	    		  		 #& (~(lock (als (config (rho T k)) a)))
-								            	    		  		 & (nonfaulty a)
-								            	    		  		 & (available (rho T k) a)
-								            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV))) 
+							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
+							            	    		  		# & (~(lock (als (config (rho T k)) a)))
+							            	    		  		 & (nonfaulty a)
+							            	    		  		 & (available (rho T k) a)
+							            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV)))
 										            	    		 & (
 							            	    		  	      			  (k N.<= y) 
-									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 1a b nilV))))									            	    		    
-										            	    		   )								            	    		  		  
-							            	    		  		 )	 
+									            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a)))									            	    		    
+										            	    		   )							            	    		  		   
+							            	    		  		 )
 
-							            	    		  		| (exists l . (j N.<= l) 
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
-													  			  )
-
-						            	    		  	      )
-
-										  		  )	   
-							        	  	) 
-							      )	       
-					)	
-				) 
-	)
-
-
-	(!prove Lemma1-step11 [Lemma1-step10 IOE->Fair-Rcv-Theorem])	
-
-
-	define Lemma1-step12 := 
-	(forall p T b i Q .
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p) 
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-			  )
-		)
-			==> 
-				(forall a .
-					((inQ a Q) 
-						==> 
-								(nonfaulty a) & (acc a) 
-							  & (exists j . (i N.<= j) 
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
-							        	  & (
-							        	  		     
-					            	    		 (exists z .
-	            	    		  	      			  (j N.<= z)
-	            	    		  	      			& (i N.<= z)   
-			            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 1a b nilV))))									            	    		    
-					            	    		  )							        	  		  	
-						        	  		  	
-
-							        	  		| (exists k y . (j N.<= k)
-										  				   
-  	   													   & (
-							            	    		  		   (
-						            	    		  	      			  (k N.<= y)
-						            	    		  	      			& (j N.<= y)
-						            	    		  	      			& (i N.<= y)   
-								            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 1a b nilV))))									            	    		    
-									            	    		   )								            	    		  		  
-
-							            	    		  		| (exists l . (j N.<= l)
-							            	    		  		            & (i N.<= l)
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))   
-													  			  )
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+											            	    			  )
+											            	      )	
 
 						            	    		  	      )
 
@@ -907,10 +1424,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step12 [Lemma1-step11 N.Less=.transitive])
+	(!prove Lemma1-step10_1 [Lemma1-step10 Fair-Rcv-Causes-Theorem])
 
 
-	define Lemma1-step13 := 
+
+	define Lemma1-step10_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -928,32 +1446,27 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
-							        	  		     
-					            	    		 (exists z .
-	            	    		  	      			  (j N.<= z)
-	            	    		  	      			& (i N.<= z)   
-			            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 1a b nilV))))
-			            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a))) 									            	    		    
-					            	    		  )							        	  		  	
-						        	  		  	
+							        	  		  (  
+						            	    		  (exists z .
+		            	    		  	      			  (j N.<= z) 
+				            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a)))
+						            	    		  )							        	  		  	
+							        	  		  )	
 
 							        	  		| (exists k y . (j N.<= k)
   	   													   & (
-							            	    		  		   (
-						            	    		  	      			  (k N.<= y)
-						            	    		  	      			& (j N.<= y)
-						            	    		  	      			& (i N.<= y)   
-								            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 1a b nilV))))
-								            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a))) 									            	    		    
-									            	    		   )								            	    		  		  
 
-							            	    		  		| (exists l . (j N.<= l)
-							            	    		  		            & (i N.<= l)
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 1a b nilV))))
-								            	    				        & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))    
-													  			  )
+										            	    		   (
+							            	    		  	      			  (k N.<= y) 
+									            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a)))									            	    		    
+										            	    		   )							            	    		  		   
+							            	    		  		 
+
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+											            	    			  )
+											            	      )	
 
 						            	    		  	      )
 
@@ -965,10 +1478,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step13 [Lemma1-step12 model-step-axioms])	
+	(!prove Lemma1-step10_2 [Lemma1-step10_1 ])
 
 
-	define Lemma1-step14 := 
+	define Lemma1-step10_3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -986,25 +1499,134 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & (exists j . (i N.<= j)
-							        	  & (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (
-							        	  		     
-					            	    		 (exists z .
-	            	    		  	      			  (i N.<= z)   
-			            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a))) 									            	    		    
-					            	    		  )							        	  		  	
-						        	  		  	
+							        	  		  (  
+						            	    		  (exists z .
+		            	    		  	      			  (j N.<= z) 
+				            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a)))
+						            	    		  )							        	  		  	
+							        	  		  )	
 
-							        	  		| ( 
-							        	  			         (
-							            	    		  		  (exists y .
+							        	  		| (exists k y . (j N.<= k)
+  	   													   & (
 
-						            	    		  	      			  (i N.<= y)   
-								            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a))) 									            	    		    
-									            	    		   )								            	    		  		  
+										            	    		   (
+							            	    		  	      			  (k N.<= y) 
+									            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a)))									            	    		    
+										            	    		   )							            	    		  		   
+							            	    		  		 
+
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))
+											            	    			  )
+											            	      )	
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step10_3 [Lemma1-step10_2 model-step-axioms])
+
+
+	define Lemma1-step10_4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 
+							  & (exists j . (i N.<= j)
+							        	  & (
+							        	  		  (  
+						            	    		  (exists z .
+		            	    		  	      			  (j N.<= z)
+		            	    		  	      			& (i N.<= z)   
+				            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a)))
+						            	    		  )							        	  		  	
+							        	  		  )	
+
+							        	  		| (exists k y . (j N.<= k)
+  	   													   & (
+
+										            	    		   (
+							            	    		  	      			  (k N.<= y)
+							            	    		  	      			& (j N.<= y)   
+									            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a)))									            	    		    
+										            	    		   )							            	    		  		   
+							            	    		  		 
+
+							            	    		  		| (exists l . (j N.<= l)
+							            	    		  					& (i N.<= l)
+								            	    				        & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))   
+													  			  )
+
+						            	    		  	      )
+
+										  		  )	   
+							        	  	) 
+							      )	       
+					)	
+				) 
+	)
+
+
+	(!prove Lemma1-step10_4 [Lemma1-step10_3 N.Less=.transitive])	
+
+
+	define Lemma1-step10_5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 
+							  & (exists j .
+							        	   (
+							        	  		  (  
+						            	    		  (exists z .
+		            	    		  	      			  (i N.<= z)   
+				            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T z)) a)))
+						            	    		  )							        	  		  	
+							        	  		  )	
+
+							        	  		| (exists y .
+  	   													     (
+
+										            	    		   (
+							            	    		  	      			  (j N.<= y)
+							            	    		  	      			& (i N.<= y)     
+									            	    					& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T y)) a)))									            	    		    
+										            	    		   )							            	    		  		   
+							            	    		  		 
 
 							            	    		  		| (exists l . (i N.<= l)
-								            	    				        & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))    
+								            	    				        & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T l)) a)))   
 													  			  )
 
 						            	    		  	      )
@@ -1017,7 +1639,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step14 [Lemma1-step13])	
+	(!prove Lemma1-step10_5 [Lemma1-step10_4 N.Less=.transitive])	
 
 
 
@@ -1046,7 +1668,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step15 [Lemma1-step14])
+	(!prove Lemma1-step15 [Lemma1-step10_5])
 
 	(!prove Lemma1 [Lemma1-step15])	
 
@@ -1375,10 +1997,11 @@ extend-module Synod{
 					    		    	  				   & (
 					    		    	  				   	      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 
-																| (exists t . 
-																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b (value (als (config (rho T j)) a)))))) 
-																  )
+
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 
 					    		    	  				   	 )
 					    		    	  		  )
@@ -1390,7 +2013,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step6 [Lemma2-step5_2 persistent-unresponded-local-1a-msgs])
+	(!prove Lemma2-step6 [Lemma2-step5_2 persistent-unresponded-local-1a-msgs-causes])
 
 
 
@@ -1432,10 +2055,10 @@ extend-module Synod{
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 					    		    	  				   	      )
 
-																| (exists t . 
-																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b (value (als (config (rho T j)) a)))))) 
-																  )
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1489,11 +2112,11 @@ extend-module Synod{
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
 					    		    	  				   	      )
 
-																| (exists t . 
-																		  (j N.< t)
-																		& (i N.<= t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b (value (als (config (rho T j)) a)))))) 
-																  )
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (i N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1546,11 +2169,11 @@ extend-module Synod{
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
 					    		    	  				   	      )
 
-																| (exists t . 
-																		  (j N.< t)
-																		& (i N.<= t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b (value (als (config (rho T j)) a)))))) 
-																  )
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (i N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1590,10 +2213,9 @@ extend-module Synod{
 				        	  		       		  & (available (rho T j) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
-				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))
-							 	       			   & (j N.<= y) 
-					            	    		   & (= (rho T y) (then (rho T j) (send a (consM a p 1b b (value (als (config (rho T j)) a))))))	
-
+				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
+			    		    	  				   & (j N.<= y)
+			    		    	  				   & (inMSet (consM a p 1b b (value (als (config (rho T j)) a))) (mu (config (rho T y))) )
 				        	  		       	    )
 					    		    	  		| (exists k z .
 				                                             (j N.<= k)
@@ -1604,14 +2226,15 @@ extend-module Synod{
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
-												 	       			   & (k N.<= z) 
-										            	    		   & (= (rho T z) (then (rho T k) (send a (consM a p 1b b (value (als (config (rho T k)) a))))))								    		    	  				   
+								    		    	  				   & (k N.<= z)
+								    		    	  				   & (inMSet (consM a p 1b b (value (als (config (rho T k)) a))) (mu (config (rho T z))) )
 					    		    	  				   	      )
 
-																| (exists t . 
-																		  (i N.<= t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b (value (als (config (rho T j)) a)))))) 
-																  )
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (i N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1624,10 +2247,12 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step7 [Lemma2-step6_3 IOE->Fair-Snd-Theorem])
+	(!prove Lemma2-step7 [Lemma2-step6_3 Fair-Snd-Causes-Theorem])
 
 
-	define Lemma2-step8 := 
+
+
+	define Lemma2-step7_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1645,17 +2270,16 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & ( 
-				        	  		         (exists j y v .
+				        	  		         (exists j y .
 				        	  		       		(   (i N.<= j)
 				        	  		       		  & (available (rho T j) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
-				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))
-							 	       			   & (j N.<= y) 
-					            	    		   & (= (rho T y) (then (rho T j) (send a (consM a p 1b b v))))	
-
+				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
+			    		    	  				   & (j N.<= y)
+			    		    	  				   & (inMSet (consM a p 1b b (value (als (config (rho T j)) a))) (mu (config (rho T y))) )
 				        	  		       	    )
-					    		    	  		| (exists k z v2 .
+					    		    	  		| (exists k z .
 				                                             (j N.<= k)
 				                                           & (i N.<= k)  
 					    		    	  				   & (
@@ -1664,14 +2288,14 @@ extend-module Synod{
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
-												 	       			   & (k N.<= z) 
-										            	    		   & (= (rho T z) (then (rho T k) (send a (consM a p 1b b v2))))								    		    	  				   
+								    		    	  				   & (k N.<= z)
+								    		    	  				   & (inMSet (consM a p 1b b (value (als (config (rho T k)) a))) (mu (config (rho T z))) )
 					    		    	  				   	      )
-
-																| (exists t . 
-																		  (i N.<= t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b v)))) 
-																  )
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (i N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1684,10 +2308,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step8 [Lemma2-step7])
+	(!prove Lemma2-step7_1 [Lemma2-step7 model-step-axioms])
+	
 
-
-	define Lemma2-step8_1 := 
+	define Lemma2-step7_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1705,25 +2329,27 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & ( 
-				        	  		         (exists j y v .
-				        	  		       		(   
-							 	       			     (j N.<= y)
-							 	       			   & (i N.<= j)    
-					            	    		   & (= (rho T y) (then (rho T j) (send a (consM a p 1b b v))))	
-
+				        	  		         (exists j y .
+				        	  		       		(   (i N.<= j)
+			    		    	  				   & (j N.<= y)
+			    		    	  				   & (i N.<= y)
+			    		    	  				   & (inMSet (consM a p 1b b (value (als (config (rho T j)) a))) (mu (config (rho T y))) )
 				        	  		       	    )
-					    		    	  		| (exists k z v2 .
-					    		    	  				     (
+					    		    	  		| (exists k z .
+				                                             (j N.<= k)
+				                                           & (i N.<= k)  
+					    		    	  				   & (
 					    		    	  				   	      (
-												 	       			     (k N.<= z)
-												 	       			   & (i N.<= k)   
-										            	    		   & (= (rho T z) (then (rho T k) (send a (consM a p 1b b v2))))								    		    	  				   
+								    		    	  				     (k N.<= z)
+								    		    	  				   & (i N.<= z)  
+								    		    	  				   & (inMSet (consM a p 1b b (value (als (config (rho T k)) a))) (mu (config (rho T z))) )
 					    		    	  				   	      )
 
-																| (exists t . 
-																		  (i N.<= t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b v)))) 
-																  )
+																	| (exists u v2 . 
+																			(j N.<= u)
+																			& (i N.<= u)
+																			& (inMSet (consM a p 1b b v2) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1736,9 +2362,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step8_1 [Lemma2-step8])
+	(!prove Lemma2-step7_2 [Lemma2-step7_1 N.Less=.transitive])	
 
-	define Lemma2-step8_2 := 
+
+	define Lemma2-step7_3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1756,77 +2383,21 @@ extend-module Synod{
 						==> 
 								(nonfaulty a) & (acc a) 
 							  & ( 
-				        	  		         (exists j y v .
-				        	  		       		(   
-							 	       			     (j N.<= y)
-							 	       			   & (i N.<= j)
-							 	       			   & (i N.<= y)    
-					            	    		   & (= (rho T y) (then (rho T j) (send a (consM a p 1b b v))))	
-
-				        	  		       	    )
-					    		    	  		| (exists k z v2 .
-					    		    	  				     (
-					    		    	  				   	      (
-												 	       			     (k N.<= z)
-												 	       			   & (i N.<= k)
-												 	       			   & (i N.<= z)   
-										            	    		   & (= (rho T z) (then (rho T k) (send a (consM a p 1b b v2))))								    		    	  				   
-					    		    	  				   	      )
-
-																| (exists t . 
-																		  (i N.<= t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 1b b v)))) 
-																  )
-															  )	
-
-
-					    		    	  		  )					    		    	  		
-				    		    	  	     )			        	  		       
-									       	 
-								 )         
-					)	
-				) 
-	)
-
-
-	(!prove Lemma2-step8_2 [Lemma2-step8_1 N.Less=.transitive ])
-
-
-	define Lemma2-step8_3 := 
-	(forall p T b i Q .
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p) 
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-			  )
-		)
-			==> 
-				(forall a .
-					((inQ a Q) 
-						==> 
-								(nonfaulty a) & (acc a) 
-							  & ( 
-				        	  		         (exists y v .
-				        	  		       		(   
-							 	       			     (i N.<= y)    
-					            	    		   & (inMSet (consM a p 1b b v) (mu (config (rho T y))) )	
-
+				        	  		         (exists v y .
+				        	  		       		(   (i N.<= y)
+			    		    	  				   & (inMSet (consM a p 1b b v) (mu (config (rho T y))) )
 				        	  		       	    )
 					    		    	  		| (exists z v2 .
-					    		    	  				     (
-					    		    	  				   	      (
-												 	       			     (i N.<= z)   
-										            	    		   & (inMSet (consM a p 1b b v) (mu (config (rho T z))) )								    		    	  				   
+				                                             
+					    		    	  				    (
+					    		    	  				   	      (      (i N.<= z)  
+								    		    	  				   & (inMSet (consM a p 1b b v2) (mu (config (rho T z))) )
 					    		    	  				   	      )
-
-																| (exists t . 
-																		  (i N.<= t)
-																		& (inMSet (consM a p 1b b v) (mu (config (rho T t))) )
-																  )
+																	| (exists u v3 . 
+																			(j N.<= u)
+																			& (i N.<= u)
+																			& (inMSet (consM a p 1b b v3) (mu (config (rho T u))) )
+																	  )
 															  )	
 
 
@@ -1839,7 +2410,40 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step8_3 [Lemma2-step8_2 model-step-axioms])	
+	(!prove Lemma2-step7_3 [Lemma2-step7_2])
+
+
+	define Lemma2-step7_4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 
+							  & ( 
+				        	  		         (exists v y .
+				        	  		       		(   (i N.<= y)
+			    		    	  				   & (inMSet (consM a p 1b b v) (mu (config (rho T y))) )
+				        	  		       	    )				    		    	  		
+				    		    	  	     )			        	  		       
+									       	 
+								 )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step7_4 [Lemma2-step7_3])
 
 
 	define Lemma2-step8_4 := 
@@ -1868,7 +2472,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step8_4 [Lemma2-step8_3])	
+	(!prove Lemma2-step8_4 [Lemma2-step7_4])	
 
 
 
@@ -2013,9 +2617,10 @@ extend-module Synod{
 				    		    	  				   & (inMSet (consM a p 1b b v) (mu (config (rho T k))))
    													   & (
 					            	    		  		  (inMSet (consM a p 1b b v) (mu (config (rho T j))))
-					            	    		  		| (exists l . (k N.<= l) 
-						            	    				        & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-											  			  )
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )						            	    		  		
 
 				            	    		  	         )				    		    	  				   
 				    		    	  		  )
@@ -2026,112 +2631,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step15 [Lemma2-step14 synod-msg-persistance-axioms])
-
-
-	define Lemma2-step16 := 
-	(forall p T b i Q .
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p) 
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-			  )
-		)
-			==> 
-				(forall a .
-					((inQ a Q) 
-						==> 
-								(nonfaulty a) & (acc a) 	
-								& (exists v k .
-											 (i N.<= k)
-							        	   & (
-							        	   		  (
-							        	  		       (~(lock (als (config (rho T k)) p)))
-							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-							        	   		  	 & (available (rho T k) p)
-							        	   		  )
-							        	  		| (exists j . 
-							        	  			   (k N.< j)
-							        	  		     & (~(lock (als (config (rho T j)) p)))
-							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-												     & (
-						            	    		  		   (inMSet (consM a p 1b b v) (mu (config (rho T j))))
-
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
-
-				            	    		  	       )
-
-										  		  )								        	   		
-
-							        	  	 ) 			            	    		     									             	 
-								  )         
-					)	
-				) 
-	)
-
-
-	#(!prove Lemma2-step16 [Lemma2-step15 1b-model-msg-persists-until-read-axiom N.Less=.Implied-by-<])
-
-
-
-	define Lemma2-step17 := 
-	(forall p T b i Q .
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p) 
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-			  )
-		)
-			==> 
-				(forall a .
-					((inQ a Q) 
-						==> 
-								(nonfaulty a) & (acc a) 	
-								& (exists v k .
-											 (i N.<= k)
-							        	   & (
-							        	   		  (
-							        	  		       (~(lock (als (config (rho T k)) p)))
-							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-							        	   		  	 & (available (rho T k) p)
-							        	   		  )
-							        	  		| (exists j . 
-							        	  			   (k N.< j)
-
-							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-												     & (
-												     		   (
-												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
-							        	  		     				& (~(lock (als (config (rho T j)) p)))
-												     		   )
-						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
-
-				            	    		  	       )
-
-										  		  )								        	   		
-
-							        	  	 ) 			            	    		     									             	 
-								  )         
-					)	
-				) 
-	)
-
-
-	#(!prove Lemma2-step17 [Lemma2-step16])	
-
+	(!prove Lemma2-step15 [Lemma2-step14 1b-model-msg-persists-until-read-axiom-lemma])
 
 
 	define Lemma2-step18 := 
@@ -2170,9 +2670,10 @@ extend-module Synod{
 							        	  		     				& (available (rho T j) p)
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
 
 				            	    		  	       )
 
@@ -2227,9 +2728,10 @@ extend-module Synod{
 							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
 
 				            	    		  	       )
 
@@ -2261,41 +2763,34 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 
 								(nonfaulty a) & (acc a) 	
-								& (exists v k .
-											 (i N.<= k) 
+								& (exists v k y .
+											 (i N.<= k)
 							        	   & (
 							        	   		  (
-							        	  		       #(~(lock (als (config (rho T k)) p)))
 							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
 							        	   		  	 & (available (rho T k) p)
 							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
-			        	  		     				 & (exists z . 
-			        	  		     				 	         (k N.<= z)
-			        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
-
-			        	  		     				   )							        	   		  	 
+													 & (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
 							        	   		  )
-							        	  		| (exists j . 
+							        	  		| (exists j z . 
 							        	  			   (k N.<= j)
 
 							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
 												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
-							        	  		     				#& (~(lock (als (config (rho T j)) p)))
 							        	  		     				& (available (rho T j) p)
 							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
-							        	  		     				& (exists y . 
-							        	  		     					         (j N.<= y)
-							        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
-
-							        	  		     				  )
+																	 & (j N.<= z) 
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
 
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
 
 				            	    		  	       )
 
@@ -2308,9 +2803,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step20 [Lemma2-step19 IOE->Fair-Rcv-Theorem])	
+	(!prove Lemma2-step20 [Lemma2-step19 Fair-Rcv-Causes-Theorem])	
 
 
+		
 	define Lemma2-step21 := 
 	(forall p T b i Q .
 		( 
@@ -2328,44 +2824,25 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 
 								(nonfaulty a) & (acc a) 	
-								& (exists v k .
-											 (i N.<= k) 
-							        	   & (
-							        	   		  (
-							        	  		       #(~(lock (als (config (rho T k)) p)))
-							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-							        	   		  	 & (available (rho T k) p)
-							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
-			        	  		     				 & (exists z . 
-			        	  		     				 	         (k N.<= z)
-			        	  		     				 	       & (i N.<= z)
-			        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
-
-			        	  		     				   )							        	   		  	 
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
 							        	   		  )
-							        	  		| (exists j . 
+							        	  		| (exists j z . 
 							        	  			   (k N.<= j)
-							        	  			 & (i N.<= j)  
-							        	   		  	 & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-												     & (
-												     		   (
-												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
-							        	  		     				#& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
-							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
-							        	  		     				& (exists y . 
-							        	  		     					         (j N.<= y)
-							        	  		     					       & (i N.<= y)  
-							        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
-
-							        	  		     				  )
+							        	   		  	 & (
+												     		   (       (k N.<= j) 
+																	 & (j N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
 
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l)
-						            	    		  		             & (i N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
 
 				            	    		  	       )
 
@@ -2378,66 +2855,18 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step21 [Lemma2-step20 N.Less=.transitive N.Less=.Implied-by-<])		
+	(!prove Lemma2-step21 [Lemma2-step20 model-step-axioms])			
 
 
-	define Lemma2-step21_1 := 
-	(forall p T b i Q .
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p) 
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-			  )
-		)
-			==> 
-				(forall a .
-					((inQ a Q) 
-						==> 
-								(nonfaulty a) & (acc a) 	
-								& (exists v k .
-											 (i N.<= k) 
-							        	   & (
-							        	   		  (
-			        	  		     				   (exists z . 
-			        	  		     				 	         (k N.<= z)
-			        	  		     				 	       & (i N.<= z)
-			        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
+	define Lemma2-step22_helper1 := 
+			(forall v k y .
+        	   		  (    (i N.<= k)
+						 & (k N.<= y)
+        	   		  )
+        	   		  ==> (i N.<= y) 
 
-			        	  		     				   )							        	   		  	 
-							        	   		  )
-							        	  		| (exists j . 
-												      (
-												     		   (
-
-							        	  		     				 (exists y . 
-							        	  		     					         (i N.<= y)  
-							        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
-
-							        	  		     				  )
-
-												     		   )
-						            	    		  		 
-						            	    		  		|  (exists l . 
-						            	    		  		               (i N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
-
-				            	    		  	       )
-
-										  		  )								        	   		
-
-							        	  	 ) 			            	    		     									             	 
-								  )         
-					)	
-				) 
-	)
-
-
-	(!prove Lemma2-step21_1 [Lemma2-step21 ])
+        	 )  		  		
+	(!prove Lemma2-step22_helper1 [Lemma2-step20 N.Less=.transitive])			
 
 
 	define Lemma2-step22 := 
@@ -2457,31 +2886,25 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 
 								(nonfaulty a) & (acc a) 	
-								& (exists v k .
-											  (i N.<= k) 
-							        	   & (
-						        	   		  
-						        	  		       (exists z . 
-		        	  		     				 	         (i N.<= z)
-		        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v)))) 
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j z . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (       (k N.<= j) 
+																	 & (j N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
 
-		        	  		     				   )							        	   		  	 
-						        	   		  
-							        	  		| (exists j . 
- 												       (
-										     		   
-										     		   	       (exists y . 
-					        	  		     					         (i N.<= y)  
-					        	  		     					       & (= (rho T y) (then (rho T j) (receive p (consM a p 1b b v)))) 
-
-					        	  		     				   )
-
-										     		   
+												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . 
-						            	    		  			           (i N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 1b b v))))   
-												  			   )
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
 
 				            	    		  	       )
 
@@ -2494,10 +2917,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22 [Lemma2-step21_1])					
+	(!prove Lemma2-step22 [Lemma2-step21 Lemma2-step22_helper1])
 
 
-	define Lemma2-step23 := 
+	define Lemma2-step22_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2514,18 +2937,376 @@ extend-module Synod{
 					((inQ a Q) 
 						==> 
 								(nonfaulty a) & (acc a) 	
-								& (exists v z k . 
-	  		     				 	          (i N.<= z)                                                     # for each a, exists k . (rho T z) = then (rho T k) ... implies that
-	  		     				 	       &  (= (rho T z) (then (rho T k) (receive p (consM a p 1b b v))))  # Receive transition happened at different times for each
-	  		     				 	       & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))   # Did not happen at the same time. k is important here 
-							        	   		  	 
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (exists z .
+												     		          (k N.<= j) 
+																	 & (j N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+						            	    		  		 
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
 								  )         
 					)	
 				) 
 	)
 
 
-	(!prove Lemma2-step23 [Lemma2-step22 model-step-axioms])	
+	(!prove Lemma2-step22_1 [Lemma2-step22])
+
+
+	define Lemma2-step22_helper2 :=
+	(forall p T b i Q .
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (exists z .
+												     		          (k N.<= j) 
+																	 & (j N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+						            	    		  		 
+																| (exists l . (   (k N.<= l) 
+											            	    				& (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))
+											            	    			  )
+																  )	
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				)  
+	     		   ==>
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (exists z .
+												     		          (k N.<= j) 
+																	 & (j N.<= z)
+																	 & (k N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l)	 
+							            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))		
+
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				)
+		)		
+	(!prove Lemma2-step22_helper2 [N.Less=.transitive])
+
+
+	define Lemma2-step22_2:= 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (exists z .
+												     		          (k N.<= j) 
+																	 & (j N.<= z)
+																	 & (k N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l)	 
+							            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))		
+
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+#-- TAKES AGES, give it time (comment out this and assert this step to skip while developing later proofs)
+	(!prove Lemma2-step22_2 [Lemma2-step22_1 Lemma2-step22_helper2])
+
+
+
+	define Lemma2-step22_3:= 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (exists z .
+												     		           (k N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+						            	    		  		 
+						            	    		  		|  (exists l . (k N.<= l)	 
+							            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T l)) p)))		
+
+												  			   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step22_3 [Lemma2-step22_2])
+
+
+	define Lemma2-step22_4 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k y .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (    (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+							        	   		  	 & (
+												     		   (exists z .
+												     		           (k N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step22_4 [Lemma2-step22_3])
+
+
+	define Lemma2-step22_5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (exists y .
+							        	   		      (k N.<= y) 
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )
+							        	  		| (
+							        	   		  	   (
+												     		   (exists z .
+												     		           (k N.<= z)
+						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
+
+												     		   )
+
+				            	    		  	       )
+
+										  		  )								        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step22_5 [Lemma2-step22_4])
+
+
+	define Lemma2-step22_6 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k .
+											 (i N.<= k)									
+							        	    & (
+							        	   		  (exists y .
+							        	   		       (k N.<= y)
+							        	   		     & (i N.<= y)  
+		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+							        	   		  )							        	   		
+
+							        	  	 ) 			            	    		     									             	 
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step22_6 [Lemma2-step22_5 N.Less=.transitive])
+
+
+	define Lemma2-step22_7 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+			  )
+		)
+			==> 
+				(forall a .
+					((inQ a Q) 
+						==> 
+								(nonfaulty a) & (acc a) 	
+								& (exists v k y .
+					        	   		       (i N.<= y)  
+            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
+								  )         
+					)	
+				) 
+	)
+
+
+	(!prove Lemma2-step22_7 [Lemma2-step22_6])
 
 
 	define Lemma2-step24 := 
@@ -2553,7 +3334,7 @@ extend-module Synod{
 				) 
 	)
 
-	(!prove Lemma2-step24 [Lemma2-step23])	
+	(!prove Lemma2-step24 [Lemma2-step22_7])	
 
 	define Lemma2-step24_1 := 
 	(forall p T b i Q .
@@ -2831,8 +3612,8 @@ extend-module Synod{
 		 		      (has-promises (als (config (rho T j)) p) b Q)
 		 		
 					| (exists k v . 
-							  (i N.< k)
-						    & (sent2A (als (config (rho T i)) p) b v Q k i)	
+							  (i N.<= k)
+						    & (sent2A (als (config (rho T k)) p) b v Q k)	
 					  )
 				)	
 		)
@@ -2867,8 +3648,8 @@ extend-module Synod{
 						 		      (has-promises (als (config (rho T j)) p) b Q)
 						 		
 									| (exists k v . 
-											  (i N.< k)
-										    & (sent2A (als (config (rho T i)) p) b v Q k i)	
+											  (i N.<= k)
+										    & (sent2A (als (config (rho T k)) p) b v Q k)	
 									  )
 								)
 			           
@@ -2916,9 +3697,10 @@ extend-module Synod{
 						              )    
 						 		
 									| (exists k v . 
-											  (i N.< k)
-										    & (sent2A (als (config (rho T i)) p) b v Q k i)	
+											  (i N.<= k)
+										    & (sent2A (als (config (rho T k)) p) b v Q k)	
 									  )
+
 								)
 			           
 
@@ -2929,34 +3711,6 @@ extend-module Synod{
 
 	(!prove Lemma3-step4_4 [Lemma3-step4_3 synod-ready-to-send-axioms])	
 
-
-	define Lemma3-step6 := 
-	(forall p T b i Q .
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p)
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
-		)
-			==>    
-			     (forall a .
-                    (inQ a Q) 
-                    	==> 
-                    		(exists j v k . 
-		                             (i N.<= j)
-		                           & (j N.<= k)  
-#		    	  				   & (available (rho T j) p)
-                    			   & (= (rho T k) (then (rho T j) (send p (consM p a 2a b v))))	
-                    	    )
-                 )						   
-
-	)
-
-	#(!prove Lemma3-step6 [Lemma3-step5_1 IOE->Fair-Snd-Theorem])
 
 
 
@@ -2977,7 +3731,7 @@ extend-module Synod{
 	  		     	  (
 
 		  		  		  (available (rho T i) p)
-		  		  		  & (forall a . (inQ a Q) ==> (exists v y . (i N.<= y) & (= (rho T y) (then (rho T i) (send p (consM p a 2a b v))))	 ) )
+		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
@@ -2990,14 +3744,15 @@ extend-module Synod{
 									   & (forall a .
 						                    (inQ a Q) 
 						                    	==> 
-						                    		(exists v z . (j N.<= z) & (= (rho T z) (then (rho T j) (send p (consM p a 2a b v))))	 )
+						                    		(exists v . (ready-to (rho T j) p (send p (consM p a 2a b v))) )
 						                 )
 						              )    
 						 		
 									| (exists k v . 
-											  (i N.< k)
-										    & (sent2A (als (config (rho T i)) p) b v Q k i)	
+											  (i N.<= k)
+										    & (sent2A (als (config (rho T k)) p) b v Q k)	
 									  )
+
 								)
 			           
 
@@ -3006,8 +3761,28 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_6 [Lemma3-step4_4 IOE->Fair-Snd-Theorem])	
+	(!prove Lemma3-step4_6 [Lemma3-step4_4 Fair-Snd-Causes-Theorem])	
 
+
+    define helper :=
+	(forall p T b i Q k v .   
+          (
+			   (i N.<= k)
+			   & (sent2A (als (config (rho T k)) p) b v Q k)
+          	)
+          ==>
+				      (forall a .
+	                    (inQ a Q) 
+	                    	==> 
+	                    	   (exists u .
+	                    	   	        (k N.<= u)
+									  #& (= (rho T (S u)) (then (rho T u) (send p (consM p a 2a b v))))
+									  & (inMSet (consM p a 2a b v) (mu (config (rho T u))) )	
+	                    	   )
+	                  )
+	 )
+	 
+	 (!prove helper [sent2A-def])                           
 
 
 	define Lemma3-step4_7 := 
@@ -3027,7 +3802,7 @@ extend-module Synod{
 	  		     	  (
 
 		  		  		  (available (rho T i) p)
-		  		  		  & (forall a . (inQ a Q) ==> (exists v y . (i N.<= y) & (inMSet (consM p a 2a b v) (mu (config (rho T y))) )	 ) )
+		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
@@ -3040,20 +3815,22 @@ extend-module Synod{
 									   & (forall a .
 						                    (inQ a Q) 
 						                    	==> 
-						                    		(exists v z . (j N.<= z) & (inMSet (consM p a 2a b v) (mu (config (rho T z))) )	 )
+						                    		(exists v . (ready-to (rho T j) p (send p (consM p a 2a b v))) )
 						                 )
 						              )    
 						 		
 									| (exists k v . 
-											   (i N.< k)
-										     & (forall a .
-							                    (inQ a Q) 
-							                    	==> 
-							                    	    (
-													       (= (rho T k) (then (rho T i) (send p (consM p a 2a b v))))
-                                                         & (inMSet (consM p a 2a b v) (mu (config (rho T k))) )
-                                                        )
-							                   )
+											   (i N.<= k)
+											   & (sent2A (als (config (rho T k)) p) b v Q k)
+											   &  (forall a .
+								                    (inQ a Q) 
+								                    	==> 
+								                    	   (exists u .
+								                    	   	        (k N.<= u)
+																  #& (= (rho T (S u)) (then (rho T u) (send p (consM p a 2a b v))))
+																  & (inMSet (consM p a 2a b v) (mu (config (rho T u))) )	
+								                    	   )
+								                  )
 									  )
 								)
 			           
@@ -3063,7 +3840,7 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_7 [Lemma3-step4_6 model-step-axioms synod-state-axioms])	
+	(!prove Lemma3-step4_7 [Lemma3-step4_6 helper])	
 
 
 
@@ -3084,7 +3861,7 @@ extend-module Synod{
 	  		     	  (
 
 		  		  		  (available (rho T i) p)
-		  		  		  & (forall a . (inQ a Q) ==> (exists v y . (i N.<= y) & (inMSet (consM p a 2a b v) (mu (config (rho T y))) )	 ) )
+		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)    
@@ -3093,7 +3870,61 @@ extend-module Synod{
 									     (forall a .
 						                    (inQ a Q) 
 						                    	==> 
-						                    		(exists v z . (j N.<= z)  & (i N.<= z) & (inMSet (consM p a 2a b v) (mu (config (rho T z))) )	 )
+						                    		(exists v . (ready-to (rho T j) p (send p (consM p a 2a b v))) )
+						                 )
+						              )    
+						 		
+									| (exists k v . 
+											   (i N.<= k)
+											   & (sent2A (als (config (rho T k)) p) b v Q k)
+											   &  (forall a .
+								                    (inQ a Q) 
+								                    	==> 
+								                    	   (exists u .
+								                    	   	        (k N.<= u)
+								                    	   	      & (i N.<= u)  
+																  & (inMSet (consM p a 2a b v) (mu (config (rho T u))) )	
+								                    	   )
+								                  )
+									  )
+								)
+			           
+
+
+			           )        
+	    	  	   )				
+	)	
+
+	(!prove Lemma3-step4_8 [Lemma3-step4_7 N.Less=.transitive N.Less=.Implied-by-<])
+
+
+	define Lemma3-step5 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				   (
+	  		     	  (
+
+		  		  		  (available (rho T i) p)
+		  		  		  & (forall a . (inQ a Q) ==> (exists v j . (i N.<= j) &  (inMSet (consM p a 2a b v) (mu (config (rho T j))) )       ) )
+                      )
+	    	  		| (exists j .
+                                 (i N.<= j)    
+						 	& (
+						 			 (	
+									     (forall a .
+						                    (inQ a Q) 
+						                    	==> 
+						                    		(exists v z .  (j N.<= z) &  (inMSet (consM p a 2a b v) (mu (config (rho T z))) )  )
 						                 )
 						              )    
 						 		
@@ -3115,7 +3946,105 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_8 [Lemma3-step4_7 N.Less=.transitive N.Less=.Implied-by-<])
+	(!prove Lemma3-step5 [Lemma3-step4_8 Fair-Snd-Causes-Theorem])
+
+
+	define Lemma3-step6 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				   (
+	  		     	  (
+
+		  		  		  (available (rho T i) p)
+		  		  		  & (forall a . (inQ a Q) ==> (exists v j . (i N.<= j) &  (inMSet (consM p a 2a b v) (mu (config (rho T j))) )       ) )
+                      )
+	    	  		| (exists j .
+                                 (i N.<= j)    
+						 	& (
+						 			 (	
+									     (forall a .
+						                    (inQ a Q) 
+						                    	==> 
+						                    		(exists v z .  (j N.<= z) & (i N.<= z) & (inMSet (consM p a 2a b v) (mu (config (rho T z))) )  )
+						                 )
+						              )    
+						 		
+									| (exists k v . 
+											   (i N.<= k)
+										     & (forall a .
+							                    (inQ a Q) 
+							                    	==> 
+							                    	    (
+													        (inMSet (consM p a 2a b v) (mu (config (rho T k))) )
+                                                        )
+							                   )
+									  )
+								)
+			           
+
+
+			           )        
+	    	  	   )				
+	)	
+
+	(!prove Lemma3-step6 [Lemma3-step5 N.Less=.transitive])
+
+
+
+	define Lemma3-step6_1 := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==>    
+				   (
+	  		     	  (
+						 (forall a . (inQ a Q) ==> (exists v j . (i N.<= j) &  (inMSet (consM p a 2a b v) (mu (config (rho T j))) )       ) )
+                      )
+	    	  		| ( (
+						 			 (	
+									     (forall a .
+						                    (inQ a Q) 
+						                    	==> 
+						                    		(exists v z . (i N.<= z) & (inMSet (consM p a 2a b v) (mu (config (rho T z))) )  )
+						                 )
+						              )    
+						 		
+									| (
+										      (forall a .
+							                    (inQ a Q) 
+							                    	==> 
+							                    	    (
+													      exists v k . (i N.<= k) &  (inMSet (consM p a 2a b v) (mu (config (rho T k))) )
+                                                        )
+							                   )
+									  )
+								)
+			           
+
+
+			           )        
+	    	  	   )				
+	)	
+
+	(!prove Lemma3-step6_1 [Lemma3-step6])
 
 	define Lemma3-step7 :=
 	 (forall p T b i Q .
@@ -3141,7 +4070,7 @@ extend-module Synod{
 
 	)
 
-	(!prove Lemma3-step7 [Lemma3-step4_8])
+	(!prove Lemma3-step7 [Lemma3-step6_1])
 
 	define Lemma3-step8 := 
 	(forall p T b i Q .
@@ -3255,9 +4184,11 @@ extend-module Synod{
   	   													   & (
 							            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
 
-							            	    		  		| (exists l . (j N.<= l) 
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
-													  				)
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 2a b v) (amu (als (config (rho T l)) a)))
+											            	    			  )
+
+																  )							            	    		  		
 
 						            	    		  	      )
 
@@ -3314,9 +4245,11 @@ extend-module Synod{
 
   	   													   		  )	
 
-							            	    		  		| (exists l . (j N.<= l) 
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
-													  				)
+																| (exists l . (   (j N.<= l) 
+											            	    				& (inMSet (consM p a 2a b v) (amu (als (config (rho T l)) a)))
+											            	    			  )
+
+																  )	
 
 						            	    		  	      )
 
@@ -3332,6 +4265,7 @@ extend-module Synod{
 	(!prove Lemma3-step13 [Lemma3-step11 synod-ready-to-receive-lemmas synod-quorum-axioms])	
 
 
+
 	define Lemma3-step14 := 
 	(forall p T b i Q .
 		( 
@@ -3344,7 +4278,7 @@ extend-module Synod{
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
-			==>
+			==>  
 				(forall a .
 					((inQ a Q) 
 						==> 
@@ -3353,28 +4287,18 @@ extend-module Synod{
 							        	  & (
 							        	  		  
 							        	  		  ( 
-							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (nonfaulty a)
-							        	  		  	 & (available (rho T j) a)
-							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
-						            	    		 & (exists z .
-		            	    		  	      			  (j N.<= z) 
-				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 2a b v))))									            	    		    
-						            	    		   )							        	  		  	 	
+
+										               (exists y . (j N.<= y) 
+								            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))) 							        	  		  	 	
 							        	  		  )
 							        	  		  	 
-							        	  		| (exists k y . (j N.<= k)
+							        	  		| (exists k . (j N.<= k)
 										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
   	   													   & (
   	   													   		  (
-								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (nonfaulty a)
-								            	    		  		   & (available (rho T k) a)
-								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
-											            	    	   & (
-							            	    		  	      			  (k N.<= y) 
-									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 2a b v))))									            	    		    
-											            	    		 )								            	    		  		   
+
+															               (exists z . (k N.<= z) 
+													            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))) 							        	  		  	 	
 
   	   													   		  )	
 
@@ -3393,7 +4317,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step14 [Lemma3-step13 IOE->Fair-Rcv-Theorem])
+	(!prove Lemma3-step14 [Lemma3-step13 Fair-Rcv-Causes-Theorem])
 
 
 	define Lemma3-step15 := 
@@ -3406,7 +4330,7 @@ extend-module Synod{
 				                ==> 
                                       (nonfaulty a) 
 			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q)
+			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
 			==>  
 				(forall a .
@@ -3417,34 +4341,30 @@ extend-module Synod{
 							        	  & (
 							        	  		  
 							        	  		  ( 
-							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (nonfaulty a)
-							        	  		  	 & (available (rho T j) a)
-							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
-						            	    		 & (exists z .
-		            	    		  	      			  (j N.<= z) 
-				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 2a b v))))
-				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
-						            	    		   )							        	  		  	 	
+
+										               (exists y . (j N.<= y)
+										                         & (i N.<= j)
+										                         & (i N.<= y) 
+								            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))) 							        	  		  	 	
 							        	  		  )
 							        	  		  	 
-							        	  		| (exists k y . (j N.<= k)
-										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
+							        	  		| (exists k . (j N.<= k)
+							        	  			       & (i N.<= j)
+							        	  			       & (i N.<= k)
   	   													   & (
   	   													   		  (
-								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (nonfaulty a)
-								            	    		  		   & (available (rho T k) a)
-								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
-											            	    	   & (
-							            	    		  	      			  (k N.<= y) 
-									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 2a b v))))
-									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
-											            	    		 )								            	    		  		   
+
+															               (exists z . (k N.<= z)
+															                         & (j N.<= k)
+															                         & (j N.<= z)
+															                         & (i N.<= k) 
+													            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))) 							        	  		  	 	
 
   	   													   		  )	
 
-							            	    		  		| (exists l . (j N.<= l) 
+							            	    		  		| (exists l . (j N.<= l)
+							            	    		  					& (i N.<= j)
+							            	    		  					& (i N.<= l)	 
 								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
 													  				)
 
@@ -3459,7 +4379,8 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step15 [Lemma3-step14 model-step-axioms])	
+	(!prove Lemma3-step15 [Lemma3-step14 N.Less=.transitive])
+
 
 
 	define Lemma3-step16 := 
@@ -3472,48 +4393,31 @@ extend-module Synod{
 				                ==> 
                                       (nonfaulty a) 
 			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q)
+			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
-			==>
-				(forall a . 
+			==>  
+				(forall a .
 					((inQ a Q) 
 						==> 
 								(exists j v . (i N.<= j) 
-							        	  & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
 							        	  & (
 							        	  		  
 							        	  		  ( 
-							        	  		  	  (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (nonfaulty a)
-							        	  		  	 & (available (rho T j) a)
-							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))
-						            	    		 & (exists z .
-		            	    		  	      			  (j N.<= z)
-		            	    		  	      			& (i N.<= z)   
-				            	    					& (= (rho T z) (then (rho T j) (receive a (consM p a 2a b v))))
-				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
-						            	    		   )							        	  		  	 	
+
+										               (exists y . (i N.<= y) 
+								            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))) 							        	  		  	 	
 							        	  		  )
 							        	  		  	 
-							        	  		| (exists k y . (j N.<= k)
-										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-  	   													   & (
+							        	  		| (exists k . 
+  	   													     (
   	   													   		  (
-								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
-								            	    		  		   & (nonfaulty a)
-								            	    		  		   & (available (rho T k) a)
-								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
-											            	    	   & (
-							            	    		  	      			  (k N.<= y)
-							            	    		  	      			& (i N.<= y)   
-									            	    					& (= (rho T y) (then (rho T k) (receive a (consM p a 2a b v))))
-									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
-											            	    		 )								            	    		  		   
+
+															               (exists z . (i N.<= z) 
+													            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))) 							        	  		  	 	
 
   	   													   		  )	
 
-							            	    		  		| (exists l . (j N.<= l)
-							            	    		  		 			& (i N.<= l)
+							            	    		  		| (exists l . (i N.<= l)	 
 								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
 													  				)
 
@@ -3541,35 +4445,32 @@ extend-module Synod{
 				                ==> 
                                       (nonfaulty a) 
 			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q)
+			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
-			==>
+			==>  
 				(forall a .
 					((inQ a Q) 
 						==> 
-								(exists j v . (i N.<= j) 
-							        	  & (
+								(exists v . 
+									       (
 							        	  		  
 							        	  		  ( 
-						            	    		   (exists z .
-		            	    		  	      			  (i N.<= z)   
-				            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))									            	    		    
-						            	    		   )							        	  		  	 	
+
+										               (exists y . (i N.<= y) 
+								            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))) 							        	  		  	 	
 							        	  		  )
 							        	  		  	 
-							        	  		| (exists y . 
-							        	  			         (
+							        	  		| ( 
+  	   													     (
   	   													   		  (
-								            	    		  		     (
-							            	    		  	      			  (i N.<= y)   
-									            	    					& (inMSet (consM p a 2a b v) (amu (als (config (rho T y)) a)))									            	    		    
-											            	    		 )								            	    		  		   
+
+															               (exists z . (i N.<= z) 
+													            	       		     & (inMSet (consM p a 2a b v) (amu (als (config (rho T z)) a)))) 							        	  		  	 	
 
   	   													   		  )	
 
-							            	    		  		| (exists l . (j N.<= l)
-							            	    		  		 			& (i N.<= l)
-								            	    				        & (= (rho T l) (then (rho T j) (receive a (consM p a 2a b v))))   
+							            	    		  		| (exists l . (i N.<= l)	 
+								            	    				        & (inMSet (consM p a 2a b v) (amu (als (config (rho T l)) a)))    
 													  				)
 
 						            	    		  	      )
@@ -3583,9 +4484,7 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step17 [Lemma3-step16])
-
-
+	(!prove Lemma3-step17 [Lemma3-step16 model-step-axioms])
 
 	define Lemma3-step18 := 
 	(forall p T b i Q .
@@ -3794,6 +4693,51 @@ extend-module Synod{
 
 
 
+
+	define Lemma4-step4_1 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q) 
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+											 (i N.<= j)
+										   & (acc a)
+										   & (nonfaulty a) 
+									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+									       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   & (
+					        	  		   		  (
+							        	  		  		 (available (rho T j) a)					        	  		   		  	
+												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+												       & ((beta (als (config (rho T j)) a)) =< b)
+					        	  		   		  )	
+
+					    		    	  		| (exists k .
+				                                             (j N.<= k)
+					    		    	  				   & (available (rho T k) a)
+  				   									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a)))
+  				   								   )	       
+
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )
+		)		  		
+
+	(!prove Lemma4-step4_1 [Lemma4-step4 N.Less=.Implied-by-<])
+
 	define Lemma4-step5 := 
 	(forall p T b i Q . 
 		( 
@@ -3831,8 +4775,9 @@ extend-module Synod{
 					    		    	  				   	         & (available (rho T k) a) 
                                                                    )
 																| (exists t . 
-																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b v)))) 
+																		(j N.<= t)
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) )
+
 																  )
 
 					    		    	  				   	 )
@@ -3847,7 +4792,7 @@ extend-module Synod{
 
 
 
-	(!prove Lemma4-step5 [Lemma4-step4 N.Less=.Implied-by-< persistent-unresponded-local-2a-msgs P1+P2-True-beta-def-axioms])
+	(!prove Lemma4-step5 [Lemma4-step4_1 persistent-unresponded-local-2a-msgs-causes P1+P2-True-beta-def-axioms])
 
 
 
@@ -3891,8 +4836,9 @@ extend-module Synod{
 					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b v) ) )
                                                                   )
 																| (exists t . 
-																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b v)))) 
+																		(j N.<= t)
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) )
+
 																  )
 
 					    		    	  				   	 )
@@ -3918,71 +4864,7 @@ extend-module Synod{
 				                ==> 
                                       (nonfaulty a) 
 			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
-		)
-			==> 
-		    	 (forall a .
-						((inQ a Q) 
-							==> 
-								(exists j v .
-											 (i N.<= j)
-										   & (acc a)
-										   & (nonfaulty a) 
-									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
-									       & ((beta (als (config (rho T j)) a)) =< b)
-					        	  		   & (
-					        	  		   		  (
-							        	  		  		 (available (rho T j) a)					        	  		   		  	
-												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
-												       & ((beta (als (config (rho T j)) a)) =< b)
-												       & (ready-to (rho T j) a (send a (consM a p 2b b v) ) )
-												       & ( exists y .
-													         (j N.<= y)
-													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b v))))												       	
-												       	 )
-					        	  		   		  )	
-					    		    	  		| (exists k .
-				                                             (j N.<= k)
-					    		    	  				   & (available (rho T k) a)
-					    		    	  				   & (    
-					    		    	  				   	      (exists z .
-					    		    	  				   	      		(inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a)))
-					    		    	  				   	      		& (available (rho T k) a) 
-					    		    	  				   	      		 & ((beta (als (config (rho T k)) a)) =< b)
-					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b v) ) )
-																       & (k N.<= z)
-																       & (= (rho T z) (then (rho T k) (send a (consM a p 2b b v))))
-                                                                  )
-																| (exists t . 
-																		(j N.< t)
-																		& (= (rho T t) (then (rho T j) (send a (consM a p 2b b v)))) 
-																  )
-
-					    		    	  				   	 )
-					    		    	  		  )						    		    	  		
-
-					    		    	  	 )									       
-
-								)	       
-						)	
-				  )		
-	)
-
-	(!prove Lemma4-step6_1 [Lemma4-step6 IOE->Fair-Snd-Theorem])	
-
-
-
-	define Lemma4-step6_1_1 := 		
-	(forall p T b i Q . 
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p)
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
+			& (has-promises (als (config (rho T i)) p) b Q)
 		)
 			==> 
 		    	 (forall a .
@@ -3992,32 +4874,30 @@ extend-module Synod{
 											 (i N.<= j)
 					        	  		   & (
 					        	  		   		  (
-					        	  		   		  	
-												        ( exists y .
-													         (j N.<= y)
-													       & (i N.<= y)  
-													       & (= (rho T y) (then (rho T j) (send a (consM a p 2b b v))))
-													       & (inMSet (consM a p 2b b v) (mu (config (rho T y))) )												       	
-												       	 )
+										                 (exists y . (j N.<= y)
+										                            & (i N.<= j) 
+								            	    				& (inMSet (consM a p 2b b v) (mu (config (rho T y))) )
+														 )  													       
 					        	  		   		  )	
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
-					    		    	  				   & (available (rho T k) a)
 					    		    	  				   & (    
-					    		    	  				   	      (exists z .
-																         (k N.<= z)
-																       & (i N.<= k)  
-																       & (i N.<= z)  
-																       & (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
+					    		    	  				   	      (
+															                 (exists z . (k N.<= z)
+															                            & (j N.<= k) 
+													            	    				& (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
+																			 )  													       
+
                                                                   )
 																| (exists t . 
-																		  (j N.<= t)
-                                                                        & (i N.<= t) 
-																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) ) 
+																		(j N.<= t) 
+																		& (i N.<= j)
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) )
+
 																  )
 
 					    		    	  				   	 )
-					    		    	  		  )						    		    	  		
+					    		    	  		  )	 
 
 					    		    	  	 )									       
 
@@ -4026,56 +4906,8 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6_1_1 [Lemma4-step6_1 model-step-axioms N.Less=.transitive N.Less=.Implied-by-<])
+	(!prove Lemma4-step6_1 [Lemma4-step6 Fair-Snd-Causes-Theorem model-step-axioms N.Less=.Implied-by-<])	
 
-
-	define Lemma4-step6_1_2 := 		
-	(forall p T b i Q . 
-		( 
-			  (prp p) 
-			& (P1+P2-True b)
-			& (nonfaulty p)
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
-		)
-			==> 
-		    	 (forall a .
-						((inQ a Q) 
-							==> 
-								(exists v .
-					        	  		    (
-					        	  		   		  (
-					        	  		   		  	
-												        ( exists y .
-													         (i N.<= y)  
-													       & (inMSet (consM a p 2b b v) (mu (config (rho T y))) )												       	
-												       	 )
-					        	  		   		  )	
-					    		    	  		| (
-					    		    	  				     (    
-					    		    	  				   	      (exists z .
-																         (i N.<= z)  
-																       & (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
-                                                                  )
-																| (exists t . 
-                                                                          (i N.<= t) 
-																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) ) 
-																  )
-
-					    		    	  				   	 )
-					    		    	  		  )						    		    	  		
-
-					    		    	  	 )									       
-
-								)	       
-						)	
-				  )		
-	)
-
-	(!prove Lemma4-step6_1_2 [Lemma4-step6_1_1 ])	
 
 	define Lemma4-step6_2 := 		
 	(forall p T b i Q . 
@@ -4087,24 +4919,36 @@ extend-module Synod{
 				                ==> 
                                       (nonfaulty a) 
 			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
+			& (has-promises (als (config (rho T i)) p) b Q)
 		)
 			==> 
 		    	 (forall a .
 						((inQ a Q) 
 							==> 
-								(exists v .
-					        	  		     (
-										         ( exists y .
-											         (i N.<= y)  
-											       & (inMSet (consM a p 2b b v) (mu (config (rho T y))) )												       	
-										       	 )
+								(exists j v .
+											 (i N.<= j)
+					        	  		   & (
+					        	  		   		  (
+										                 (exists y . (i N.<= y) 
+								            	    				& (inMSet (consM a p 2b b v) (mu (config (rho T y))) )
+														 )  													       
+					        	  		   		  )	
+					    		    	  		| (exists k .
+				                                              (    
+					    		    	  				   	      (
+															                 (exists z . (j N.<= z)
+															                 			& (i N.<= j) 
+													            	    				& (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
+																			 )  													       
 
-					    		    	  		| (exists z .
-													         (i N.<= z)
-													       & (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
+                                                                  )
+																| (exists t . 
+																		(i N.<= t)
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) )
+																  )
 
-					    		    	  		  )
+					    		    	  				   	 )
+					    		    	  		  )	 
 
 					    		    	  	 )									       
 
@@ -4113,7 +4957,57 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6_2 [Lemma4-step6_1_2])
+	(!prove Lemma4-step6_2 [Lemma4-step6_1 N.Less=.transitive])
+
+
+
+	define Lemma4-step6_3 := 		
+	(forall p T b i Q . 
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p)
+			& (forall a . (inQ a Q) 
+				                ==> 
+                                      (nonfaulty a) 
+			  )			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+		)
+			==> 
+		    	 (forall a .
+						((inQ a Q) 
+							==> 
+								(exists j v .
+								            (
+					        	  		   		  (
+										                 (exists y . (i N.<= y) 
+								            	    				& (inMSet (consM a p 2b b v) (mu (config (rho T y))) )
+														 )  													       
+					        	  		   		  )	
+					    		    	  		| (exists k .
+				                                              (    
+					    		    	  				   	      (
+															                 (exists z . (i N.<= z) 
+													            	    				& (inMSet (consM a p 2b b v) (mu (config (rho T z))) )
+																			 )  													       
+
+                                                                  )
+																| (exists t . 
+																		(i N.<= t)
+																		& (inMSet (consM a p 2b b v) (mu (config (rho T t))) )
+																  )
+
+					    		    	  				   	 )
+					    		    	  		  )	 
+
+					    		    	  	 )									       
+
+								)	       
+						)	
+				  )		
+	)
+
+	(!prove Lemma4-step6_3 [Lemma4-step6_2 N.Less=.transitive])
 
 	define Lemma4-step7 := 		
 	(forall p T b i Q . 
@@ -4140,7 +5034,7 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step7 [Lemma4-step6_2])		
+	(!prove Lemma4-step7 [Lemma4-step6_3])		
 
 
 
@@ -4255,9 +5149,10 @@ extend-module Synod{
 												       & (
 						            	    		  		   (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
-												  			   )
+															| (exists l .    
+															   	       (k N.<= l) 
+										            	    		 & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))		  
+										            	      )							            	    		  		
 
 				            	    		  	         )						            	    		   
 				    		    	  		  )
@@ -4306,9 +5201,11 @@ extend-module Synod{
 							        	  		     				& (available (rho T j) p)
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
-												  			   )
+															| (exists l .    
+															   	       (k N.<= l) 
+										            	    		 & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))		  
+										            	      )							            	    		  		
+
 
 				            	    		  	       )
 
@@ -4361,9 +5258,11 @@ extend-module Synod{
 							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
-												  			   )
+															| (exists l .    
+															   	       (k N.<= l) 
+										            	    		 & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))		  
+										            	      )							            	    		  		
+
 
 				            	    		  	       )
 
@@ -4391,43 +5290,33 @@ extend-module Synod{
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
 			==> 
-				(forall a . 
+				(forall a .
 					((inQ a Q) 
 						==> 
 							(exists k v .
 				 	       			     (i N.<= k) 									       
 						        	   & (
 							        	   	      (
-							        	   	      	     # (~(lock (als (config (rho T k)) p)))
-							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
-							        	   	      		& (available (rho T k) p)
-							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b v)))
-				        	  		     				& (exists z . 
-				        	  		     				 	         (k N.<= z)
-				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b v)))) 
-
-				        	  		     				  )							        	   	      		
+										            	 (exists y . (k N.<= y)
+										            	 			& (i N.<= k) 
+								            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p))))  							        	   	      		
 							        	   	      )
 						        	  		  
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
-
-							        	   		  	 & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
-												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
-							        	  		     				#& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
-							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
-							        	  		     				& (exists y . 
-							        	  		     				 	         (j N.<= y)
-							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b v)))) 
 
-							        	  		     				  )							        	  		     				
+													            	 (exists z . (j N.<= z)
+													            	 			& (k N.<= j)
+													            	 			& (i N.<= k) 
+											            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))))  							        	   	      		
+
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))   
+						            	    		  		|  (exists l . (k N.<= l)
+						            	    		  					 & (i N.<= k)	 
+							            	    				         & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))   
 												  			   )
 
 				            	    		  	       )
@@ -4440,9 +5329,9 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step16 [Lemma4-step15 IOE->Fair-Rcv-Theorem])	
+	(!prove Lemma4-step16 [Lemma4-step15 Fair-Rcv-Causes-Theorem model-step-axioms])	
 
-
+	
 	define Lemma4-step17 := 
 	(forall p T b i Q . 
 		( 
@@ -4455,7 +5344,7 @@ extend-module Synod{
 			  )			 
 			& (has-promises (als (config (rho T i)) p) b Q)
 		)
-			==>  
+			==> 
 				(forall a .
 					((inQ a Q) 
 						==> 
@@ -4463,38 +5352,28 @@ extend-module Synod{
 				 	       			     (i N.<= k) 									       
 						        	   & (
 							        	   	      (
-							        	   	      	      #(~(lock (als (config (rho T k)) p)))
-							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
-							        	   	      		& (available (rho T k) p)
-							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b v)))
-				        	  		     				& (exists z . 
-				        	  		     				 	         (k N.<= z)
-				        	  		     				 	       & (= (rho T z) (then (rho T k) (receive p (consM a p 2b b v))))
-				        	  		     				 	       & (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))) 
-
-				        	  		     				  )							        	   	      		
+										            	 (exists y . (k N.<= y)
+										            	 			& (i N.<= k)
+										            	 			& (i N.<= y) 
+								            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p))))  							        	   	      		
 							        	   	      )
 						        	  		  
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
-
-							        	   		  	 & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												     & (
 												     		   (
-												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
-							        	  		     				#& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
-							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
-							        	  		     				& (exists y . 
-							        	  		     				 	         (j N.<= y)
-							        	  		     				 	       & (= (rho T y) (then (rho T j) (receive p (consM a p 2b b v))))
-							        	  		     				 	       & (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p)))  
 
-							        	  		     				  )							        	  		     				
+													            	 (exists z . (j N.<= z)
+													            	 			& (k N.<= j)
+													            	 			& (i N.<= k)
+													            	 			& (k N.<= z)
+											            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))))  							        	   	      		
+
 												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l . (k N.<= l) 
-							            	    				         & (= (rho T l) (then (rho T k) (receive p (consM a p 2b b v))))
+						            	    		  		|  (exists l . (k N.<= l)
+						            	    		  					 & (i N.<= k)
+						            	    		  					 #& (i N.<= l)	 
 							            	    				         & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))   
 												  			   )
 
@@ -4508,7 +5387,7 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step17 [Lemma4-step16 model-step-axioms])		
+	(!prove Lemma4-step17 [Lemma4-step16 N.Less=.transitive])	
 
 
 	define Lemma4-step18 := 
@@ -4521,29 +5400,36 @@ extend-module Synod{
 				                ==> 
                                       (nonfaulty a) 
 			  )			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
+			& (has-promises (als (config (rho T i)) p) b Q)
 		)
 			==> 
 				(forall a .
 					((inQ a Q) 
 						==> 
-							(
-				        	  		     				  (exists z v .  (i N.<= z)
-				        	  		     				 	        &  (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))) 
-
-				        	  		     				  )							        	   	      		
+							(exists k v . (
+							        	   	      (
+										            	 (exists y . (i N.<= y) 
+								            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p))))  							        	   	      		
+							        	   	      )
 						        	  		  
-							        	  		| (
-							        	  		     				  (exists y v . (i N.<= y)
-							        	  		     				 	        & (inMSet (consM a p 2b b v) (amu (als (config (rho T y)) p)))  
+							        	  		| (exists j . 
+							        	  			   (k N.<= j)
+												     & (
+												     		   (
 
-							        	  		     				  )							        	  		     				
+													            	 (exists z .  (i N.<= z)
+											            	    				& (inMSet (consM a p 2b b v) (amu (als (config (rho T z)) p))))  							        	   	      		
+
+												     		   )
 						            	    		  		 
-						            	    		  		|  (exists l v . (i N.<= l) 
+						            	    		  		|  (exists l .  (i N.<= l)	 
 							            	    				         & (inMSet (consM a p 2b b v) (amu (als (config (rho T l)) p)))   
 												  			   )
 
+				            	    		  	       )
+
 										  		  )								        	  	 
+							        	 )								       	 
 							)	       
 					)	
 				)
@@ -4551,7 +5437,6 @@ extend-module Synod{
 
 
 	(!prove Lemma4-step18 [Lemma4-step17 N.Less=.transitive])	
-
 
 
 	define Lemma4-step19 := 
@@ -4738,6 +5623,7 @@ extend-module Synod{
 
 
 	(!prove Progress-Theorem [Progress-Theorem-step1 Progress-Theorem-step2 synod-learn-def-axiom])
+
 
 
 }#close module	
