@@ -7,7 +7,6 @@
 
 * `synod` -- theory and proofs about the Synod consensus protocol
 
-<hr style="border:1px solid gray"> </hr>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

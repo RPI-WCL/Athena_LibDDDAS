@@ -9,7 +9,6 @@
 
 * `Netwrk.ath` - Module, Network fundamentals
 
-<hr style="border:1px solid gray"> </hr>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

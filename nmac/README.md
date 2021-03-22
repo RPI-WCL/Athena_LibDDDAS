@@ -9,7 +9,6 @@
 
 * The `OUTPUT_proofs` file contains preverified output of `proofs.ath` in ATHENA
 
-<hr style="border:1px solid gray"> </hr>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

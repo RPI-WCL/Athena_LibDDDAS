@@ -7,7 +7,7 @@
 
 * `consensus` -- theory and proofs about consensus protocols
 
-* `network` -- theory and proofs about network theory
+* `network` -- theory and proofs about network, relay protocols, etc
 
 * `nmac` -- theory and proofs about an NMAC-aware flight planning algorithm 
 
@@ -31,7 +31,6 @@
 
 * For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
 
-<hr style="border:0.2px solid gray"> </hr>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

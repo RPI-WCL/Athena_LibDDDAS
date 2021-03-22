@@ -5,15 +5,23 @@
 
 ##### Description:
 
-* `CharFun.ath` - Module, Charecteristic Functions
+* `RealExt` -Real Extension    
+	* `RealExt.ath` : Some extension to Reals 
 
-* `Evnt.ath` - Module, Events (sets of outcomes of an experiment)
+* `CharFun` - Charecteristic functions    
+	* `CharFun.ath` : Basic theory of Charecteristic functions  
 
-* `Prob.ath` - Module, Probability Theory
+* `Dist` - Distributions    
+	* `Dist.ath` : Basic theory of distributions
 
-* `Random.ath` - Module, Random Variables
+* `Random` - Random Variables    
+	* `Random.ath` : Basic theory of Random Variables
 
-* `RealExt.ath` - Module, Reals 
+* `Prob` - Probability    
+	* `Prob.ath` : Basic theory of Probability    
+	* `PrbIndRv.ath` : Probability of Independent random variables
+
+
 
 
 ###### Note: This library is under development and many modules may be currently just stubs

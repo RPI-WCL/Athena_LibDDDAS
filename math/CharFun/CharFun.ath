@@ -1,0 +1,47 @@
+#-------------------------------------------------------------------------
+#-- Theories of Charecteristic Functions and Distributions
+#-- Author: Samual Breese (sometime early 2019)
+
+module CharFun {
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Declaring a datatype CF about Charecteristic Functions
+	#-- NormalCF is the constructor for datatype CF and OtherCF is the base case
+
+	(datatype CF (NormalCF Real Real) OtherCF)
+
+
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#-- DISTRIBUTIONS NEED TO BE IN A SEPARATE MODULE
+# ****************************************************************
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- mul-cf takes two normal CFs and creates a new normal CF 
+
+	(declare mul-cf (-> (CF CF) CF))
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	
+
+	#-------------------------  RELEVANT THEORY  -------------------------	
+
+	(define mul-cf-normal
+	  (forall ?m1:Real
+	    (forall ?v1:Real
+	      (forall ?m2:Real
+	        (forall ?v2:Real
+	          (= (mul-cf (NormalCF ?m1:Real ?v1:Real) (NormalCF ?m2:Real ?v2:Real))
+	             (NormalCF (+ ?m1:Real ?m2:Real) (+ ?v1:Real ?v2:Real))))))))
+	(assert mul-cf-normal)
+
+
+
+} # end module 
+
+
