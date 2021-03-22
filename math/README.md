@@ -12,7 +12,8 @@
 	* `CharFun.ath` : Basic theory of Charecteristic functions  
 
 * `Dist` - Distributions    
-	* `Dist.ath` : Basic theory of distributions
+	* `Dist.ath` : Basic theory of distributions    
+	* `NormDist.ath` :Theory of Normal Distributions
 
 * `Random` - Random Variables    
 	* `Random.ath` : Basic theory of Random Variables

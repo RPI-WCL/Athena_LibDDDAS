@@ -1,8 +1,7 @@
 #-------------------------------------------------------------------------
 #-- Theories of Random Variables
 
-#load "Athena_LibDDDAS/math/CharFun.ath"
-#load "Athena_LibDDDAS/math/Prob.ath"
+
 load "Athena_LibDDDAS/math/Dist/Dist.ath"
 
 module Random {
