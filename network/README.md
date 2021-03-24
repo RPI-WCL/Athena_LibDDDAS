@@ -11,7 +11,7 @@
 
 * A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
 <p align="center">
-  <img src="network_hierarchy.png">
+  <img height="600" src="network_hierarchy.png">
 </p>
 
 ###### Note: This library is under development and many modules may be currently just stubs

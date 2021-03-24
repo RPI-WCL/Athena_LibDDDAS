@@ -15,7 +15,7 @@
 
 * A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
 <p align="center">
-  <img src="root_hierarchy.png">
+  <img height="600" src="root_hierarchy.png">
 </p>
 
 ##### Instructions:
