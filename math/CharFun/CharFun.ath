@@ -1,6 +1,10 @@
 #-------------------------------------------------------------------------
-#-- Theories of Charecteristic Functions and Distributions
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Charecteristic Functions 
 #-- Author: Samual Breese (sometime early 2019)
+
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+-  
 
 module CharFun {
 

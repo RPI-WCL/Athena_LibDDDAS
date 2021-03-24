@@ -13,6 +13,10 @@
 
 * `math` -- theory and proofs about basic mathematical concepts like random variables, probability, distributions, etc  
 
+* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
+<p align="center">
+  <img src="root_hierarchy.png">
+</p>
 
 ##### Instructions:
 

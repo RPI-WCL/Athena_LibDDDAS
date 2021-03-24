@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------
-#-- Theories of probability
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Probability
 
 load "Athena_LibDDDAS/math/Random/Random.ath"
 load "Athena_LibDDDAS/math/RealExt/RealExt.ath"

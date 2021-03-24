@@ -1,9 +1,10 @@
 #-------------------------------------------------------------------------
-#-- Theory of Multicopy Two-Hop Relay Protocol with Arbitrary Inter-meeting and Constant TTLs
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Multicopy Two-Hop Relay Protocol with Arbitrary Inter-meeting and Constant TTLs
 #-- Based on - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
 
 load "Athena_LibDDDAS/network/Netwrk.ath"
-load "Athena_LibDDDAS/math/Random.ath"
+load "Athena_LibDDDAS/math/Random/Random.ath"
 
 module MTR-AIMCT { 
 
@@ -17,7 +18,7 @@ module MTR-AIMCT {
 	# MTR property: set of the random variables represnting the intermeeting times of the source and each relay with respect to the source
 	# (The set {Xsd, D1, ..., DN-1} in equation 8)
 
-	declare mtrImtngTms: [Random.RandVarSet] -> Random.RandVarSet	
+	# declare mtrImtngTms: [Random.RandVarSet] -> Random.RandVarSet	
 
 
 
@@ -27,13 +28,22 @@ module MTR-AIMCT {
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
-	# Mobility Model constraints : 
+
+	#-- Axiom: The time Td to deliver packet to destination
+	#  is the minimum of the intermeeting time of the source
+	#  and the dest and the time needed for the relay nodes to deliver
+	#  a copy to the dest
+
+	 
+
+	#-- Mobility Model constraints : 
 	# "All nodes move
 	# 	1. independently of each other 
 	#	2. according to the same random mobility model"
 
 	assert mobilityOfMTR-AIMCT :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 		(
 			forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
 			(
@@ -49,12 +59,13 @@ module MTR-AIMCT {
 	)
 
 
-	# MTR Protocol Transmission Constraints:
+	#-- MTR Protocol Transmission Constraints:
 
-	# Source node can transmit a packet to destination or to relay nodes
+	#-- Source node can transmit a packet to destination or to relay nodes
 
 	assert srcTrnsmitRul1 :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 		(forall ?src:Netwrk.MobileNode .
 		 	    (Netwrk.nodeIsSrc ?src:Netwrk.MobileNode) 
 		 	 		==>
@@ -65,10 +76,11 @@ module MTR-AIMCT {
 		)
 	)	
 
-	# Relay node can only transmit a packet to destination
+	#-- Relay node can only transmit a packet to destination
 
 	assert rlyTrnsmitRul1 :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 			(forall ?rly:Netwrk.MobileNode .
 			 	    (Netwrk.nodeIsRly ?rly:Netwrk.MobileNode) 			 	 
 			 	 	==>
@@ -77,10 +89,11 @@ module MTR-AIMCT {
 			)		
 	)
 
-	# source cannot transmit a copy to a relay that already has a copy
+	#-- source cannot transmit a copy to a relay that already has a copy
 
 	assert srcTrnsmitRul2 :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 		(forall ?src:Netwrk.MobileNode ?rly:Netwrk.MobileNode ?pckt:Netwrk.Packet .
 		 	    (   (Netwrk.nodeIsSrc ?src:Netwrk.MobileNode)
 		 	      & (Netwrk.nodeIsRly ?rly:Netwrk.MobileNode) 	
@@ -96,7 +109,7 @@ module MTR-AIMCT {
 	)
 
 
-	# Assumtpions in Section 3: Arbitrary intermeeting and Constant TTLS
+	#-- Assumtpions in Section 3: Arbitrary intermeeting and Constant TTLS
 
 # ** THIS IS WRONG **
 #	# Intermeeting times are IID with a distribution G(t)
@@ -107,15 +120,15 @@ module MTR-AIMCT {
 #
 #	assert intrMtngTmIID :=
 #	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
-#		(exists ?gDist:CharFun.Dist .
+#		(exists ?gDist:Dist.Dist .
 #			(
 #				forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
 #					(
-#						(Random.iID (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode))  
+#						(Random.rvsIID (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode))  
 #					  &	(forall ?intrMtngTM:Random.RandVar .
 #					  		(Random.inRVS (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode) ?intrMtngTM:Random.RandVar)
 #					  			==>
-#					  				(= (Random.cdf ?intrMtngTM:Random.RandVar) ?gDist:CharFun.Dist)
+#					  				(= (Random.cdf ?intrMtngTM:Random.RandVar) ?gDist:Dist.Dist)
 #					  	)
 #					)
 #			)
@@ -123,46 +136,36 @@ module MTR-AIMCT {
 #	)	
 
 	
-	# Intermeeting times are IID with a distribution G(t)
+	#-- Intermeeting times are IID with a distribution G(t)
 	# (The intermeeting time between each pair of nodes
 	# is represented by a random variable and the times 
 	# for all different pairs are iid with a distribution (cdf) gDist)
 
 	assert intrMtngTmsIID :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
-		(
-			(exists ?gDist:CharFun.Dist .
-				(
-					  (Random.iID (mtrImtngTms (Netwrk.netNodeIMTmSet Netwrk.NETWORK)))
-					& (forall ?rv:Random.RandVar .
-						(
-							(Random.inRVS (mtrImtngTms (Netwrk.netNodeIMTmSet Netwrk.NETWORK)) ?rv:Random.RandVar)
-								==>
-									(= (Random.cdf ?rv:Random.RandVar) ?gDist:CharFun.Dist) 
-						)			
-					  )
-				)
-			)	
-		)
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+					  (Random.rvsIID (Netwrk.netNodeIMTmSet Netwrk.NETWORK))
 	)		
 
 
-	# Intermeetings are mutually independently
+	#-- Intermeetings are mutually independent
 	# (Since intermeeting is a mobility concept, specifying it 
 	# at a very highlevel)
 
 	assert intrMtngsInd :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 		(
 			(Netwrk.intrmtngOfNodsInd (Netwrk.netNodeSet Netwrk.NETWORK))
 		)
 	)
 
 
-	# TTLs are constant 
+	#-- TTLs are constant 
 
 	assert cnstntTTL :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	  (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 		(exists ?constantTTL:Netwrk.Duration .
 			(forall ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode .
 				(
@@ -174,13 +177,21 @@ module MTR-AIMCT {
 		)
 	)
 
-	# No restrictions on number of packets
+	#-- No restrictions on number of packets
 
 	assert noPcktRstrctn :=
-	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall Netwrk.NETWORK .
+	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
 		 ( (Netwrk.netMaxPckts Netwrk.NETWORK) N.<= (Netwrk.numNodes (Netwrk.netNodeSet Netwrk.NETWORK)))
 	)
 		
+ 
+ 	#-- Assumption for equation 9:
+ 	#  The intermeeting time of source and dest given by Xsd
+ 	#  and the time taken to deliver by each
+ 	#  relay node Di,.... are mutually independent 
+ 	#  and Di forall i are identical
+
 
 
 

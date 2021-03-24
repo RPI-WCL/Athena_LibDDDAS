@@ -1,8 +1,9 @@
 #-------------------------------------------------------------------------
-#-- Theory of network for modelling MANETS
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Network for modelling MANETS
 #-- Inspiration - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
 
-load "Athena_LibDDDAS/math/Random.ath"
+load "Athena_LibDDDAS/math/Random/Random.ath"
 load "lib/main/nat-less.ath"
 
 module Netwrk { 
@@ -54,6 +55,10 @@ module Netwrk {
 
 	declare intrmtngOfNodsInd: [MobileNodeSet] -> Boolean
 
+	# Network property: the intermeeting time of source and destination
+
+	declare netIMTSorce-Dest: [Network] -> Random.RandVar	
+
 	# Network property: set of of Mobile nodes in the network
 
 	declare netNodeSet: [Network] -> MobileNodeSet
@@ -69,6 +74,10 @@ module Netwrk {
 	# Function that returns protocol in use 
 
 	declare netPrtInUse: [Network] -> ProtocolName
+
+	# Network property: the set of times taken by relay nodes to transfer to destination
+
+	declare netTTRelays->Dest: [Network] -> Random.RandVarSet
 
 	# Node A can transmit to node B 
 
@@ -154,7 +163,7 @@ module Netwrk {
 	# but we needed to create a separate domain for networks
 	# in order to express some properties on that domain)
 
-	declare NETWORK: Network
+	define [NETWORK] := [?NETWORK:Network]
 
 	# constant protocol names
 

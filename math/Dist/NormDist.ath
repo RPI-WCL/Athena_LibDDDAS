@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------
-#-- Theories of Normal Distributions
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Normal Distributions
 
 load "Athena_LibDDDAS/math/Dist/Dist.ath"
 load "Athena_LibDDDAS/math/Random/Random.ath"

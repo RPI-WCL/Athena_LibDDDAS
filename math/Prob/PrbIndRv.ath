@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------
-#-- Theory of Independent Random Variables
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Probabilities of Independent Random Variables
 
 load "Athena_LibDDDAS/math/Prob/Prob.ath"
 

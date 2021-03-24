@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------
-#-- Theories of Distributions
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Distributions
 
 load "Athena_LibDDDAS/math/CharFun/CharFun.ath"
 

@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------
-#-- Theories of Random Variables
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Random Variables
 
 
 load "Athena_LibDDDAS/math/Dist/Dist.ath"
