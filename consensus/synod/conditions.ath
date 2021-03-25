@@ -1,0 +1,247 @@
+#****************************************************************************
+# Constraints/conditions required specifically for proving progress in Paxos 
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+
+
+extend-module Synod{
+	
+
+#----------------------------------------------------------------------------
+#-- GUARANTEES IMPLIED BY THE "nonfaulty" PREDICATE  
+#----------------------------------------------------------------------------
+
+#-- The "nonfaulty" predicate basically implies that an actor will be available
+#-- when the system conditions require it to perform some action, i.e., a 
+#-- nonfaulty actor is available whenever it is supposed to send a message or receive
+#-- a message that had been sent to it 
+
+	#-- A nonfaulty acceptor is available if there is a message for it in the multiset
+	define acceptor-nonfaulty1 :=
+	(forall a .
+		( (   (acc a) 
+			& (nonfaulty a) 
+		  )
+				==>
+					(forall p T b i v typ .
+
+	  		  	       (inMSet (consM p a typ b v) (mu (config (rho T i))))
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) a))
+	    		    	  	  )		
+					)
+		) 
+	)
+
+
+	#-- An nonfaulty acceptor is available if its local state satisfies conditions for it to send a 
+	#-- 1b or 2b message 
+	define acceptor-nonfaulty2 :=
+	(forall a .
+		( (   (acc a) 
+			& (nonfaulty a) 
+		  )
+				==>
+					(forall p T b i v typ .
+					  	(  (inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
+					  	 & (   ((beta (als (config (rho T i)) a)) < b)
+                             | ((beta (als (config (rho T i)) a)) =< b)
+					  	   )	
+                        )
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) a))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+
+	#-- A nonfaulty proposer is available if there is a message for it in the multiset
+	define proposer-nonfaulty1 :=
+	(forall p .
+		( (   (prp p) 
+			& (nonfaulty p) 
+		  )
+				==>
+					(forall T i a typ b v .   
+        	   		  	  (inMSet (consM a p typ b v) (mu (config (rho T i))) )
+		
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) p)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) p))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+
+	#-- A nonfaulty proposer is available if its local state satisfies conditions for it to send a 
+	#-- 2a message 
+	define proposer-nonfaulty2 :=
+	(forall p .
+		( (   (prp p) 
+			& (nonfaulty p) 
+		  )	
+				==>
+					(forall T i typ b v Q .
+						(
+							(forall a .
+								(inQ a Q) 
+									==> 
+										(exists j v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )	       
+							)
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) p)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) p))
+	    		    	  	  )			    
+	        	  		)  
+					)
+		) 
+	)
+
+
+#----------------------------------------------------------------------------
+#-- Send and receive transitions for a nonfaulty actor are IOE
+
+	define nonfaulty->IOE-rcv :=
+		(forall x .
+			(nonfaulty x) ==>
+			(forall m T i .
+		        ((inMSet m (mu (config (rho T i)))) 
+		        & (ready-to (rho T i) x (receive x m)))  
+	            	==>
+	            	(
+	            		  (exists j . (i N.<= j) 
+	            		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )                  
+	            	    |  (forall k .  (i N.< k)
+	            	    				==>
+	            	    				(exists j .
+		            	    				  (k N.<= j) 
+		            	    				& (inMSet m (mu (config (rho T j)))) 
+		            	    				& (ready-to (rho T j) x (receive x m))
+		            	    			)
+	            	    	)			              
+	            	) 
+    		)
+     	)	
+
+	define nonfaulty->IOE-snd :=
+		(forall x m T i .
+				(nonfaulty x) ==>
+				(
+			        (ready-to (rho T i) x (send x m))  
+		            	==>
+		            	(
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+		            	    |  (forall k .  (i N.< k)
+		            	    				==>
+		            	    				(exists j .
+			            	    				  (k N.<= j) 
+			            	    				& (ready-to (rho T j) x (send x m))
+			            	    			)
+		            	    	) 
+		            	) 
+	            )	
+        )						   	
+
+
+
+
+	define nonfaulty-def-axioms := [ proposer-nonfaulty1
+	                            	  proposer-nonfaulty2
+	                              	  acceptor-nonfaulty1
+	                              	  acceptor-nonfaulty2 
+	                              	  nonfaulty->IOE-snd
+	                              	  nonfaulty->IOE-rcv
+	                            	]
+
+
+#----------------------------------------------------------------------------
+#-- PROPERTIES OF A BALLOT NECESSARY FOR IT TO SUCCESSFULLY GET VOTES 
+
+#-- 
+
+	#-- We can call it the "P1+P2-True" since it requires >= properties
+ 	#-- If P1+P2-True proposer, then two things: 
+ 	#--		1. if an acceptor receives 1a message at some indexed position with the ballot,
+ 	#--        the ballot should be > beta of every acceptor 
+ 	#-- 	2. if an acceptor receives 2a message at some indexed position with the ballot, 
+ 	#--        the ballot should be >= beta of every acceptor
+
+ 	define P1+P2-True-1a-beta :=                                                                  
+ 		(forall b . 
+ 			 	(P1+P2-True b)                                                                    
+				 ==> 
+				 	(forall p T a i .
+				 		(
+					 		(
+					 			  (acc a) 
+						 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+							)
+							==>	((beta (als (config (rho T i)) a)) < b) # In an actual implementation, the beta will be updated after responding to a message
+				 		)												# and if a message has been responded to, it will be removed from local state
+				 	)													# Therefore, this cannot lead to a fallacy when beta is updated
+		)		 	
+
+ 	define P1+P2-True-2a-beta :=
+ 		(forall b . 
+ 			(P1+P2-True b)
+				 ==> 
+				 	(forall p T a i v .
+				 		(
+					 		(
+					 			  (acc a) 
+						 		& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+							)
+							==>	((beta (als (config (rho T i)) a)) =< b)
+						) 
+				 	)
+	 	)
+
+
+	define P1+P2-True-beta-def-axioms := [ P1+P2-True-1a-beta 
+				  					       P1+P2-True-2a-beta 
+				  					     ]
+
+
+#----------------------------------------------------------------------------
+#-- CONDITIONS FOR PROVING PROGRESS
+#----------------------------------------------------------------------------
+ 	#-- The following conditions are necessary:
+ 	#-- In every transaction path, some nonfaulty proposer will eventually be ready to propose a ballot 
+ 	#-- that satisfies P1+P2 to some quorum of nonfaulty acceptors
+
+ 	define progress_conditions :=
+	(forall T .
+		(exists i p b Q .
+					  (prp p) 
+					& (P1+P2-True b)
+					& (nonfaulty p) 
+					& (forall a . (inQ a Q) 
+						                ==> 
+						                      (nonfaulty a) 
+						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+					  )
+		)
+	)
+
+
+
+
+}#close module

@@ -1,0 +1,251 @@
+#****************************************************************************
+# Constraints/rules defining the Proposer and Acceptor behavior for Synod
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+
+
+extend-module Synod{
+
+#----------------------------------------------------------------------------
+#-- Quorum theory 
+
+	#-- Non-empty quorums (Unused for progress)
+	define synod-non-empty-Q :=
+			(forall Q . (exists a . (inQ a Q)))		
+
+
+	#-- All members of a quorum are acceptors
+	define synod-only-acc-inQ :=
+			(forall Q a . 
+				((inQ a Q) ==> (acc a))
+			) 	
+
+
+	define synod-quorum-axioms := [ synod-non-empty-Q
+									synod-only-acc-inQ 
+								  ]	
+
+
+#----------------------------------------------------------------------------
+#-- Definitions of the has-promises, has-votes, and learn predicates
+
+	define synod-has-promises-def-axiom :=
+        (forall p T b i Q . 
+				(forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) ))
+	    			<==> 
+	    			    (has-promises (als (config (rho T i)) p) b  Q) 
+
+        )
+
+
+	define synod-has-votes-def-axiom :=
+        (forall p T b i Q . 
+				(forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 2b b v) (amu (als (config (rho T i)) p))) )) # To ensure safety, v should be same for all a in Q
+	    			<==> 
+	    			    (has-votes (als (config (rho T i)) p) b  Q) 
+
+        )
+
+
+	#-- A proposer learns a ballot has been chosen if there is a time when its local
+	#-- state has 2b messages for that ballot from a quorum of acceptors	
+	define synod-learn-def-axiom :=
+	(forall T i p b Q .
+	    (
+  			(has-votes (als (config (rho T i)) p) b  Q)
+				<==>
+					(learn p (config (rho T i)) b)
+	  	)					  
+    )
+
+
+#----------------------------------------------------------------------------
+#-- Message Sending Behavior of Proposers and Acceptors depending on local state
+
+	#-- If an actor is a proposer, then if it has received 1b messages from every acceptor in a Quorum Q 
+	#-- then it becomes ready to send 2a message to each acceptor in Q iff it is available
+
+	define synod-2a-msg-rule := 
+        (forall p T b i Q . 
+        	(prp p) ==>
+	            ( 
+					(has-promises (als (config (rho T i)) p) b  Q)
+	                    ==> 
+	                        (
+	                            (available (rho T i) p)
+	                                ==>
+	                                     ( (forall a .
+	                                            (inQ a Q) 
+	                                                ==> 
+	                                                   (ready-to (rho T i) p (send p (consM p a 2a b (decide-value (als (config (rho T i)) p)) ))) ) )
+	                        )
+	            ) 
+        )
+
+
+	#-- If an actor is an acceptor and it receives an 1a message from a proposer for a ballot greater than any ballot it has seen, 
+	#-- then it becomes ready to send 1b message to the proposer
+
+	define synod-1b-msg-rule := 
+		(forall p T b i a . 
+			(acc a) ==>
+				( 
+					( (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+					& ((beta (als (config (rho T i)) a)) < b) )
+						==> 
+							(
+								(available (rho T i) a)
+									==>
+										 (ready-to (rho T i) a (send a (consM a p 1b b (value (als (config (rho T i)) a))) ) )
+							)
+				) 
+		) 
+
+
+    #-- If an actor is an acceptor and it receives an 2b message from a proposer for a ballot greater or equal to any ballot it has seen, 
+	#-- then it becomes ready to send 2b message to the proposer
+
+	define synod-2b-msg-rule := 
+		(forall p T b i a v . 
+			(acc a) ==>
+				( 
+					( (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+					& ((beta (als (config (rho T i)) a)) =< b) )
+						==> 
+							(
+								(available (rho T i) a)
+									==>
+										 (ready-to (rho T i) a (send a (consM a p 2b b v) ) ) 
+							)
+
+				) 
+		) 									  
+
+
+	define synod-ready-to-send-axioms := [ 
+				   						  synod-1b-msg-rule
+									      synod-2a-msg-rule
+									      synod-2b-msg-rule
+								         ]
+
+
+#----------------------------------------------------------------------------
+#-- Message Receiving Behavior of Proposers and Acceptors 
+
+	define synod-ready-to-receive-general-axiom :=
+		(forall T i sender' recipient' b typ v .
+				  (	
+					    (available (rho T i) recipient')
+					  & (inMSet (consM sender' recipient' typ b v) (mu (config (rho T i))))
+				  )
+					<==>
+						(ready-to (rho T i) recipient' (receive recipient' (consM sender' recipient' typ b v)))
+					
+		)
+
+
+
+
+#----------------------------------------------------------------------------
+#-- Some axioms that are a consequence of Stable Storage in FAL  
+#-- FAL only allows failures in which stable storage of actors persists 
+#-- We use an axiom that asserts that any message in the set of unresponded messages
+#-- in the local state of synod actors will persist in the set until it has been responded to 
+
+	#-- sent2A predicate is a syntactic sugar that states that 2a messages have been sent to a quorum
+	define sent2A-def :=
+    (forall p T b i Q v .
+
+    	(sent2A (als (config (rho T i)) p) b v Q i) <==>
+						      (forall a .
+			                    (inQ a Q) 
+			                    	==> 
+			                    	   (exists u .
+			                    	   	        (i N.<= u)
+											  #& (= (rho T (S u)) (then (rho T u) (send p (consM p a 2a b v))))
+											  & (inMSet (consM p a 2a b v) (mu (config (rho T u))) )	
+			                    	   )
+			                  )	
+    )
+
+
+#-- Pattern matched persistance axioms for various types of unresponded Synod messages 
+	define persistent-unresponded-local-1a-msgs :=
+	(forall T i a p b .
+		(
+		 (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k . 
+							(i N.<= k)
+							& (= (rho T (S k)) (then (rho T k) (send a (consM a p 1b b (value (als (config (rho T k)) a)))))) 
+					  )
+		)
+    )
+
+	define persistent-unresponded-local-2a-msgs :=
+	(forall T i a p b v .
+		(
+		 (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+		 	==>
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
+					  )
+					| (exists k . 
+							(i N.<= k)
+							& (= (rho T (S k)) (then (rho T k) (send a (consM a p 2b b v)))) 
+					  )
+		)
+    )    
+
+	define persistent-unresponded-local-promises :=
+	(forall T i p Q b .
+		(
+		 (has-promises (als (config (rho T i)) p) b Q) 
+		 	==>
+		 		(
+					  (forall j .
+					        (i N.<= j) 
+					  		      ==> 
+					  			      (has-promises (als (config (rho T j)) p) b Q) 
+					  )
+					| (exists k v . 
+							  (i N.<= k)
+						    & (sent2A (als (config (rho T k)) p) b v Q k)	
+					  )
+				)	
+		)
+    )
+
+
+
+	# If a proposer P receives a particular type of message from all members of a quorum Q at different times, then
+	# eventually that message will exist in P's set of unresponded messages from all members of Q. 
+	# This is because P can only respond to a message after it has received a version of it from all members of a quorum. 
+    define received-from-quorum-general :=
+	(forall T i p b Q typ .
+	    (
+  			(forall a . (inQ a Q) ==> (exists j v . (i N.<= j) & (inMSet (consM a p typ b v) (amu (als (config (rho T j)) p))) ))
+			==>
+				(exists k . (i N.<= k) 
+					      & (forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p typ b v) (amu (als (config (rho T k)) p))) )) )
+	  	)					  
+    )
+
+
+
+	define synod-state-axioms := [	sent2A-def
+									persistent-unresponded-local-1a-msgs
+									persistent-unresponded-local-2a-msgs
+									persistent-unresponded-local-promises
+									received-from-quorum-general
+								 ]
+
+}#close module
