@@ -229,6 +229,56 @@ module Prob {
 	(!right-and p-options-comp)
 
 
+
+	#-- THEOREM-probability-X-<=-&-> states that 
+	#   P(X <= y) = 1 - P(X > y)
+
+	define THEOREM-probability-X-<=-&-> :=
+	(forall x R .  
+		(
+			(probE (consE <= x R)) 
+				= 
+					(1.0 - (probE (consE > x R)))
+		)
+	)
+
+	conclude THEOREM-probability-X-<=-&-> 
+	pick-any x
+	pick-any R 
+	let{
+		e1 :=  (consE <= x R);
+		e2 :=  (consE > x R);
+		is-complement := (!uspec (!uspec comp-<=-&-> x) R);
+		comp-rul := (!left-iff (!uspec (!uspec complement-rule e1) e2))
+	}
+	(!right-and (!mp comp-rul is-complement))
+
+
+	#-- THEOREM-probability-X-<=-&-> states that 
+	#   P(X > y) = 1 - P(X <= y)
+
+	define THEOREM-probability-X->-&-<= :=
+	(forall x R .  
+		(
+			(probE (consE > x R)) 
+				= 
+					(1.0 - (probE (consE <= x R)))
+		)
+	)
+
+	conclude THEOREM-probability-X->-&-<=
+	pick-any x
+	pick-any R 
+	let{
+		e1 :=  (consE <= x R);
+		e2 :=  (consE > x R);
+		is-complement := (!uspec (!uspec comp-<=-&-> x) R);
+		comp-rul := (!left-iff (!uspec (!uspec complement-rule e1) e2))
+	}
+	(!left-and (!mp comp-rul is-complement))	
+
+
+
 	#-- THEOREM-probability-MIN-<=-&-> states that 
 	#   P(min[X1,X2,...] <= y) = 1 - P(min[X1,X2,...] > y)
 

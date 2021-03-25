@@ -147,31 +147,30 @@ extend-module Prob {
 		#   If X1,X2,... are independent
 		#   P(min[X1,X2,...] <= y) = 1- prod[P(X1 > y), P(X2 > y),...]
 		#                          = 1- prod[P(X1 > y), prod[P(X2 > y),...]]
+		#						   = 1- prod[(1- G(X)), prod[P(X2 > y),...]]
 
 		define THEOREM-probability-MIN-<=-MInd-RVS :=
-		(forall rvSet y rvSetTail R  . 
-			(	  (rvSet = (Random.consRVS y rvSetTail))
-				& (Random.rvSetInd rvSet)
+		(forall y rvSetTail R  . 
+			(	  
+				  (Random.rvSetInd (Random.consRVS y rvSetTail))
 			)	
 			==> 
 			(
-				(probE (consE <= (Random.minRVS rvSet) R)) 
+				(probE (consE <= (Random.minRVS (Random.consRVS y rvSetTail)) R)) 
 					= 	(1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R)))) ) 
 			)
 		)
 
 
 		conclude THEOREM-probability-MIN-<=-MInd-RVS 
-		pick-any rvSet
 		pick-any y 
 		pick-any rvSetTail
 		pick-any R
-		assume ((rvSet = (Random.consRVS y rvSetTail)) & (Random.rvSetInd rvSet))  
+		assume (Random.rvSetInd (Random.consRVS y rvSetTail))  
 		let{
-			rvSetComposite := (rvSet = (Random.consRVS y rvSetTail));
+			rvSet := (Random.consRVS y rvSetTail);
 			rvSetind := (Random.rvSetInd rvSet);
-			rvSetInd+Composite := ((rvSet = (Random.consRVS y rvSetTail)) & (Random.rvSetInd rvSet));
-			rvSetTailInd := (!mp (!uspec (!uspec (!uspec Random.composite-rvSetInd rvSet) rvSetTail) y) rvSetInd+Composite);
+			rvSetTailInd := (!mp (!uspec (!uspec Random.composite-rvSetInd y) rvSetTail) rvSetind);
 			cnnct-to-> := (!uspec (!uspec THEOREM-probability-MIN-<=-&-> rvSet) R);
 			cnnct-to-set := (!chain [ (probE (consE <= (Random.minRVS rvSet) R))
 									= (1.0 - (probE (consE > (Random.minRVS rvSet) R))) [cnnct-to->]
@@ -185,7 +184,7 @@ extend-module Prob {
 		(!chain [  (probE (consE <= (Random.minRVS rvSet) R))
 				 = (1.0 - (probE (consErvs > rvSet R))) [cnnct-to-set]
 				 = (1.0 - (RealExt.prod (get-set-probs (consErvs > rvSet R)))) [cnnct-to-rvs-ind] # need to create a composite here
-				 = (1.0 - (RealExt.prod (get-set-probs (consErvs > (Random.consRVS y rvSetTail) R)))) [rvSetComposite]
+				 = (1.0 - (RealExt.prod (get-set-probs (consErvs > (Random.consRVS y rvSetTail) R)))) [rvSet]
 				 = (1.0 - (RealExt.prod (RealExt.consRS (probE (consE > y R)) (get-set-probs (consErvs > rvSetTail R))))) [cnnct-to-get-set-probs-axiom2]
 				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [cnnct-to-composite-rvSetInd]
 				  
@@ -199,44 +198,47 @@ extend-module Prob {
 		#                          = 1- prod[P(X1 > y), P(Xi > y)^N]  
 
 		define THEOREM-probability-MIN-<=-MInd-TId-RVS :=
-		(forall rvSet y rvSetTail R  . 
-			(	  (rvSet = (Random.consRVS y rvSetTail))
-				& (Random.rvSetInd rvSet)
+		(forall y rvSetTail R  . 
+			(	 
+				  (Random.rvSetInd (Random.consRVS y rvSetTail))
 				& (Random.rvSetId rvSetTail)
 			)	
 			==> 
 			(
-				(probE (consE <= (Random.minRVS rvSet) R)) 
-			  		= (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) ))
+				(probE (consE <= (Random.minRVS (Random.consRVS y rvSetTail)) R)) 
+			  		= (1.0 - (RealExt.prod_2 (1.0 - (Random.cdf y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) ))
 			)
 		)
 	 
 		conclude THEOREM-probability-MIN-<=-MInd-TId-RVS 
-		pick-any rvSet
 		pick-any y 
 		pick-any rvSetTail
 		pick-any R
 		assume 
-			(	  (rvSet = (Random.consRVS y rvSetTail))
-				& (Random.rvSetInd rvSet)
+			(	
+				  (Random.rvSetInd (Random.consRVS y rvSetTail))
 				& (Random.rvSetId rvSetTail)
 			)	 
 		let{
-			rvSetComposite := (rvSet = (Random.consRVS y rvSetTail));
+			rvSet := (Random.consRVS y rvSetTail);
 			rvSetind := (Random.rvSetInd rvSet);
 			rvSetTailId := (Random.rvSetId rvSetTail);
-			Mind-THEOReM-stmnt := (!uspec (!uspec (!uspec (!uspec THEOREM-probability-MIN-<=-MInd-RVS rvSet) y) rvSetTail) R);
+			Mind-THEOReM-stmnt := (!uspec (!uspec (!uspec THEOREM-probability-MIN-<=-MInd-RVS y) rvSetTail) R);
 			cnnct-to-rvsTail-id := (!mp (!uspec (!uspec (!uspec rvs-Id-axiom rvSetTail) R) >) rvSetTailId);
 			cnnct-to-elmntHRS=probE := (!right-and cnnct-to-rvsTail-id);
 			cnnct-to-get-set-homo := (!left-and cnnct-to-rvsTail-id);
 			cnnct-to-prod-pow-axm := (!mp (!uspec RealExt.prod-pow-axiom (get-set-probs (consErvs > rvSetTail R))) cnnct-to-get-set-homo);
-			cnnct-to-get-set-probs-len := (!uspec (!uspec (!uspec get-set-probs-axiom1 rvSetTail) >) R)
+			cnnct-to-get-set-probs-len := (!uspec (!uspec (!uspec get-set-probs-axiom1 rvSetTail) >) R);
+			conn-to-comp-prob := (!uspec (!uspec THEOREM-probability-X->-&-<= y) R);
+			conn-to-cdf := (!uspec (!uspec cdf-prob-axiom y) R)
 		}
 		(!chain [  (probE (consE <= (Random.minRVS rvSet) R))
 				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [Mind-THEOReM-stmnt]
 				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (RealExt.elmntHRS (get-set-probs (consErvs > rvSetTail R))) (RealExt.lenRS (get-set-probs (consErvs > rvSetTail R)))) )) [cnnct-to-prod-pow-axm]
 				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (RealExt.lenRS (get-set-probs (consErvs > rvSetTail R)))) )) [cnnct-to-elmntHRS=probE]
 				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [cnnct-to-get-set-probs-len]
+				 = (1.0 - (RealExt.prod_2 (1 - (probE (consE <= y R))) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [conn-to-comp-prob]
+				 = (1.0 - (RealExt.prod_2 (1 - (Random.cdf y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [conn-to-cdf]
 			])
 
 

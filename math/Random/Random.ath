@@ -171,14 +171,12 @@ module Random {
 	#   then all elements of [tail] are mutually independent
 
 	assert composite-rvSetInd :=
-	(forall rvSet rvSetTail y .
+	(forall y rvSetTail .
 		(
-			( 
-			  (rvSet = (consRVS y rvSetTail))
-			& (rvSetInd rvSet)
-			)
-			==>
-			(rvSetInd rvSetTail)
+			 
+			(rvSetInd (Random.consRVS y rvSetTail))
+				==>
+				(rvSetInd rvSetTail)
 		)
 	)
 

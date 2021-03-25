@@ -5,6 +5,8 @@
 
 load "Athena_LibDDDAS/network/Netwrk.ath"
 load "Athena_LibDDDAS/math/Random/Random.ath"
+load "Athena_LibDDDAS/math/Prob/Prob.ath"
+load "Athena_LibDDDAS/math/Prob/PrbIndRv.ath"
 
 module MTR-AIMCT { 
 
@@ -24,7 +26,9 @@ module MTR-AIMCT {
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
+	define [NETWORK] := [?NETWORK:Netwrk.Network]
 
+	define [R] := [?R:Real]
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
@@ -33,6 +37,21 @@ module MTR-AIMCT {
 	#  is the minimum of the intermeeting time of the source
 	#  and the dest and the time needed for the relay nodes to deliver
 	#  a copy to the dest
+	# ** DO NOT HAVE A BASIS FOR THIS AXIOM YET
+	#    BUT THIS HAS BEEN USED IN THE PAPER (Since K = N ?)
+
+	assert Td-MIN-IMTSrc-Dest&TTRelays->Dest :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+	 	(
+	 		(Netwrk.netTd NETWORK)
+	 		= 
+	 			(Random.minRVS 
+				 		(Random.consRVS
+				 			(Netwrk.netIMTSource-Dest NETWORK) 
+				 				(Netwrk.netTTRelays->Dest NETWORK)))
+	 	)
+	)	
 
 	 
 
@@ -42,13 +61,13 @@ module MTR-AIMCT {
 	#	2. according to the same random mobility model"
 
 	assert mobilityOfMTR-AIMCT :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		(
 			forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
 			(
-				(  (Netwrk.inMNS (Netwrk.netNodeSet Netwrk.NETWORK) ?node1:Netwrk.MobileNode) 
-				 & (Netwrk.inMNS (Netwrk.netNodeSet Netwrk.NETWORK) ?node2:Netwrk.MobileNode) )
+				(  (Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node1:Netwrk.MobileNode) 
+				 & (Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node2:Netwrk.MobileNode) )
 				==>
 					(
 						(Netwrk.nodeMovInd ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode)
@@ -61,11 +80,12 @@ module MTR-AIMCT {
 
 	#-- MTR Protocol Transmission Constraints:
 
-	#-- Source node can transmit a packet to destination or to relay nodes
+	#-- Source node can transmit a packet to destination or to relay 
+	#   nodes
 
 	assert srcTrnsmitRul1 :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		(forall ?src:Netwrk.MobileNode .
 		 	    (Netwrk.nodeIsSrc ?src:Netwrk.MobileNode) 
 		 	 		==>
@@ -79,8 +99,8 @@ module MTR-AIMCT {
 	#-- Relay node can only transmit a packet to destination
 
 	assert rlyTrnsmitRul1 :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 			(forall ?rly:Netwrk.MobileNode .
 			 	    (Netwrk.nodeIsRly ?rly:Netwrk.MobileNode) 			 	 
 			 	 	==>
@@ -92,8 +112,8 @@ module MTR-AIMCT {
 	#-- source cannot transmit a copy to a relay that already has a copy
 
 	assert srcTrnsmitRul2 :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		(forall ?src:Netwrk.MobileNode ?rly:Netwrk.MobileNode ?pckt:Netwrk.Packet .
 		 	    (   (Netwrk.nodeIsSrc ?src:Netwrk.MobileNode)
 		 	      & (Netwrk.nodeIsRly ?rly:Netwrk.MobileNode) 	
@@ -119,7 +139,7 @@ module MTR-AIMCT {
 #
 #
 #	assert intrMtngTmIID :=
-#	( (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+#	( (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 #		(exists ?gDist:Dist.Dist .
 #			(
 #				forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
@@ -142,9 +162,9 @@ module MTR-AIMCT {
 	# for all different pairs are iid with a distribution (cdf) gDist)
 
 	assert intrMtngTmsIID :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
-					  (Random.rvsIID (Netwrk.netNodeIMTmSet Netwrk.NETWORK))
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+					  (Random.rvsIID (Netwrk.netNodeIMTmSet NETWORK))
 	)		
 
 
@@ -153,10 +173,10 @@ module MTR-AIMCT {
 	# at a very highlevel)
 
 	assert intrMtngsInd :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		(
-			(Netwrk.intrmtngOfNodsInd (Netwrk.netNodeSet Netwrk.NETWORK))
+			(Netwrk.intrmtngOfNodsInd (Netwrk.netNodeSet NETWORK))
 		)
 	)
 
@@ -164,12 +184,12 @@ module MTR-AIMCT {
 	#-- TTLs are constant 
 
 	assert cnstntTTL :=
-	(forall Netwrk.NETWORK .
-	  (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
+	(forall NETWORK .
+	  (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		(exists ?constantTTL:Netwrk.Duration .
 			(forall ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode .
 				(
-					(Netwrk.inMNS (Netwrk.netNodeSet Netwrk.NETWORK) ?node.Netwrk.MobileNode)
+					(Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node.Netwrk.MobileNode)
 					==>
 						(= ?constantTTL:Netwrk.Duration (Netwrk.pcktTTL ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode))
 				)
@@ -180,9 +200,9 @@ module MTR-AIMCT {
 	#-- No restrictions on number of packets
 
 	assert noPcktRstrctn :=
-	(forall Netwrk.NETWORK .
-	 (= (Netwrk.netPrtInUse Netwrk.NETWORK) Netwrk.MTR_AIMCT) ==>
-		 ( (Netwrk.netMaxPckts Netwrk.NETWORK) N.<= (Netwrk.numNodes (Netwrk.netNodeSet Netwrk.NETWORK)))
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 ( (Netwrk.netMaxPckts NETWORK) N.<= (Netwrk.numNodes (Netwrk.netNodeSet NETWORK)))
 	)
 		
  
@@ -191,6 +211,91 @@ module MTR-AIMCT {
  	#  and the time taken to deliver by each
  	#  relay node Di,.... are mutually independent 
  	#  and Di forall i are identical
+
+	assert IMTSource-Dest-MI-TTRelays->Source :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+	 	(
+	 		(Random.rvSetInd
+		 		(Random.consRVS
+		 			(Netwrk.netIMTSource-Dest NETWORK) 
+		 				(Netwrk.netTTRelays->Dest NETWORK)))
+	 		& (Random.rvSetId (Netwrk.netTTRelays->Dest NETWORK))
+	 	)
+	)
+
+
+
+	#-- THEOREM-Prob-AIMCT-Td<=R states that the probability 
+	#   that the Td for MTR-AIMCT will be <= R is given by
+	#   = 1- prod[(1- G(X)), prod[P(X2 > y),...]]
+	#   i.e, Eq 9 in paper 
+
+	define THEOREM-Prob-AIMCT-Td<=R :=
+	(forall NETWORK R .
+		(= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 	(
+		 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
+		 		= (1.0 - 
+		 			(RealExt.prod_2 
+		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
+		 				(RealExt.pow 
+		 					(Prob.probE 
+		 						(Prob.consE Prob.> 
+		 							(Random.rvSetIdElmnt 
+		 								(Netwrk.netTTRelays->Dest NETWORK)) R)) 
+		 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) ))
+		 	)
+	)
+
+	conclude THEOREM-Prob-AIMCT-Td<=R
+	pick-any NETWORK
+	pick-any R
+	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
+	let{
+		netIsAIMCT := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
+		Mi-&-Id := (!mp (!uspec IMTSource-Dest-MI-TTRelays->Source NETWORK) netIsAIMCT);
+		Td=Min := (!mp (!uspec Td-MIN-IMTSrc-Dest&TTRelays->Dest NETWORK) netIsAIMCT);
+		rvSet := (Random.consRVS
+		 			(Netwrk.netIMTSource-Dest NETWORK) 
+		 				(Netwrk.netTTRelays->Dest NETWORK));
+		y :=  (Netwrk.netIMTSource-Dest NETWORK);
+		rvSetTail := (Netwrk.netTTRelays->Dest NETWORK); 						
+		PrbMin<= := (!uspec (!uspec (!uspec Prob.PrbIndRv.THEOREM-probability-MIN-<=-MInd-TId-RVS y) rvSetTail) R);
+		conn-to-min := conclude 
+								(= (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) 
+			  						 (1.0 - 
+		  								(RealExt.prod_2 
+		  									(1.0 - (Random.cdf y R)) 
+		  									(RealExt.pow 
+		  										(Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
+		  										(Random.lenRVS rvSetTail)) ))
+			  				    )
+			  			(!mp PrbMin<= Mi-&-Id)				
+	}
+	(!chain [ (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
+		    = (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) [Td=Min]
+			= (1.0 - 
+				 (RealExt.prod_2 
+					 (1.0 - (Random.cdf y R)) 
+					 (RealExt.pow 
+						 (Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
+						 (Random.lenRVS rvSetTail)) )) [conn-to-min]
+		])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

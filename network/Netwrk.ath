@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 # Lines beginning with '#+-' are used to create the hierarchy graph
-#+- Network for modelling MANETS
+#+- Network Theory for MANETS
 #-- Inspiration - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
 
 load "Athena_LibDDDAS/math/Random/Random.ath"
@@ -57,7 +57,7 @@ module Netwrk {
 
 	# Network property: the intermeeting time of source and destination
 
-	declare netIMTSorce-Dest: [Network] -> Random.RandVar	
+	declare netIMTSource-Dest: [Network] -> Random.RandVar	
 
 	# Network property: set of of Mobile nodes in the network
 
@@ -74,6 +74,10 @@ module Netwrk {
 	# Function that returns protocol in use 
 
 	declare netPrtInUse: [Network] -> ProtocolName
+
+	# Network property: the time taken to deliver a packet to the destination
+
+	declare netTd: [Network] -> Random.RandVar
 
 	# Network property: the set of times taken by relay nodes to transfer to destination
 
