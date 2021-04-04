@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 # Lines beginning with '#+-' are used to create the hierarchy graph
-#+- Extension of Real
+#+- Reals
 #-- For some reason, cannot extend built-in module Real using extend-module
 
 module RealExt { 
