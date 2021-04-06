@@ -20,9 +20,13 @@
 
 ##### Instructions:
 
-* [Download and install ATHENA](https://proofcentral.org/athena/1.4/) and place this directory in the `ATHENA_HOME` directory created during installation
+1. [Download and install ATHENA](https://proofcentral.org/athena/1.4/) 
 
-* Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory
+2. Place this directory in the `ATHENA_HOME` directory created during installation
+
+3. Rename this directory to `Athena_LibDDDAS` (E.g., `vx.x` will be renamed to `Athena_LibDDDAS`) 
+
+3. Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory
 
 
 ##### ATHENA Resources:
