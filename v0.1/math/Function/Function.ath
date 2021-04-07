@@ -1,0 +1,68 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Functions
+
+module Function { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Domain of all mathematical function symbols over reals
+	domain FunSym
+
+	#-- Domain of all general mathematical function expressions over reals
+	# E.g., N(T), x + y, etc
+	domain FunExp
+
+	#-- Create a mathematical function using a symbol and a real
+	datatype Func := (consUF FunSym Real) #unary functions
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- Create a general expression for a symbol
+	#   Eg, given N, it creates the expression for N(x) with a dummy variable x
+	#   need so that we do not have to include an universal quantifier for the 
+	#   dummy 
+
+	declare createFunExp : [FunSym] -> FunExp
+
+	#-- dive divides a FunExp by a Real to give a Real
+	declare FunExpDiv: [FunExp Real] -> FunExp 
+
+	overload / FunExpDiv
+
+	#-- get the real value output of a mathematical function
+
+	declare output : [Func] -> Real
+
+	# SUM computes sum of a function expression f(x) for a given range of discrete real numbers
+
+	declare SUM : [Real Real FunExp] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [x y z] := [?x:Real ?y:Real ?z:Real]
+
+	define [fe] := [?fe:FunExp]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- It simply means that a real outside a SUM oprtaion
+	#   on an expression f(x) can be subsumed as the denominator 
+	#   of f(x) inside the SUM operation 
+	# 
+
+	assert SUM-subsumes-denominator :=
+	(forall x y z fe .
+
+		((SUM x y fe) / z) = (SUM x y (fe / z))
+
+	)
+
+	
+
+
+}# end module

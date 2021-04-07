@@ -1,0 +1,303 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Multicopy Two-Hop Relay Protocol with Arbitrary Inter-meeting and Constant TTLs
+#-- Based on - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
+
+load "Athena_LibDDDAS/network/Netwrk.ath"
+load "Athena_LibDDDAS/math/Random/Random.ath"
+load "Athena_LibDDDAS/math/Prob/Prob.ath"
+load "Athena_LibDDDAS/math/Prob/PrbIndRv.ath"
+
+module MTR-AIMCT { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	# MTR property: set of the random variables represnting the intermeeting times of the source and each relay with respect to the source
+	# (The set {Xsd, D1, ..., DN-1} in equation 8)
+
+	# declare mtrImtngTms: [Random.RandVarSet] -> Random.RandVarSet	
+
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [NETWORK] := [?NETWORK:Netwrk.Network]
+
+	define [R] := [?R:Real]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- Axiom: The time Td to deliver packet to destination
+	#  is the minimum of the intermeeting time of the source
+	#  and the dest and the time needed for the relay nodes to deliver
+	#  a copy to the dest
+	# ** DO NOT HAVE A BASIS FOR THIS AXIOM YET
+	#    BUT THIS HAS BEEN USED IN THE PAPER (Since K = N ?)
+
+	assert Td-MIN-IMTSrc-Dest&TTRelays->Dest :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+	 	(
+	 		(Netwrk.netTd NETWORK)
+	 		= 
+	 			(Random.minRVS 
+				 		(Random.consRVS
+				 			(Netwrk.netIMTSource-Dest NETWORK) 
+				 				(Netwrk.netTTRelays->Dest NETWORK)))
+	 	)
+	)	
+
+	 
+
+	#-- Mobility Model constraints : 
+	# "All nodes move
+	# 	1. independently of each other 
+	#	2. according to the same random mobility model"
+
+	assert mobilityOfMTR-AIMCT :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		(
+			forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
+			(
+				(  (Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node1:Netwrk.MobileNode) 
+				 & (Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node2:Netwrk.MobileNode) )
+				==>
+					(
+						(Netwrk.nodeMovInd ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode)
+					  &	(= (Netwrk.nodeMobMod ?node1:Netwrk.MobileNode) (Netwrk.nodeMobMod ?node2:Netwrk.MobileNode))
+					)
+			)
+		)
+	)
+
+
+	#-- MTR Protocol Transmission Constraints:
+
+	#-- Source node can transmit a packet to destination or to relay 
+	#   nodes
+
+	assert srcTrnsmitRul1 :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		(forall ?src:Netwrk.MobileNode .
+		 	    (Netwrk.nodeIsSrc ?src:Netwrk.MobileNode) 
+		 	 		==>
+				( 
+						(Netwrk.prtSrcCanTrnsmt2Rlys Netwrk.MTR_AIMCT ?src:Netwrk.MobileNode)
+					|	(Netwrk.prtSrcCanTrnsmt2Dst Netwrk.MTR_AIMCT ?src:Netwrk.MobileNode)	
+				) 
+		)
+	)	
+
+	#-- Relay node can only transmit a packet to destination
+
+	assert rlyTrnsmitRul1 :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+			(forall ?rly:Netwrk.MobileNode .
+			 	    (Netwrk.nodeIsRly ?rly:Netwrk.MobileNode) 			 	 
+			 	 	==>
+							(Netwrk.prtRlyOnlyTrnsmt2Dst Netwrk.MTR_AIMCT ?rly:Netwrk.MobileNode)
+					 
+			)		
+	)
+
+	#-- source cannot transmit a copy to a relay that already has a copy
+
+	assert srcTrnsmitRul2 :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		(forall ?src:Netwrk.MobileNode ?rly:Netwrk.MobileNode ?pckt:Netwrk.Packet .
+		 	    (   (Netwrk.nodeIsSrc ?src:Netwrk.MobileNode)
+		 	      & (Netwrk.nodeIsRly ?rly:Netwrk.MobileNode) 	
+		 	    )		
+		 	 		==>
+				( 
+					 ( (Netwrk.nodeHasCpy ?rly:Netwrk.MobileNode ?pckt:Netwrk.Packet)
+					 	 ==>
+					 	 	(~(Netwrk.nodeCanTrnsmt ?src:Netwrk.MobileNode ?rly:Netwrk.MobileNode))
+					 )	
+				) 
+		)
+	)
+
+
+	#-- Assumtpions in Section 3: Arbitrary intermeeting and Constant TTLS
+
+# ** THIS IS WRONG **
+#	# Intermeeting times are IID with a distribution G(t)
+#	# (Each pair of nodes may meet 0 or more times. Therefore
+#	# there is an intermeeting tie between each meeting. 
+#	# Each of those times can be modelled by a random variable)
+#
+#
+#	assert intrMtngTmIID :=
+#	( (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+#		(exists ?gDist:Dist.Dist .
+#			(
+#				forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
+#					(
+#						(Random.rvsIID (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode))  
+#					  &	(forall ?intrMtngTM:Random.RandVar .
+#					  		(Random.inRVS (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode) ?intrMtngTM:Random.RandVar)
+#					  			==>
+#					  				(= (Random.cdf ?intrMtngTM:Random.RandVar) ?gDist:Dist.Dist)
+#					  	)
+#					)
+#			)
+#		)
+#	)	
+
+	
+	#-- Intermeeting times are IID with a distribution G(t)
+	# (The intermeeting time between each pair of nodes
+	# is represented by a random variable and the times 
+	# for all different pairs are iid with a distribution (cdf) gDist)
+
+	assert intrMtngTmsIID :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+					  (Random.rvsIID (Netwrk.netNodeIMTmSet NETWORK))
+	)		
+
+
+	#-- Intermeetings are mutually independent
+	# (Since intermeeting is a mobility concept, specifying it 
+	# at a very highlevel)
+
+	assert intrMtngsInd :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		(
+			(Netwrk.intrmtngOfNodsInd (Netwrk.netNodeSet NETWORK))
+		)
+	)
+
+
+	#-- TTLs are constant 
+
+	assert cnstntTTL :=
+	(forall NETWORK .
+	  (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		(exists ?constantTTL:Netwrk.Duration .
+			(forall ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode .
+				(
+					(Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node.Netwrk.MobileNode)
+					==>
+						(= ?constantTTL:Netwrk.Duration (Netwrk.pcktTTL ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode))
+				)
+			)
+		)
+	)
+
+	#-- No restrictions on number of packets
+
+	assert noPcktRstrctn :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 ( (Netwrk.netMaxPckts NETWORK) N.<= (Netwrk.numNodes (Netwrk.netNodeSet NETWORK)))
+	)
+		
+ 
+ 	#-- Assumption for equation 9:
+ 	#  The intermeeting time of source and dest given by Xsd
+ 	#  and the time taken to deliver by each
+ 	#  relay node Di,.... are mutually independent 
+ 	#  and Di forall i are identical
+
+	assert IMTSource-Dest-MI-TTRelays->Source :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+	 	(
+	 		(Random.rvSetInd
+		 		(Random.consRVS
+		 			(Netwrk.netIMTSource-Dest NETWORK) 
+		 				(Netwrk.netTTRelays->Dest NETWORK)))
+	 		& (Random.rvSetId (Netwrk.netTTRelays->Dest NETWORK))
+	 	)
+	)
+
+
+
+	#-- THEOREM-Prob-AIMCT-Td<=R states that the probability 
+	#   that the Td for MTR-AIMCT will be <= R is given by
+	#   = 1- prod[(1- G(X)), prod[P(X2 > y),...]]
+	#   i.e, Eq 9 in paper 
+
+	define THEOREM-Prob-AIMCT-Td<=R :=
+	(forall NETWORK R .
+		(= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 	(
+		 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
+		 		= (1.0 - 
+		 			(RealExt.prod_2 
+		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
+		 				(RealExt.pow 
+		 					(Prob.probE 
+		 						(Prob.consE Prob.> 
+		 							(Random.rvSetIdElmnt 
+		 								(Netwrk.netTTRelays->Dest NETWORK)) R)) 
+		 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) ))
+		 	)
+	)
+
+	conclude THEOREM-Prob-AIMCT-Td<=R
+	pick-any NETWORK
+	pick-any R
+	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
+	let{
+		netIsAIMCT := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
+		Mi-&-Id := (!mp (!uspec IMTSource-Dest-MI-TTRelays->Source NETWORK) netIsAIMCT);
+		Td=Min := (!mp (!uspec Td-MIN-IMTSrc-Dest&TTRelays->Dest NETWORK) netIsAIMCT);
+		rvSet := (Random.consRVS
+		 			(Netwrk.netIMTSource-Dest NETWORK) 
+		 				(Netwrk.netTTRelays->Dest NETWORK));
+		y :=  (Netwrk.netIMTSource-Dest NETWORK);
+		rvSetTail := (Netwrk.netTTRelays->Dest NETWORK); 						
+		PrbMin<= := (!uspec (!uspec (!uspec Prob.PrbIndRv.THEOREM-probability-MIN-<=-MInd-TId-RVS y) rvSetTail) R);
+		conn-to-min := conclude 
+								(= (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) 
+			  						 (1.0 - 
+		  								(RealExt.prod_2 
+		  									(1.0 - (Random.cdf y R)) 
+		  									(RealExt.pow 
+		  										(Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
+		  										(Random.lenRVS rvSetTail)) ))
+			  				    )
+			  			(!mp PrbMin<= Mi-&-Id)				
+	}
+	(!chain [ (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
+		    = (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) [Td=Min]
+			= (1.0 - 
+				 (RealExt.prod_2 
+					 (1.0 - (Random.cdf y R)) 
+					 (RealExt.pow 
+						 (Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
+						 (Random.lenRVS rvSetTail)) )) [conn-to-min]
+		])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}# end module

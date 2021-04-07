@@ -1,0 +1,96 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "vector_2d"
+load "types"
+load "flightplan"
+load "matrix"
+load "v-list"
+load "nmac"
+
+extend-module NMAC{
+#****************************************************************************
+  define [board] := [?board:Matrix]
+
+  define [v] := [?v:Real]
+
+  define [D H] := [?D:Real ?H:Real]    
+
+  declare check-safety: [Matrix Flightplan Fplan-list V-list Real Real] -> Boolean
+
+  declare valid: [Real Matrix N N Flightplan Fplan-list V-list Real Real] -> Boolean
+  
+  declare solve: [Matrix N N Flightplan Fplan-list V-list Real Real] -> Matrix 
+
+#---------------------------------------------------------------------------
+
+
+#****************************************************************************
+  #-------------------------------------------------------------
+  #-- check-safety() takes an interval n, a flightplan and a flightplan list,
+  #-- it creates an intermediate flightpan upto interval n
+  #-- and returns true if intermediate is compatible with the list 
+
+  assert check-safety-axioms :=
+         let{ 
+            intermediate := (plan board fa v_list);
+            new_list := (consP intermediate f_list);
+            is_safe := (safe new_list D H)
+            }
+	  (fun
+	  [(check-safety board fa f_list v_list D H) =
+	    [ true  when is_safe
+	      false when (~ is_safe)
+	    ]
+	  ]) 
+  define [check-safety-true check-safety-false] := check-safety-axioms
+#---------------------------------------------------------------------------
+
+#****************************************************************************
+  #-------------------------------------------------------------
+  #-- valid() takes a value of ground speeed v, the current matrix
+  #-- the proposal flight-plan, the list of flight-plans, the list of
+  #-- valuse of ground speed and the horizontal and vertical thresholds
+  #-- and returns true iff it is possible to safely assign v to the
+  #-- last unassigned row while still allowing assignments to future rows. 
+
+  assert valid-axioms :=
+         let{ 
+            possible := (check-safety (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) fa f_list v_list D H);
+            future := (solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H)
+            }
+	  (fun
+	  [(valid v board num_v num_intervals fa f_list v_list D H) =
+	    [ true  when (possible & ~(future = nilM))
+	      false when (~(possible & ~(future = nilM)))
+	    ]
+	  ]) 
+  define [valid-true valid-false] := valid-axioms
+#---------------------------------------------------------------------------
+
+#****************************************************************************
+  #-------------------------------------------------------------
+  #-- solve() assigns an airspeed 
+  #-- to an interval  i and calls solve() for interval i + 1 iff  
+  #-- interval i is safe . 
+  #-- Else it it recursively tries other values of airspeed until
+  #-- no values can be assigned to interval i   
+
+  assert solve-axioms :=
+  (fun
+  [(solve board num_v num_intervals fa f_list v_list D H) =  
+   [ board when ((Matrix.complete board) & ((check-safety board fa f_list v_list D H) = true) )
+
+     nilM when ((Matrix.complete board) & ((check-safety board fa f_list v_list D H) = false) )
+
+     (solve (Matrix.set board (Matrix.unassigned board) (V-list.get-index v_list v)) num_v num_intervals fa f_list v_list D H) when ( ~(Matrix.complete board) & (exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) ) )
+
+     nilM when ( ~(Matrix.complete board) & (~(exists v . ((V-list.in-V-list v v_list) &  (valid v board num_v num_intervals fa f_list v_list D H)) )) )
+
+   ]
+  ])
+
+  define [solve-all-intervals-solved solve-final-interval-not-possible solve-current-interval-solved solve-current-interval-not-possible] := solve-axioms
+#---------------------------------------------------------------------------
+
+}#extend-module NMAC

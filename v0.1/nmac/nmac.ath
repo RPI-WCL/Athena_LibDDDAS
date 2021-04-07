@@ -1,0 +1,46 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "types"
+load "vector_2d"
+load "configuration"
+
+
+
+module NMAC{
+
+#****************************************************************************
+
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+  define [sxa sya sza vga ha vza ta]:= [?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?ta:Real]
+
+  define [t t2 lookahead time ta tb ta2 tb2 tsp tsp1 tsp2]:= [?t:Real ?t2:Real ?lookahead:Real ?time:Real ?ta:Real ?tb:Real ?ta2:Real ?tb2:Real ?tsp:Real ?tsp1:Real ?tsp2:Real]
+
+  define [t_list] := [?t_list:Time-list]
+
+  define [fp fa fb intermediate f_copy tail_plan f_rev] := [?fp:Flightplan ?fa:Flightplan ?fb:Flightplan ?intermediate:Flightplan ?f_copy:Flightplan ?tail_plan:Flightplan ?f_rev:Flightplan]
+  
+  define [f_list tail_f_list] := [?f_list:Fplan-list ?tail_f_list:Fplan-list]
+  
+  define [v_list] := [?v_list:V-list]
+  
+  define [sxa2 sya2 sza2 vga2 ha2 vza2 ta2] := [?sxa2:Real ?sya2:Real ?sza2:Real ?vga2:Real ?ha2:Real ?vza2:Real ?ta2:Real]
+
+  define [config_i config_i+1] := [?config_i:Configuration ?config_i+1:Configuration]
+
+  define [D H] := [?D:Real ?H:Real]
+
+  define [interval num_intervals current_v num_v counter unassigned] := [?interval:N ?num_intervals:N ?current_v:N ?num_v:N ?counter:N ?unassigned:N]
+
+  define [row] := [?row:Row]
+
+#  define [sp_list tail_sp_list] := [?sp_list:Statepair-list ?tail_sp_list:Statepair-list] 
+
+#  define [sp] := [?sp:State-pair]
+
+#  define [state_a1 state_b1 state_a2 state_b2] := [?state_a1:State ?state_b1:State ?state_a2:State ?state_b2:State] 
+#----------------------------------------------------------------------------
+
+}#module NMAC

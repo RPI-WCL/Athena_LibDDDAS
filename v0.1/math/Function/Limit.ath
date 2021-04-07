@@ -1,0 +1,41 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Limit
+
+load "Athena_LibDDDAS/math/Function/Function.ath"
+load "Athena_LibDDDAS/math/RealExt/RealExt.ath"
+
+extend-module Function { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- Output the limit
+	declare limit : [Real Real Func] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [x y] := [?x:Real ?y:Real]
+
+	define [f f1 f2] := [?f:Func ?f1:Func ?f2:Func]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- axiom: limits of product of mathematical functions
+
+	assert limit-of-prod :=
+	(forall x y f f1 f2 .
+		(
+			((output f) = ((output f1) * (output f2)) )
+				==>
+					( (limit x y f) = ((limit x y f1) * (limit x y f2)) )
+		)	
+	)
+
+}# end module

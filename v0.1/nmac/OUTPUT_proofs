@@ -1,0 +1,3201 @@
+
+Welcome to Athena (version 1.4).
+
+Type an expression or deduction at the
+prompt below, and press Enter to evaluate it.
+
+To exit Athena, type "quit" at the prompt
+and press Enter.
+
+Loading basic libraries...
+
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/util.ath"
+
+Unit: ()
+
+Unit: ()
+
+Unit: ()
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/list.ath"
+
+Unit: ()
+
+Unit: ()
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/graph-draw.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/rsarray.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/maps.ath"
+
+Unit: ()
+
+Unit: ()
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/rewriting.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/prop-tab.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/tableaux.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/msr.ath"
+
+Unit: ()
+
+Unit: ()
+
+Unit: ()
+
+Unit: ()
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/pairs.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/options.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/dt-model-checker.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/dt-streams.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/streams.ath"
+
+Unit: ()
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/st.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/proofs.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/main/nat-plus.ath"
+
+New datatype N defined.
+
+OK.
+
+The sentence 
+(forall ?y1:N
+  (not (= zero
+          (S ?y1:N))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x1:N
+  (forall ?y1:N
+    (iff (= (S ?x1:N)
+            (S ?y1:N))
+         (= ?x1:N ?y1:N))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?v:N
+  (or (= ?v:N zero)
+      (exists ?x1:N
+        (= ?v:N
+           (S ?x1:N)))))
+has been added to the assumption base.
+
+Procedure int->nat defined.
+
+Procedure nat->int defined.
+
+Procedure nat->int defined.
+
+Symbol N.S defined.
+
+Term N.zero defined.
+
+New symbol N.one declared.
+
+New symbol N.two declared.
+
+Term N.x defined.
+
+Term N.k defined.
+
+Term N.m defined.
+
+Term N.p defined.
+
+Term N.y defined.
+
+Term N.n defined.
+
+Term N.z defined.
+
+The sentence 
+(= N.one
+   (S zero))
+has been added to the assumption base.
+
+The sentence 
+(= N.two
+   (S N.one))
+has been added to the assumption base.
+
+Sentence N.S-not-zero defined.
+
+Sentence N.one-not-zero defined.
+
+Sentence N.S-injective defined.
+
+Theorem: (forall ?n:N
+           (not (= (S ?n:N)
+                   zero)))
+
+Theorem: (forall ?n:N
+           (not (= (S ?n:N)
+                   zero)))
+
+Theorem: (not (= N.one zero))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (iff (= (S ?m:N)
+                     (S ?n:N))
+                  (= ?m:N ?n:N))))
+
+Sentence N.nonzero-S defined.
+
+Sentence N.S-not-same defined.
+
+Theorem: (forall ?n:N
+           (if (not (= ?n:N zero))
+               (exists ?m:N
+                 (= ?n:N
+                    (S ?m:N)))))
+
+Theorem: (forall ?n:N
+           (not (= (S ?n:N)
+                   ?n:N)))
+
+New symbol N.+ declared.
+
+The sentence 
+(forall ?n:N
+  (= (N.+ ?n:N zero)
+     ?n:N))
+has been added to the assumption base.
+
+The sentence 
+(forall ?m:N
+  (forall ?n:N
+    (= (N.+ ?n:N
+            (S ?m:N))
+       (S (N.+ ?n:N ?m:N)))))
+has been added to the assumption base.
+
+Sentence N.Plus.right-zero defined.
+
+Sentence N.Plus.right-nonzero defined.
+
+Sentence N.Plus.left-zero defined.
+
+Sentence N.Plus.left-nonzero defined.
+
+Theorem: (forall ?n:N
+           (= (N.+ zero ?n:N)
+              ?n:N))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (= (N.+ (S ?m:N)
+                     ?n:N)
+                (S (N.+ ?m:N ?n:N)))))
+
+Sentence N.Plus.right-one defined.
+
+Sentence N.Plus.left-one defined.
+
+Theorem: (forall ?n:N
+           (= (N.+ ?n:N N.one)
+              (S ?n:N)))
+
+Theorem: (forall ?n:N
+           (= (N.+ N.one ?n:N)
+              (S ?n:N)))
+
+Sentence N.Plus.associative defined.
+
+Sentence N.Plus.commutative defined.
+
+Theorem: (forall ?m:N
+           (forall ?p:N
+             (forall ?n:N
+               (= (N.+ (N.+ ?m:N ?p:N)
+                       ?n:N)
+                  (N.+ ?m:N
+                       (N.+ ?p:N ?n:N))))))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (= (N.+ ?m:N ?n:N)
+                (N.+ ?n:N ?m:N))))
+
+Sentence N.Plus.=-cancellation defined.
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (= (N.+ ?m:N ?k:N)
+                      (N.+ ?n:N ?k:N))
+                   (= ?m:N ?n:N)))))
+
+Sentence N.Plus.squeeze-property defined.
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (= (N.+ ?m:N ?n:N)
+                    zero)
+                 (= ?m:N zero))))
+
+Module N.Plus defined.
+
+Module N defined.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/main/nat-minus.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/main/nat-less.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/main/nat-times.ath"
+
+New symbol N.* declared.
+
+OK.
+
+Term N.Times.x defined.
+
+Term N.Times.y defined.
+
+Term N.Times.z defined.
+
+The sentence 
+(forall ?x:N
+  (= (N.* ?x:N zero)
+     zero))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x:N
+  (forall ?y:N
+    (= (N.* ?x:N
+            (S ?y:N))
+       (N.+ (N.* ?x:N ?y:N)
+            ?x:N))))
+has been added to the assumption base.
+
+Sentence N.Times.left-zero defined.
+
+Sentence N.Times.left-nonzero defined.
+
+Theorem: (forall ?x:N
+           (= (N.* zero ?x:N)
+              zero))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (= (N.* (S ?y:N)
+                     ?x:N)
+                (N.+ ?x:N
+                     (N.* ?y:N ?x:N)))))
+
+Sentence N.Times.right-one defined.
+
+Sentence N.Times.left-one defined.
+
+Theorem: (forall ?x:N
+           (= (N.* ?x:N N.one)
+              ?x:N))
+
+Theorem: (forall ?x:N
+           (= (N.* N.one ?x:N)
+              ?x:N))
+
+Sentence N.Times.right-distributive defined.
+
+Sentence N.Times.left-distributive defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (= (N.* (N.+ ?x:N ?y:N)
+                       ?z:N)
+                  (N.+ (N.* ?x:N ?z:N)
+                       (N.* ?y:N ?z:N))))))
+
+Sentence N.Times.associative defined.
+
+Sentence N.Times.commutative defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (= (N.* (N.* ?x:N ?y:N)
+                       ?z:N)
+                  (N.* ?x:N
+                       (N.* ?y:N ?z:N))))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (= (N.* ?x:N ?y:N)
+                (N.* ?y:N ?x:N))))
+
+Theorem: (forall ?z:N
+           (forall ?x:N
+             (forall ?y:N
+               (= (N.* ?z:N
+                       (N.+ ?x:N ?y:N))
+                  (N.+ (N.* ?z:N ?x:N)
+                       (N.* ?z:N ?y:N))))))
+
+Sentence N.Times.no-zero-divisors defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (= (N.* ?x:N ?y:N)
+                    zero)
+                 (or (= ?x:N zero)
+                     (= ?y:N zero)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (= (N.* ?x:N ?y:N)
+                    zero)
+                 (or (= ?x:N zero)
+                     (= ?y:N zero)))))
+
+Sentence N.Times.two-times defined.
+
+Theorem: (forall ?x:N
+           (= (N.* N.two ?x:N)
+              (N.+ ?x:N ?x:N)))
+
+Module N.Times defined.
+
+New symbol N.square declared.
+
+Term N.square.x defined.
+
+The sentence 
+(forall ?x:N
+  (= (N.square ?x:N)
+     (N.* ?x:N ?x:N)))
+has been added to the assumption base.
+
+Sentence N.square.zero-property defined.
+
+Theorem: (forall ?x:N
+           (if (= (N.square ?x:N)
+                  zero)
+               (= ?x:N zero)))
+
+Module N.square defined.
+
+Module N extended.
+
+New symbol N.< declared.
+
+OK.
+
+The sentence 
+(forall ?n:N
+  (N.< zero
+       (S ?n:N)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?n:N
+  (not (N.< ?n:N zero)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?m:N
+  (forall ?n:N
+    (iff (N.< (S ?n:N)
+              (S ?m:N))
+         (N.< ?n:N ?m:N))))
+has been added to the assumption base.
+
+Sentence N.Less.injective defined.
+
+Sentence N.Less.not-zero defined.
+
+Sentence N.Less.zero<S defined.
+
+Term N.Less.x defined.
+
+Term N.Less.y defined.
+
+Term N.Less.z defined.
+
+Term N.Less.n' defined.
+
+Sentence N.Less.<S defined.
+
+Sentence N.Less.=zero defined.
+
+Sentence N.Less.zero< defined.
+
+Sentence N.Less.S1 defined.
+
+Sentence N.Less.S2 defined.
+
+Sentence N.Less.S4 defined.
+
+Sentence N.Less.S-step defined.
+
+Sentence N.Less.discrete defined.
+
+Sentence N.Less.transitive defined.
+
+Sentence N.Less.transitive1 defined.
+
+Sentence N.Less.transitive2 defined.
+
+Sentence N.Less.transitive3 defined.
+
+Sentence N.Less.irreflexive defined.
+
+Sentence N.Less.asymmetric defined.
+
+Sentence N.Less.S-not-< defined.
+
+Sentence N.Less.Reverse-S defined.
+
+Sentence N.Less.trichotomy defined.
+
+Sentence N.Less.trichotomy1 defined.
+
+Sentence N.Less.trichotomy2 defined.
+
+Sentence N.Less.Plus-cancellation defined.
+
+Sentence N.Less.Plus-k defined.
+
+Sentence N.Less.Plus-k1 defined.
+
+Sentence N.Less.Plus-k-equiv defined.
+
+Sentence N.Less.not-equal defined.
+
+Sentence N.Less.not-equal1 defined.
+
+Module N.Less defined.
+
+New symbol N.<= declared.
+
+Term N.Less=.x defined.
+
+Term N.Less=.y defined.
+
+Term N.Less=.z defined.
+
+Term N.Less=.n' defined.
+
+The sentence 
+(forall ?x:N
+  (forall ?y:N
+    (iff (N.<= ?x:N ?y:N)
+         (or (N.< ?x:N ?y:N)
+             (= ?x:N ?y:N)))))
+has been added to the assumption base.
+
+List N.Less=.definition defined.
+
+Sentence N.Less=.Implied-by-< defined.
+
+Sentence N.Less=.Implied-by-equal defined.
+
+Sentence N.Less=.reflexive defined.
+
+Sentence N.Less=.zero<= defined.
+
+Sentence N.Less=.S-zero-S-n defined.
+
+Sentence N.Less=.injective defined.
+
+Sentence N.Less=.not-S defined.
+
+Sentence N.Less=.S-not-equal defined.
+
+Sentence N.Less=.discrete defined.
+
+Sentence N.Less=.transitive defined.
+
+Sentence N.Less=.transitive1 defined.
+
+Sentence N.Less=.transitive2 defined.
+
+Sentence N.Less=.S1 defined.
+
+Sentence N.Less=.S2 defined.
+
+Sentence N.Less=.S3 defined.
+
+Sentence N.Less=.trichotomy1 defined.
+
+Sentence N.Less=.trichotomy2 defined.
+
+Sentence N.Less=.trichotomy3 defined.
+
+Sentence N.Less=.trichotomy4 defined.
+
+Sentence N.Less=.trichotomy5 defined.
+
+Sentence N.Less=.Plus-cancellation defined.
+
+Sentence N.Less=.Plus-k defined.
+
+Sentence N.Less=.Plus-k1 defined.
+
+Sentence N.Less=.k-Less= defined.
+
+Sentence N.Less=.zero2 defined.
+
+Sentence N.Less=.not-S-zero defined.
+
+Sentence N.Less=.S4 defined.
+
+Sentence N.Less=.S5 defined.
+
+Sentence N.Less=.=zero defined.
+
+Sentence N.Less=.zero<=one defined.
+
+Module N.Less= defined.
+
+Theorem: (forall ?n:N
+           (N.< ?n:N
+                (S ?n:N)))
+
+Theorem: (forall ?n:N
+           (if (not (N.< zero ?n:N))
+               (= ?n:N zero)))
+
+Theorem: (forall ?n:N
+           (iff (not (= ?n:N zero))
+                (N.< zero ?n:N)))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (N.< (S ?x:N)
+                      ?y:N)
+                 (N.< ?x:N ?y:N))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (N.< (S ?x:N)
+                      ?y:N)
+                 (N.< ?x:N ?y:N))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (N.< ?x:N ?y:N)
+                 (N.< ?x:N
+                      (S ?y:N)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (and (N.< ?x:N
+                           (S ?y:N))
+                      (not (= ?x:N ?y:N)))
+                 (N.< ?x:N ?y:N))))
+
+Theorem: (forall ?n:N
+           (not (exists ?x:N
+                  (and (N.< ?n:N ?x:N)
+                       (N.< ?x:N
+                            (S ?n:N))))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (and (N.< ?x:N ?y:N)
+                        (N.< ?y:N ?z:N))
+                   (N.< ?x:N ?z:N)))))
+
+Theorem: (forall ?n:N
+           (not (N.< ?n:N ?n:N)))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< ?m:N ?n:N)
+                 (not (N.< ?n:N ?m:N)))))
+
+Theorem: (forall ?n:N
+           (not (N.< (S ?n:N)
+                     ?n:N)))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (and (not (N.< ?m:N ?n:N))
+                      (not (= ?m:N ?n:N)))
+                 (N.< ?n:N ?m:N))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (and (not (N.< ?m:N ?n:N))
+                      (not (N.< ?n:N ?m:N)))
+                 (= ?m:N ?n:N))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (iff (= ?m:N ?n:N)
+                  (and (not (N.< ?m:N ?n:N))
+                       (not (N.< ?n:N ?m:N))))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< ?m:N ?n:N)
+                 (not (= ?m:N ?n:N)))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< ?m:N ?n:N)
+                 (not (= ?n:N ?m:N)))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< ?m:N ?n:N)
+                 (N.<= ?m:N ?n:N))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (= ?m:N ?n:N)
+                 (N.<= ?m:N ?n:N))))
+
+Theorem: (forall ?n:N
+           (N.<= ?n:N ?n:N))
+
+Theorem: (forall ?n:N
+           (N.<= zero ?n:N))
+
+Theorem: (forall ?n:N
+           (N.<= (S zero)
+                 (S ?n:N)))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (iff (N.<= (S ?n:N)
+                        (S ?m:N))
+                  (N.<= ?n:N ?m:N))))
+
+Theorem: (forall ?n:N
+           (not (N.<= (S ?n:N)
+                      ?n:N)))
+
+Theorem: (forall ?k:N
+           (forall ?n:N
+             (if (N.<= (S ?k:N)
+                       ?n:N)
+                 (not (= ?k:N ?n:N)))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< ?m:N ?n:N)
+                 (N.<= (S ?m:N)
+                       ?n:N))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (not (N.<= ?n:N ?m:N))
+                 (N.< ?m:N ?n:N))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (not (N.< ?n:N ?m:N))
+                 (N.<= ?m:N ?n:N))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< ?n:N ?m:N)
+                 (not (N.<= ?m:N ?n:N)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (and (N.<= ?x:N ?y:N)
+                        (N.<= ?y:N ?z:N))
+                   (N.<= ?x:N ?z:N)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (and (N.<= ?x:N ?y:N)
+                        (N.< ?y:N ?z:N))
+                   (N.< ?x:N ?z:N)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (and (N.< ?x:N ?y:N)
+                        (N.<= ?y:N ?z:N))
+                   (N.< ?x:N ?z:N)))))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (if (N.<= ?n:N ?m:N)
+                 (N.< ?n:N
+                      (S ?m:N)))))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (if (N.<= ?n:N ?m:N)
+                 (N.<= ?n:N
+                       (S ?m:N)))))
+
+Theorem: (forall ?n:N
+           (N.<= ?n:N
+                 (S ?n:N)))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.<= ?n:N ?m:N)
+                 (not (N.< ?m:N ?n:N)))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (and (N.<= ?m:N ?n:N)
+                      (N.<= ?n:N ?m:N))
+                 (= ?m:N ?n:N))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.< (N.+ ?m:N ?k:N)
+                        (N.+ ?n:N ?k:N))
+                   (N.< ?m:N ?n:N)))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.<= (N.+ ?m:N ?k:N)
+                         (N.+ ?n:N ?k:N))
+                   (N.<= ?m:N ?n:N)))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.< ?m:N ?n:N)
+                   (N.< (N.+ ?m:N ?k:N)
+                        (N.+ ?n:N ?k:N))))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.< ?m:N ?n:N)
+                   (N.< (N.+ ?m:N ?k:N)
+                        (N.+ ?n:N ?k:N))))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.< ?m:N ?n:N)
+                   (N.< ?m:N
+                        (N.+ ?n:N ?k:N))))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.<= ?m:N ?n:N)
+                   (N.<= (N.+ ?m:N ?k:N)
+                         (N.+ ?n:N ?k:N))))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (N.<= ?m:N ?n:N)
+                   (N.<= ?m:N
+                         (N.+ ?n:N ?k:N))))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (iff (N.< ?m:N ?n:N)
+                    (N.< (N.+ ?m:N ?k:N)
+                         (N.+ ?n:N ?k:N))))))
+
+Theorem: (forall ?k:N
+           (forall ?m:N
+             (forall ?n:N
+               (if (= ?n:N
+                      (N.+ ?m:N ?k:N))
+                   (N.<= ?m:N ?n:N)))))
+
+Theorem: (forall ?n:N
+           (if (N.<= ?n:N zero)
+               (= ?n:N zero)))
+
+Theorem: (forall ?n:N
+           (if (N.<= ?n:N zero)
+               (= ?n:N zero)))
+
+Theorem: (forall ?n:N
+           (not (N.<= (S ?n:N)
+                      zero)))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (if (not (N.< ?m:N ?n:N))
+                 (N.< ?n:N
+                      (S ?m:N)))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.< (S ?m:N)
+                      ?n:N)
+                 (exists ?n':N
+                   (= ?n:N
+                      (S ?n':N))))))
+
+Theorem: (forall ?m:N
+           (forall ?n:N
+             (if (N.<= (S ?m:N)
+                       ?n:N)
+                 (exists ?n':N
+                   (= ?n:N
+                      (S ?n':N))))))
+
+Theorem: (forall ?n:N
+           (forall ?m:N
+             (if (and (N.<= ?n:N
+                            (S ?m:N))
+                      (not (= ?n:N
+                              (S ?m:N))))
+                 (N.<= ?n:N ?m:N))))
+
+Theorem: (forall ?m:N
+           (if (N.< ?m:N N.one)
+               (= ?m:N zero)))
+
+Theorem: (forall ?m:N
+           (if (= ?m:N zero)
+               (N.<= ?m:N N.one)))
+
+Sentence N.Times.=-cancellation defined.
+
+Theorem: (forall ?y:N
+           (forall ?z:N
+             (forall ?x:N
+               (if (and (N.< zero ?x:N)
+                        (= (N.* ?x:N ?y:N)
+                           (N.* ?x:N ?z:N)))
+                   (= ?y:N ?z:N)))))
+
+Sentence N.Times.<-cancellation defined.
+
+Theorem: (forall ?y:N
+           (forall ?z:N
+             (forall ?x:N
+               (if (and (N.< zero ?x:N)
+                        (N.< (N.* ?x:N ?y:N)
+                             (N.* ?x:N ?z:N)))
+                   (N.< ?y:N ?z:N)))))
+
+Sentence N.Times.<-cancellation-conv defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (and (N.< zero ?x:N)
+                        (N.< ?y:N ?z:N))
+                   (N.< (N.* ?x:N ?y:N)
+                        (N.* ?x:N ?z:N))))))
+
+Sentence N.Times.<=-cancellation-conv defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (N.<= ?y:N ?z:N)
+                   (N.<= (N.* ?x:N ?y:N)
+                         (N.* ?x:N ?z:N))))))
+
+Sentence N.Times.identity-lemma1 defined.
+
+Sentence N.Times.identity-lemma2 defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (and (N.< zero ?x:N)
+                      (= (N.* ?x:N ?y:N)
+                         ?x:N))
+                 (= ?y:N N.one))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (= (N.* ?x:N ?y:N)
+                    N.one)
+                 (= ?x:N N.one))))
+
+Sentence N.Times.squeeze defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (N.< (N.* ?x:N ?y:N)
+                      ?x:N)
+                 (= ?y:N zero))))
+
+Module N.Times extended.
+
+Module N extended.
+
+Method N.combine-inequalities defined.
+
+Module N extended.
+
+New symbol N.- declared.
+
+Term N.Minus.x defined.
+
+Term N.Minus.y defined.
+
+Term N.Minus.z defined.
+
+The sentence 
+(forall ?x:N
+  (= (N.- zero ?x:N)
+     zero))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x:N
+  (= (N.- ?x:N zero)
+     ?x:N))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x:N
+  (forall ?y:N
+    (= (N.- (S ?x:N)
+            (S ?y:N))
+       (N.- ?x:N ?y:N))))
+has been added to the assumption base.
+
+Sentence N.Minus.zero-left defined.
+
+Sentence N.Minus.zero-right defined.
+
+Sentence N.Minus.both-nonzero defined.
+
+Sentence N.Minus.Plus-Cancel defined.
+
+Theorem: (forall ?y:N
+           (forall ?x:N
+             (if (N.<= ?y:N ?x:N)
+                 (= ?x:N
+                    (N.+ (N.- ?x:N ?y:N)
+                         ?y:N)))))
+
+Sentence N.Minus.second-equal defined.
+
+Theorem: (forall ?x:N
+           (= (N.- ?x:N ?x:N)
+              zero))
+
+Theorem: (forall ?x:N
+           (= (N.- ?x:N ?x:N)
+              zero))
+
+Sentence N.Minus.second-greater defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (N.< ?x:N ?y:N)
+                 (= (N.- ?x:N ?y:N)
+                    zero))))
+
+Sentence N.Minus.second-greater-or-equal defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (N.<= ?x:N ?y:N)
+                 (= (N.- ?x:N ?y:N)
+                    zero))))
+
+Sentence N.Minus.alt-<=-characterization defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (iff (N.<= ?x:N ?y:N)
+                  (exists ?z:N
+                    (= ?y:N
+                       (N.+ ?x:N ?z:N))))))
+
+Sentence N.Minus.<-left defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (if (and (N.< zero ?y:N)
+                      (N.<= ?y:N ?x:N))
+                 (N.< (N.- ?x:N ?y:N)
+                      ?x:N))))
+
+Sentence N.Minus.Plus-Minus-property defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (= ?x:N
+                      (N.+ ?y:N ?z:N))
+                   (= (N.- ?x:N ?y:N)
+                      ?z:N)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (= ?x:N
+                      (N.+ ?y:N ?z:N))
+                   (= (N.- ?x:N ?z:N)
+                      ?y:N)))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (= (N.+ ?x:N ?y:N)
+                      ?z:N)
+                   (= ?x:N
+                      (N.- ?z:N ?y:N))))))
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (= (N.+ ?x:N ?y:N)
+                      ?z:N)
+                   (= ?y:N
+                      (N.- ?z:N ?x:N))))))
+
+List N.Minus.Plus-Minus-properties defined.
+
+Sentence N.Minus.cancellation defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (= (N.- (N.+ ?x:N ?y:N)
+                     ?x:N)
+                ?y:N)))
+
+Sentence N.Minus.comparison defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (if (and (N.< ?z:N ?y:N)
+                        (N.<= ?y:N ?x:N))
+                   (N.< (N.- ?x:N ?y:N)
+                        (N.- ?x:N ?z:N))))))
+
+Sentence N.Minus.Times-Distributivity defined.
+
+Theorem: (forall ?x:N
+           (forall ?y:N
+             (forall ?z:N
+               (= (N.- (N.* ?x:N ?y:N)
+                       (N.* ?x:N ?z:N))
+                  (N.* ?x:N
+                       (N.- ?y:N ?z:N))))))
+
+Module N.Minus defined.
+
+Module N extended.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/vector_2d.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/real.ath"
+
+Procedure: extend (defined at /home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/lib/basic/maps.ath:8:4)
+
+New symbol Real.sqrt declared.
+
+New symbol Real.sin declared.
+
+New symbol Real.cos declared.
+
+Module Real defined.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/types.ath"
+
+New datatype Vector_2d defined.
+
+The sentence 
+(forall ?x1:Real
+  (forall ?x2:Real
+    (forall ?y1:Real
+      (forall ?y2:Real
+        (iff (= (vec_2d ?x1:Real ?x2:Real)
+                (vec_2d ?y1:Real ?y2:Real))
+             (and (= ?x1:Real ?y1:Real)
+                  (= ?x2:Real ?y2:Real)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?v:Vector_2d
+  (exists ?x1:Real
+    (exists ?x2:Real
+      (= ?v:Vector_2d
+         (vec_2d ?x1:Real ?x2:Real)))))
+has been added to the assumption base.
+
+New datatype Configuration defined.
+
+New datatype State defined.
+
+New datatype Flightplan defined.
+
+The sentence 
+(forall ?y1:Configuration
+  (forall ?y2:Flightplan
+    (not (= nilF
+            (consF ?y1:Configuration ?y2:Flightplan)))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x1:Configuration
+  (forall ?x2:Flightplan
+    (forall ?y1:Configuration
+      (forall ?y2:Flightplan
+        (iff (= (consF ?x1:Configuration ?x2:Flightplan)
+                (consF ?y1:Configuration ?y2:Flightplan))
+             (and (= ?x1:Configuration ?y1:Configuration)
+                  (= ?x2:Flightplan ?y2:Flightplan)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?v:Flightplan
+  (or (= ?v:Flightplan nilF)
+      (exists ?x1:Configuration
+        (exists ?x2:Flightplan
+          (= ?v:Flightplan
+             (consF ?x1:Configuration ?x2:Flightplan))))))
+has been added to the assumption base.
+
+New datatype Fplan-list defined.
+
+The sentence 
+(forall ?y1:Flightplan
+  (forall ?y2:Fplan-list
+    (not (= nilP
+            (consP ?y1:Flightplan ?y2:Fplan-list)))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x1:Flightplan
+  (forall ?x2:Fplan-list
+    (forall ?y1:Flightplan
+      (forall ?y2:Fplan-list
+        (iff (= (consP ?x1:Flightplan ?x2:Fplan-list)
+                (consP ?y1:Flightplan ?y2:Fplan-list))
+             (and (= ?x1:Flightplan ?y1:Flightplan)
+                  (= ?x2:Fplan-list ?y2:Fplan-list)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?v:Fplan-list
+  (or (= ?v:Fplan-list nilP)
+      (exists ?x1:Flightplan
+        (exists ?x2:Fplan-list
+          (= ?v:Fplan-list
+             (consP ?x1:Flightplan ?x2:Fplan-list))))))
+has been added to the assumption base.
+
+New datatype V-list defined.
+
+The sentence 
+(forall ?y1:Real
+  (forall ?y2:V-list
+    (not (= nilV
+            (consV ?y1:Real ?y2:V-list)))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x1:Real
+  (forall ?x2:V-list
+    (forall ?y1:Real
+      (forall ?y2:V-list
+        (iff (= (consV ?x1:Real ?x2:V-list)
+                (consV ?y1:Real ?y2:V-list))
+             (and (= ?x1:Real ?y1:Real)
+                  (= ?x2:V-list ?y2:V-list)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?v:V-list
+  (or (= ?v:V-list nilV)
+      (exists ?x1:Real
+        (exists ?x2:V-list
+          (= ?v:V-list
+             (consV ?x1:Real ?x2:V-list))))))
+has been added to the assumption base.
+
+New datatype Time-list defined.
+
+The sentence 
+(forall ?y1:Real
+  (forall ?y2:Time-list
+    (not (= nilTl
+            (consTl ?y1:Real ?y2:Time-list)))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?x1:Real
+  (forall ?x2:Time-list
+    (forall ?y1:Real
+      (forall ?y2:Time-list
+        (iff (= (consTl ?x1:Real ?x2:Time-list)
+                (consTl ?y1:Real ?y2:Time-list))
+             (and (= ?x1:Real ?y1:Real)
+                  (= ?x2:Time-list ?y2:Time-list)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?v:Time-list
+  (or (= ?v:Time-list nilTl)
+      (exists ?x1:Real
+        (exists ?x2:Time-list
+          (= ?v:Time-list
+             (consTl ?x1:Real ?x2:Time-list))))))
+has been added to the assumption base.
+
+New symbol Vector_2d.0_vec declared.
+
+The sentence 
+(= Vector_2d.0_vec
+   (vec_2d 0.0 0.0))
+has been added to the assumption base.
+
+Term Vector_2d.r defined.
+
+Term Vector_2d.ux defined.
+
+Term Vector_2d.uy defined.
+
+Term Vector_2d.vx defined.
+
+Term Vector_2d.vy defined.
+
+Term Vector_2d.v defined.
+
+Term Vector_2d.u defined.
+
+New symbol Vector_2d.getx declared.
+
+The sentence 
+(forall ?ux:Real
+  (forall ?uy:Real
+    (= (Vector_2d.getx (vec_2d ?ux:Real ?uy:Real))
+       ?ux:Real)))
+has been added to the assumption base.
+
+New symbol Vector_2d.gety declared.
+
+The sentence 
+(forall ?ux:Real
+  (forall ?uy:Real
+    (= (Vector_2d.gety (vec_2d ?ux:Real ?uy:Real))
+       ?uy:Real)))
+has been added to the assumption base.
+
+New symbol Vector_2d.ADD declared.
+
+The sentence 
+(forall ?ux:Real
+  (forall ?uy:Real
+    (forall ?vx:Real
+      (forall ?vy:Real
+        (= (Vector_2d.ADD (vec_2d ?ux:Real ?uy:Real)
+                          (vec_2d ?vx:Real ?vy:Real))
+           (vec_2d (+ ?ux:Real ?vx:Real)
+                   (+ ?uy:Real ?vy:Real)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?u:Vector_2d
+  (= (Vector_2d.ADD ?u:Vector_2d Vector_2d.0_vec)
+     ?u:Vector_2d))
+has been added to the assumption base.
+
+Module Vector_2d.ADD defined.
+
+New symbol Vector_2d.SUBTRACT declared.
+
+The sentence 
+(forall ?ux:Real
+  (forall ?uy:Real
+    (forall ?vx:Real
+      (forall ?vy:Real
+        (= (Vector_2d.SUBTRACT (vec_2d ?ux:Real ?uy:Real)
+                               (vec_2d ?vx:Real ?vy:Real))
+           (vec_2d (- ?ux:Real ?vx:Real)
+                   (- ?uy:Real ?vy:Real)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?u:Vector_2d
+  (= (Vector_2d.SUBTRACT ?u:Vector_2d Vector_2d.0_vec)
+     ?u:Vector_2d))
+has been added to the assumption base.
+
+Module Vector_2d.SUBTRACT defined.
+
+New symbol Vector_2d.SCALAR-MULT declared.
+
+The sentence 
+(forall ?r:Real
+  (forall ?ux:Real
+    (forall ?uy:Real
+      (= (Vector_2d.SCALAR-MULT (vec_2d ?ux:Real ?uy:Real)
+                                ?r:Real)
+         (vec_2d (* ?ux:Real ?r:Real)
+                 (* ?uy:Real ?r:Real))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?u:Vector_2d
+  (= (Vector_2d.SCALAR-MULT ?u:Vector_2d 0.0)
+     Vector_2d.0_vec))
+has been added to the assumption base.
+
+Module Vector_2d.SCALAR-MULT defined.
+
+New symbol Vector_2d.DOT declared.
+
+The sentence 
+(forall ?ux:Real
+  (forall ?uy:Real
+    (forall ?vx:Real
+      (forall ?vy:Real
+        (= (Vector_2d.DOT (vec_2d ?ux:Real ?uy:Real)
+                          (vec_2d ?vx:Real ?vy:Real))
+           (+ (* ?ux:Real ?vx:Real)
+              (* ?uy:Real ?vy:Real)))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?u:Vector_2d
+  (= (Vector_2d.DOT ?u:Vector_2d Vector_2d.0_vec)
+     0.0))
+has been added to the assumption base.
+
+Module Vector_2d.DOT defined.
+
+New symbol Vector_2d.NORM declared.
+
+The sentence 
+(forall ?ux:Real
+  (forall ?uy:Real
+    (= (Vector_2d.NORM (vec_2d ?ux:Real ?uy:Real))
+       (Real.sqrt (+ (* ?ux:Real ?ux:Real)
+                     (* ?uy:Real ?uy:Real))))))
+has been added to the assumption base.
+
+Module Vector_2d.NORM defined.
+
+Module Vector_2d defined.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/violation.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/v-list.ath"
+
+Term V-list.v1 defined.
+
+Term V-list.i defined.
+
+Term V-list.counter defined.
+
+Term V-list.v_list defined.
+
+New symbol V-list.in-V-list declared.
+
+The sentence 
+(forall ?x:Real
+  (not (V-list.in-V-list ?x:Real nilV)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?h:Real
+  (forall ?t:V-list
+    (forall ?x:Real
+      (forall ?tail:V-list
+        (iff (V-list.in-V-list ?x:Real
+                               (consV ?h:Real ?t:V-list))
+             (or (= ?x:Real ?h:Real)
+                 (V-list.in-V-list ?x:Real ?tail:V-list)))))))
+has been added to the assumption base.
+
+New symbol V-list.get-index declared.
+
+Module V-list defined.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/matrix.ath"
+
+New datatype Row defined.
+
+New datatype Matrix defined.
+
+New symbol Matrix.set declared.
+
+New symbol Matrix.delete declared.
+
+New symbol Matrix.complete declared.
+
+New symbol Matrix.assigned declared.
+
+New symbol Matrix.unassigned declared.
+
+Term Matrix.M defined.
+
+Term Matrix.row defined.
+
+Term Matrix.M_tail defined.
+
+New symbol Matrix.in-Matrix declared.
+
+The sentence 
+(forall ?r:Row
+  (not (Matrix.in-Matrix ?r:Row nilM)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?h:Row
+  (forall ?r:Row
+    (forall ?tail:Matrix
+      (iff (Matrix.in-Matrix ?r:Row
+                             (consM ?h:Row ?tail:Matrix))
+           (or (= ?r:Row ?h:Row)
+               (Matrix.in-Matrix ?r:Row ?tail:Matrix))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?M:Matrix
+  (if (forall ?v4551:Row
+        (and (Matrix.in-Matrix ?v4551:Row ?M:Matrix)
+             (Matrix.assigned ?v4551:Row)))
+      (= (Matrix.complete ?M:Matrix)
+         true)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?M:Matrix
+  (if (not (forall ?v4552:Row
+             (and (Matrix.in-Matrix ?v4552:Row ?M:Matrix)
+                  (Matrix.assigned ?v4552:Row))))
+      (= (Matrix.complete ?M:Matrix)
+         false)))
+has been added to the assumption base.
+
+Sentence Matrix.complete-true defined.
+
+Sentence Matrix.complete-false defined.
+
+Module Matrix defined.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/nmac.ath"
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/configuration.ath"
+
+Term Configuration.t defined.
+
+Term Configuration.sxa defined.
+
+Term Configuration.sya defined.
+
+Term Configuration.vga defined.
+
+Term Configuration.ha defined.
+
+Term Configuration.sza defined.
+
+Term Configuration.vza defined.
+
+New symbol Configuration.getsx declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.getsx (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?sxa:Real))))))))
+has been added to the assumption base.
+
+New symbol Configuration.getsy declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.getsy (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?sya:Real))))))))
+has been added to the assumption base.
+
+New symbol Configuration.getsz declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.getsz (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?sza:Real))))))))
+has been added to the assumption base.
+
+New symbol Configuration.getvg declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.getvg (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?vga:Real))))))))
+has been added to the assumption base.
+
+New symbol Configuration.geth declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.geth (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?ha:Real))))))))
+has been added to the assumption base.
+
+New symbol Configuration.getvz declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.getvz (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?vza:Real))))))))
+has been added to the assumption base.
+
+New symbol Configuration.gettime declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?ha:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (= (Configuration.gettime (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real))
+                 ?t:Real))))))))
+has been added to the assumption base.
+
+Module Configuration defined.
+
+Term NMAC.sxa defined.
+
+Term NMAC.sya defined.
+
+Term NMAC.vga defined.
+
+Term NMAC.ha defined.
+
+Term NMAC.ta defined.
+
+Term NMAC.sza defined.
+
+Term NMAC.vza defined.
+
+Term NMAC.time defined.
+
+Term NMAC.t defined.
+
+Term NMAC.t2 defined.
+
+Term NMAC.ta defined.
+
+Term NMAC.ta2 defined.
+
+Term NMAC.lookahead defined.
+
+Term NMAC.tb defined.
+
+Term NMAC.tb2 defined.
+
+Term NMAC.tsp defined.
+
+Term NMAC.tsp1 defined.
+
+Term NMAC.tsp2 defined.
+
+Term NMAC.t_list defined.
+
+Term NMAC.fb defined.
+
+Term NMAC.fa defined.
+
+Term NMAC.tail_plan defined.
+
+Term NMAC.fp defined.
+
+Term NMAC.intermediate defined.
+
+Term NMAC.f_copy defined.
+
+Term NMAC.f_rev defined.
+
+Term NMAC.f_list defined.
+
+Term NMAC.tail_f_list defined.
+
+Term NMAC.v_list defined.
+
+Term NMAC.ta2 defined.
+
+Term NMAC.sxa2 defined.
+
+Term NMAC.sya2 defined.
+
+Term NMAC.sza2 defined.
+
+Term NMAC.vga2 defined.
+
+Term NMAC.ha2 defined.
+
+Term NMAC.vza2 defined.
+
+Term NMAC.config_i+1 defined.
+
+Term NMAC.config_i defined.
+
+Term NMAC.H defined.
+
+Term NMAC.D defined.
+
+Term NMAC.counter defined.
+
+Term NMAC.unassigned defined.
+
+Term NMAC.num_v defined.
+
+Term NMAC.num_intervals defined.
+
+Term NMAC.interval defined.
+
+Term NMAC.current_v defined.
+
+Term NMAC.row defined.
+
+Module NMAC defined.
+
+New symbol NMAC.get-config declared.
+
+The sentence 
+(forall ?time:Real
+  (= (NMAC.get-config nilF ?time:Real)
+     (config 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?ha:Real
+  (forall ?ta:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (forall ?time:Real
+                (if (<= ?ta:Real ?time:Real)
+                    (= (NMAC.get-config (consF (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?ta:Real)
+                                               nilF)
+                                        ?time:Real)
+                       (config (Vector_2d.getx (Vector_2d.ADD (vec_2d ?sxa:Real ?sya:Real)
+                                                              (Vector_2d.SCALAR-MULT (vec_2d (* ?vga:Real
+                                                                                                (Real.cos ?ha:Real))
+                                                                                             (* ?vga:Real
+                                                                                                (Real.sin ?ha:Real)))
+                                                                                     (- ?time:Real ?ta:Real))))
+                               (Vector_2d.gety (Vector_2d.ADD (vec_2d ?sxa:Real ?sya:Real)
+                                                              (Vector_2d.SCALAR-MULT (vec_2d (* ?vga:Real
+                                                                                                (Real.cos ?ha:Real))
+                                                                                             (* ?vga:Real
+                                                                                                (Real.sin ?ha:Real)))
+                                                                                     (- ?time:Real ?ta:Real))))
+                               (+ ?sza:Real
+                                  (* ?vza:Real
+                                     (- ?time:Real ?ta:Real)))
+                               ?vga:Real
+                               ?ha:Real
+                               ?vza:Real
+                               ?time:Real)))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?ha:Real
+  (forall ?ta:Real
+    (forall ?sxa:Real
+      (forall ?sya:Real
+        (forall ?sza:Real
+          (forall ?vga:Real
+            (forall ?vza:Real
+              (forall ?time:Real
+                (if (not (<= ?ta:Real ?time:Real))
+                    (= (NMAC.get-config (consF (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?ta:Real)
+                                               nilF)
+                                        ?time:Real)
+                       (config 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?fp:Flightplan
+  (forall ?sza:Real
+    (forall ?ta2:Real
+      (forall ?vza:Real
+        (forall ?time:Real
+          (forall ?config_i:Configuration
+            (forall ?config_i+1:Configuration
+              (if (and (<= (Configuration.gettime ?config_i:Configuration)
+                           ?time:Real)
+                       (< ?time:Real ?ta2:Real))
+                  (= (NMAC.get-config (consF ?config_i:Configuration
+                                             (consF ?config_i+1:Configuration ?fp:Flightplan))
+                                      ?time:Real)
+                     (config (Vector_2d.getx (Vector_2d.ADD (vec_2d (Configuration.getsx ?config_i:Configuration)
+                                                                    (Configuration.getsy ?config_i:Configuration))
+                                                            (Vector_2d.SCALAR-MULT (vec_2d (* (Configuration.getvg ?config_i:Configuration)
+                                                                                              (Real.cos (Configuration.geth ?config_i:Configuration)))
+                                                                                           (* (Configuration.getvg ?config_i:Configuration)
+                                                                                              (Real.sin (Configuration.geth ?config_i:Configuration))))
+                                                                                   (- ?time:Real
+                                                                                      (Configuration.gettime ?config_i:Configuration)))))
+                             (Vector_2d.gety (Vector_2d.ADD (vec_2d (Configuration.getsx ?config_i:Configuration)
+                                                                    (Configuration.getsy ?config_i:Configuration))
+                                                            (Vector_2d.SCALAR-MULT (vec_2d (* (Configuration.getvg ?config_i:Configuration)
+                                                                                              (Real.cos (Configuration.geth ?config_i:Configuration)))
+                                                                                           (* (Configuration.getvg ?config_i:Configuration)
+                                                                                              (Real.sin (Configuration.geth ?config_i:Configuration))))
+                                                                                   (- ?time:Real
+                                                                                      (Configuration.gettime ?config_i:Configuration)))))
+                             (+ ?sza:Real
+                                (* ?vza:Real
+                                   (- ?time:Real
+                                      (Configuration.gettime ?config_i:Configuration))))
+                             (Configuration.getvg ?config_i:Configuration)
+                             (Configuration.geth ?config_i:Configuration)
+                             ?vza:Real
+                             ?time:Real))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?fp:Flightplan
+  (forall ?time:Real
+    (forall ?config_i:Configuration
+      (forall ?config_i+1:Configuration
+        (if (and (<= (Configuration.gettime ?config_i:Configuration)
+                     ?time:Real)
+                 (< ?time:Real
+                    (Configuration.gettime ?config_i+1:Configuration)))
+            (= (NMAC.get-config (consF ?config_i:Configuration
+                                       (consF ?config_i+1:Configuration ?fp:Flightplan))
+                                ?time:Real)
+               (NMAC.get-config (consF ?config_i+1:Configuration ?fp:Flightplan)
+                                ?time:Real)))))))
+has been added to the assumption base.
+
+New symbol NMAC.exists-violation declared.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?t:Real
+      (forall ?fa:Flightplan
+        (forall ?fb:Flightplan
+          (forall ?t2:Real
+            (if (exists ?v60890:Real
+                  (and (and (< ?t:Real ?v60890:Real)
+                            (<= ?v60890:Real ?t2:Real))
+                       (and (< (Vector_2d.NORM (Vector_2d.ADD (Vector_2d.SUBTRACT (vec_2d (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                          (Configuration.getsy (NMAC.get-config ?fa:Flightplan ?t:Real)))
+                                                                                  (vec_2d (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                          (Configuration.getsy (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                              (Vector_2d.SCALAR-MULT (Vector_2d.SUBTRACT (vec_2d (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                    (Real.cos (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real))))
+                                                                                                                 (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                    (Real.sin (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real)))))
+                                                                                                         (vec_2d (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                    (Real.cos (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                                                                 (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                    (Real.sin (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))))
+                                                                                     (- ?v60890:Real ?t:Real))))
+                               ?D:Real)
+                            (< (+ (- (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                     (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real)))
+                                  (* (- ?v60890:Real ?t:Real)
+                                     (- (Configuration.getvz (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                        (Configuration.getvz (NMAC.get-config ?fb:Flightplan ?t:Real)))))
+                               ?H:Real))))
+                (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                   true))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?t:Real
+      (forall ?fa:Flightplan
+        (forall ?fb:Flightplan
+          (forall ?t2:Real
+            (if (not (exists ?v60892:Real
+                       (and (and (< ?t:Real ?v60892:Real)
+                                 (<= ?v60892:Real ?t2:Real))
+                            (and (< (Vector_2d.NORM (Vector_2d.ADD (Vector_2d.SUBTRACT (vec_2d (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                               (Configuration.getsy (NMAC.get-config ?fa:Flightplan ?t:Real)))
+                                                                                       (vec_2d (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                               (Configuration.getsy (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                   (Vector_2d.SCALAR-MULT (Vector_2d.SUBTRACT (vec_2d (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                         (Real.cos (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real))))
+                                                                                                                      (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                         (Real.sin (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real)))))
+                                                                                                              (vec_2d (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                         (Real.cos (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                                                                      (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                         (Real.sin (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))))
+                                                                                          (- ?v60892:Real ?t:Real))))
+                                    ?D:Real)
+                                 (< (+ (- (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                          (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real)))
+                                       (* (- ?v60892:Real ?t:Real)
+                                          (- (Configuration.getvz (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                             (Configuration.getvz (NMAC.get-config ?fb:Flightplan ?t:Real)))))
+                                    ?H:Real)))))
+                (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                   false))))))))
+has been added to the assumption base.
+
+Sentence NMAC.exists-violation-true defined.
+
+Sentence NMAC.exists-violation-false defined.
+
+New symbol NMAC.T-violation declared.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?fb:Flightplan
+        (= (NMAC.T-violation nilTl ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+           false)))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?t:Real
+      (forall ?fa:Flightplan
+        (forall ?fb:Flightplan
+          (forall ?t2:Real
+            (forall ?t_list:Time-list
+              (if (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                  (= (NMAC.T-violation (consTl ?t:Real
+                                               (consTl ?t2:Real ?t_list:Time-list))
+                                       ?fa:Flightplan
+                                       ?fb:Flightplan
+                                       ?D:Real
+                                       ?H:Real)
+                     true)))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?t:Real
+      (forall ?fa:Flightplan
+        (forall ?fb:Flightplan
+          (forall ?t2:Real
+            (forall ?t_list:Time-list
+              (if (not (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real))
+                  (= (NMAC.T-violation (consTl ?t:Real
+                                               (consTl ?t2:Real ?t_list:Time-list))
+                                       ?fa:Flightplan
+                                       ?fb:Flightplan
+                                       ?D:Real
+                                       ?H:Real)
+                     (NMAC.T-violation (consTl ?t2:Real ?t_list:Time-list)
+                                       ?fa:Flightplan
+                                       ?fb:Flightplan
+                                       ?D:Real
+                                       ?H:Real))))))))))
+has been added to the assumption base.
+
+Sentence NMAC.T-violation-true defined.
+
+Sentence NMAC.T-violation-next defined.
+
+Sentence NMAC.T-violation-empty defined.
+
+Module NMAC extended.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/flightplan.ath"
+
+New symbol NMAC.in-Flightplan declared.
+
+The sentence 
+(forall ?x:Configuration
+  (not (NMAC.in-Flightplan ?x:Configuration nilF)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?h:Configuration
+  (forall ?t:Flightplan
+    (forall ?x:Configuration
+      (forall ?tail:Flightplan
+        (iff (NMAC.in-Flightplan ?x:Configuration
+                                 (consF ?h:Configuration ?t:Flightplan))
+             (or (= ?x:Configuration ?h:Configuration)
+                 (NMAC.in-Flightplan ?x:Configuration ?tail:Flightplan)))))))
+has been added to the assumption base.
+
+New symbol NMAC.in-Fplan-list declared.
+
+The sentence 
+(forall ?x:Flightplan
+  (not (NMAC.in-Fplan-list ?x:Flightplan nilP)))
+has been added to the assumption base.
+
+The sentence 
+(forall ?h:Flightplan
+  (forall ?t:Fplan-list
+    (forall ?x:Flightplan
+      (forall ?tail:Fplan-list
+        (iff (NMAC.in-Fplan-list ?x:Flightplan
+                                 (consP ?h:Flightplan ?t:Fplan-list))
+             (or (= ?x:Flightplan ?h:Flightplan)
+                 (NMAC.in-Fplan-list ?x:Flightplan ?tail:Fplan-list)))))))
+has been added to the assumption base.
+
+New symbol NMAC.time-list-add declared.
+
+The sentence 
+(forall ?t:Real
+  (forall ?t_list:Time-list
+    (= (NMAC.time-list-add ?t:Real ?t_list:Time-list)
+       (consTl ?t:Real ?t_list:Time-list))))
+has been added to the assumption base.
+
+New symbol NMAC.get-times declared.
+
+The sentence 
+(forall ?t_list:Time-list
+  (= (NMAC.get-times nilF ?t_list:Time-list)
+     ?t_list:Time-list))
+has been added to the assumption base.
+
+The sentence 
+(forall ?fp:Flightplan
+  (forall ?ha:Real
+    (forall ?ta:Real
+      (forall ?sxa:Real
+        (forall ?sya:Real
+          (forall ?sza:Real
+            (forall ?vga:Real
+              (forall ?vza:Real
+                (forall ?t_list:Time-list
+                  (= (NMAC.get-times (consF (config ?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?ta:Real)
+                                            ?fp:Flightplan)
+                                     ?t_list:Time-list)
+                     (NMAC.get-times ?fp:Flightplan
+                                     (NMAC.time-list-add ?ta:Real ?t_list:Time-list))))))))))))
+has been added to the assumption base.
+
+New symbol NMAC.get-all-times declared.
+
+The sentence 
+(forall ?fa:Flightplan
+  (forall ?fb:Flightplan
+    (= (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+       (NMAC.get-times ?fb:Flightplan
+                       (NMAC.get-times ?fa:Flightplan nilTl)))))
+has been added to the assumption base.
+
+New symbol NMAC.conflict declared.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?fb:Flightplan
+        (if (NMAC.T-violation (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+                              ?fa:Flightplan
+                              ?fb:Flightplan
+                              ?D:Real
+                              ?H:Real)
+            (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+               true))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?fb:Flightplan
+        (if (not (NMAC.T-violation (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+                                   ?fa:Flightplan
+                                   ?fb:Flightplan
+                                   ?D:Real
+                                   ?H:Real))
+            (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+               false))))))
+has been added to the assumption base.
+
+Sentence NMAC.conflict-true defined.
+
+Sentence NMAC.conflict-false defined.
+
+New symbol NMAC.safe declared.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?f_list:Fplan-list
+      (if (exists ?v65806:Flightplan
+            (exists ?v65807:Flightplan
+              (and (NMAC.in-Fplan-list ?v65806:Flightplan ?f_list:Fplan-list)
+                   (and (NMAC.in-Fplan-list ?v65807:Flightplan ?f_list:Fplan-list)
+                        (NMAC.conflict ?v65806:Flightplan ?v65807:Flightplan ?D:Real ?H:Real)))))
+          (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+             false)))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?f_list:Fplan-list
+      (if (not (exists ?v65808:Flightplan
+                 (exists ?v65809:Flightplan
+                   (and (NMAC.in-Fplan-list ?v65808:Flightplan ?f_list:Fplan-list)
+                        (and (NMAC.in-Fplan-list ?v65809:Flightplan ?f_list:Fplan-list)
+                             (NMAC.conflict ?v65808:Flightplan ?v65809:Flightplan ?D:Real ?H:Real))))))
+          (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+             true)))))
+has been added to the assumption base.
+
+Sentence NMAC.safe-true defined.
+
+Sentence NMAC.safe-false defined.
+
+New symbol NMAC.plan declared.
+
+Module NMAC extended.
+
+Loading file "/home/saswata/Desktop/Research/adsb_collision/flightplan_collision/proof/athena/algorithm.ath"
+
+Term NMAC.board defined.
+
+Term NMAC.v defined.
+
+Term NMAC.H defined.
+
+Term NMAC.D defined.
+
+New symbol NMAC.check-safety declared.
+
+New symbol NMAC.valid declared.
+
+New symbol NMAC.solve declared.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?board:Matrix
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (if (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                  ?f_list:Fplan-list)
+                           ?D:Real
+                           ?H:Real)
+                (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                   true))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?board:Matrix
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (if (not (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                       ?f_list:Fplan-list)
+                                ?D:Real
+                                ?H:Real))
+                (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                   false))))))))
+has been added to the assumption base.
+
+Sentence NMAC.check-safety-true defined.
+
+Sentence NMAC.check-safety-false defined.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?v:Real
+      (forall ?fa:Flightplan
+        (forall ?board:Matrix
+          (forall ?num_v:N
+            (forall ?num_intervals:N
+              (forall ?f_list:Fplan-list
+                (forall ?v_list:V-list
+                  (if (and (NMAC.check-safety (Matrix.set ?board:Matrix
+                                                          (Matrix.unassigned ?board:Matrix)
+                                                          (V-list.get-index ?v_list:V-list ?v:Real))
+                                              ?fa:Flightplan
+                                              ?f_list:Fplan-list
+                                              ?v_list:V-list
+                                              ?D:Real
+                                              ?H:Real)
+                           (not (= (NMAC.solve (Matrix.set ?board:Matrix
+                                                           (Matrix.unassigned ?board:Matrix)
+                                                           (V-list.get-index ?v_list:V-list ?v:Real))
+                                               ?num_v:N
+                                               ?num_intervals:N
+                                               ?fa:Flightplan
+                                               ?f_list:Fplan-list
+                                               ?v_list:V-list
+                                               ?D:Real
+                                               ?H:Real)
+                                   nilM)))
+                      (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                         true)))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?v:Real
+      (forall ?fa:Flightplan
+        (forall ?board:Matrix
+          (forall ?num_v:N
+            (forall ?num_intervals:N
+              (forall ?f_list:Fplan-list
+                (forall ?v_list:V-list
+                  (if (not (and (NMAC.check-safety (Matrix.set ?board:Matrix
+                                                               (Matrix.unassigned ?board:Matrix)
+                                                               (V-list.get-index ?v_list:V-list ?v:Real))
+                                                   ?fa:Flightplan
+                                                   ?f_list:Fplan-list
+                                                   ?v_list:V-list
+                                                   ?D:Real
+                                                   ?H:Real)
+                                (not (= (NMAC.solve (Matrix.set ?board:Matrix
+                                                                (Matrix.unassigned ?board:Matrix)
+                                                                (V-list.get-index ?v_list:V-list ?v:Real))
+                                                    ?num_v:N
+                                                    ?num_intervals:N
+                                                    ?fa:Flightplan
+                                                    ?f_list:Fplan-list
+                                                    ?v_list:V-list
+                                                    ?D:Real
+                                                    ?H:Real)
+                                        nilM))))
+                      (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                         false)))))))))))
+has been added to the assumption base.
+
+Sentence NMAC.valid-true defined.
+
+Sentence NMAC.valid-false defined.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?board:Matrix
+        (forall ?num_v:N
+          (forall ?num_intervals:N
+            (forall ?f_list:Fplan-list
+              (forall ?v_list:V-list
+                (if (and (Matrix.complete ?board:Matrix)
+                         (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            true))
+                    (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                       ?board:Matrix))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?board:Matrix
+        (forall ?num_v:N
+          (forall ?num_intervals:N
+            (forall ?f_list:Fplan-list
+              (forall ?v_list:V-list
+                (if (and (Matrix.complete ?board:Matrix)
+                         (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            false))
+                    (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                       nilM))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?v:Real
+      (forall ?fa:Flightplan
+        (forall ?board:Matrix
+          (forall ?num_v:N
+            (forall ?num_intervals:N
+              (forall ?f_list:Fplan-list
+                (forall ?v_list:V-list
+                  (if (and (not (Matrix.complete ?board:Matrix))
+                           (exists ?v66251:Real
+                             (and (V-list.in-V-list ?v66251:Real ?v_list:V-list)
+                                  (NMAC.valid ?v66251:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real))))
+                      (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                         (NMAC.solve (Matrix.set ?board:Matrix
+                                                 (Matrix.unassigned ?board:Matrix)
+                                                 (V-list.get-index ?v_list:V-list ?v:Real))
+                                     ?num_v:N
+                                     ?num_intervals:N
+                                     ?fa:Flightplan
+                                     ?f_list:Fplan-list
+                                     ?v_list:V-list
+                                     ?D:Real
+                                     ?H:Real))))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?D:Real
+  (forall ?H:Real
+    (forall ?fa:Flightplan
+      (forall ?board:Matrix
+        (forall ?num_v:N
+          (forall ?num_intervals:N
+            (forall ?f_list:Fplan-list
+              (forall ?v_list:V-list
+                (if (and (not (Matrix.complete ?board:Matrix))
+                         (not (exists ?v66253:Real
+                                (and (V-list.in-V-list ?v66253:Real ?v_list:V-list)
+                                     (NMAC.valid ?v66253:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)))))
+                    (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                       nilM))))))))))
+has been added to the assumption base.
+
+Sentence NMAC.solve-all-intervals-solved defined.
+
+Sentence NMAC.solve-final-interval-not-possible defined.
+
+Sentence NMAC.solve-current-interval-solved defined.
+
+Sentence NMAC.solve-current-interval-not-possible defined.
+
+Module NMAC extended.
+
+Sentence NMAC.Theorem1a defined.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?t:Real
+               (forall ?t2:Real
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (if (exists ?time:Real
+                           (and (and (< ?t:Real ?time:Real)
+                                     (<= ?time:Real ?t2:Real))
+                                (and (< (Vector_2d.NORM (Vector_2d.ADD (Vector_2d.SUBTRACT (vec_2d (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                   (Configuration.getsy (NMAC.get-config ?fa:Flightplan ?t:Real)))
+                                                                                           (vec_2d (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                   (Configuration.getsy (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                       (Vector_2d.SCALAR-MULT (Vector_2d.SUBTRACT (vec_2d (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                             (Real.cos (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real))))
+                                                                                                                          (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                             (Real.sin (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real)))))
+                                                                                                                  (vec_2d (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                             (Real.cos (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                                                                          (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                             (Real.sin (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))))
+                                                                                              (- ?time:Real ?t:Real))))
+                                        ?D:Real)
+                                     (< (+ (- (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                              (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real)))
+                                           (* (- ?time:Real ?t:Real)
+                                              (- (Configuration.getvz (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                 (Configuration.getvz (NMAC.get-config ?fb:Flightplan ?t:Real)))))
+                                        ?H:Real))))
+                         (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                            true))))))))
+
+Sentence NMAC.Theorem1b defined.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?t:Real
+               (forall ?t2:Real
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (if (not (exists ?time:Real
+                                (and (and (< ?t:Real ?time:Real)
+                                          (<= ?time:Real ?t2:Real))
+                                     (and (< (Vector_2d.NORM (Vector_2d.ADD (Vector_2d.SUBTRACT (vec_2d (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                        (Configuration.getsy (NMAC.get-config ?fa:Flightplan ?t:Real)))
+                                                                                                (vec_2d (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                        (Configuration.getsy (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                            (Vector_2d.SCALAR-MULT (Vector_2d.SUBTRACT (vec_2d (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                                  (Real.cos (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real))))
+                                                                                                                               (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                                  (Real.sin (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real)))))
+                                                                                                                       (vec_2d (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                                  (Real.cos (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                                                                               (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                                  (Real.sin (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))))
+                                                                                                   (- ?time:Real ?t:Real))))
+                                             ?D:Real)
+                                          (< (+ (- (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                   (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real)))
+                                                (* (- ?time:Real ?t:Real)
+                                                   (- (Configuration.getvz (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                      (Configuration.getvz (NMAC.get-config ?fb:Flightplan ?t:Real)))))
+                                             ?H:Real)))))
+                         (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                            false))))))))
+
+The sentence 
+(forall ?fa:Flightplan
+  (forall ?fb:Flightplan
+    (forall ?t:Real
+      (forall ?t2:Real
+        (forall ?D:Real
+          (forall ?H:Real
+            (if (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                   true)
+                (not (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                        false)))))))))
+has been added to the assumption base.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?t:Real
+               (forall ?t2:Real
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (if (not (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                                 false))
+                         (exists ?time:Real
+                           (and (and (< ?t:Real ?time:Real)
+                                     (<= ?time:Real ?t2:Real))
+                                (and (< (Vector_2d.NORM (Vector_2d.ADD (Vector_2d.SUBTRACT (vec_2d (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                   (Configuration.getsy (NMAC.get-config ?fa:Flightplan ?t:Real)))
+                                                                                           (vec_2d (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                   (Configuration.getsy (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                       (Vector_2d.SCALAR-MULT (Vector_2d.SUBTRACT (vec_2d (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                             (Real.cos (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real))))
+                                                                                                                          (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                             (Real.sin (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real)))))
+                                                                                                                  (vec_2d (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                             (Real.cos (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                                                                          (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                             (Real.sin (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))))
+                                                                                              (- ?time:Real ?t:Real))))
+                                        ?D:Real)
+                                     (< (+ (- (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                              (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real)))
+                                           (* (- ?time:Real ?t:Real)
+                                              (- (Configuration.getvz (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                 (Configuration.getvz (NMAC.get-config ?fb:Flightplan ?t:Real)))))
+                                        ?H:Real)))))))))))
+
+Sentence NMAC.T1b-contra defined.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?t:Real
+               (forall ?t2:Real
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (iff (= (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                             true)
+                          (exists ?time:Real
+                            (and (and (< ?t:Real ?time:Real)
+                                      (<= ?time:Real ?t2:Real))
+                                 (and (< (Vector_2d.NORM (Vector_2d.ADD (Vector_2d.SUBTRACT (vec_2d (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                    (Configuration.getsy (NMAC.get-config ?fa:Flightplan ?t:Real)))
+                                                                                            (vec_2d (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                    (Configuration.getsy (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                        (Vector_2d.SCALAR-MULT (Vector_2d.SUBTRACT (vec_2d (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                              (Real.cos (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real))))
+                                                                                                                           (* (Configuration.getvg (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                                                                                              (Real.sin (Configuration.geth (NMAC.get-config ?fa:Flightplan ?t:Real)))))
+                                                                                                                   (vec_2d (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                              (Real.cos (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))
+                                                                                                                           (* (Configuration.getvg (NMAC.get-config ?fb:Flightplan ?t:Real))
+                                                                                                                              (Real.sin (Configuration.geth (NMAC.get-config ?fb:Flightplan ?t:Real))))))
+                                                                                               (- ?time:Real ?t:Real))))
+                                         ?D:Real)
+                                      (< (+ (- (Configuration.getsx (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                               (Configuration.getsx (NMAC.get-config ?fb:Flightplan ?t:Real)))
+                                            (* (- ?time:Real ?t:Real)
+                                               (- (Configuration.getvz (NMAC.get-config ?fa:Flightplan ?t:Real))
+                                                  (Configuration.getvz (NMAC.get-config ?fb:Flightplan ?t:Real)))))
+                                         ?H:Real)))))))))))
+
+Sentence NMAC.Theorem1 defined.
+
+Sentence NMAC.Theorem2a defined.
+
+Theorem: (forall ?t_list:Time-list
+           (forall ?t:Real
+             (forall ?t2:Real
+               (forall ?fa:Flightplan
+                 (forall ?fb:Flightplan
+                   (forall ?D:Real
+                     (forall ?H:Real
+                       (if (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                           (= (NMAC.T-violation (consTl ?t:Real
+                                                        (consTl ?t2:Real ?t_list:Time-list))
+                                                ?fa:Flightplan
+                                                ?fb:Flightplan
+                                                ?D:Real
+                                                ?H:Real)
+                              true)))))))))
+
+Sentence NMAC.Theorem2b defined.
+
+Theorem: (forall ?t_list:Time-list
+           (forall ?t:Real
+             (forall ?t2:Real
+               (forall ?fa:Flightplan
+                 (forall ?fb:Flightplan
+                   (forall ?D:Real
+                     (forall ?H:Real
+                       (if (not (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real))
+                           (= (NMAC.T-violation (consTl ?t:Real
+                                                        (consTl ?t2:Real ?t_list:Time-list))
+                                                ?fa:Flightplan
+                                                ?fb:Flightplan
+                                                ?D:Real
+                                                ?H:Real)
+                              (NMAC.T-violation (consTl ?t2:Real ?t_list:Time-list)
+                                                ?fa:Flightplan
+                                                ?fb:Flightplan
+                                                ?D:Real
+                                                ?H:Real))))))))))
+
+Theorem: (forall ?t_list:Time-list
+           (forall ?t:Real
+             (forall ?t2:Real
+               (forall ?fa:Flightplan
+                 (forall ?fb:Flightplan
+                   (forall ?D:Real
+                     (forall ?H:Real
+                       (and (if (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                                (= (NMAC.T-violation (consTl ?t:Real
+                                                             (consTl ?t2:Real ?t_list:Time-list))
+                                                     ?fa:Flightplan
+                                                     ?fb:Flightplan
+                                                     ?D:Real
+                                                     ?H:Real)
+                                   true))
+                            (if (not (NMAC.exists-violation ?t:Real ?t2:Real ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real))
+                                (= (NMAC.T-violation (consTl ?t:Real
+                                                             (consTl ?t2:Real ?t_list:Time-list))
+                                                     ?fa:Flightplan
+                                                     ?fb:Flightplan
+                                                     ?D:Real
+                                                     ?H:Real)
+                                   (NMAC.T-violation (consTl ?t2:Real ?t_list:Time-list)
+                                                     ?fa:Flightplan
+                                                     ?fb:Flightplan
+                                                     ?D:Real
+                                                     ?H:Real)))))))))))
+
+Sentence NMAC.Theorem2 defined.
+
+Sentence NMAC.Theorem3a defined.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?D:Real
+               (forall ?H:Real
+                 (if (NMAC.T-violation (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+                                       ?fa:Flightplan
+                                       ?fb:Flightplan
+                                       ?D:Real
+                                       ?H:Real)
+                     (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                        true))))))
+
+Sentence NMAC.Theorem3b defined.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?D:Real
+               (forall ?H:Real
+                 (if (not (NMAC.T-violation (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+                                            ?fa:Flightplan
+                                            ?fb:Flightplan
+                                            ?D:Real
+                                            ?H:Real))
+                     (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                        false))))))
+
+The sentence 
+(forall ?fa:Flightplan
+  (forall ?fb:Flightplan
+    (forall ?D:Real
+      (forall ?H:Real
+        (if (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+               true)
+            (not (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                    false)))))))
+has been added to the assumption base.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?D:Real
+               (forall ?H:Real
+                 (if (not (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                             false))
+                     (NMAC.T-violation (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+                                       ?fa:Flightplan
+                                       ?fb:Flightplan
+                                       ?D:Real
+                                       ?H:Real))))))
+
+Sentence NMAC.T3b-contra defined.
+
+Theorem: (forall ?fa:Flightplan
+           (forall ?fb:Flightplan
+             (forall ?D:Real
+               (forall ?H:Real
+                 (iff (NMAC.T-violation (NMAC.get-all-times ?fa:Flightplan ?fb:Flightplan)
+                                        ?fa:Flightplan
+                                        ?fb:Flightplan
+                                        ?D:Real
+                                        ?H:Real)
+                      (= (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)
+                         true))))))
+
+Sentence NMAC.Theorem3 defined.
+
+Sentence NMAC.Theorem4a defined.
+
+Theorem: (forall ?f_list:Fplan-list
+           (forall ?D:Real
+             (forall ?H:Real
+               (if (not (exists ?fa:Flightplan
+                          (exists ?fb:Flightplan
+                            (and (NMAC.in-Fplan-list ?fa:Flightplan ?f_list:Fplan-list)
+                                 (and (NMAC.in-Fplan-list ?fb:Flightplan ?f_list:Fplan-list)
+                                      (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real))))))
+                   (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+                      true)))))
+
+Sentence NMAC.Theorem4b defined.
+
+Theorem: (forall ?f_list:Fplan-list
+           (forall ?D:Real
+             (forall ?H:Real
+               (if (exists ?fa:Flightplan
+                     (exists ?fb:Flightplan
+                       (and (NMAC.in-Fplan-list ?fa:Flightplan ?f_list:Fplan-list)
+                            (and (NMAC.in-Fplan-list ?fb:Flightplan ?f_list:Fplan-list)
+                                 (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real)))))
+                   (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+                      false)))))
+
+The sentence 
+(forall ?f_list:Fplan-list
+  (forall ?D:Real
+    (forall ?H:Real
+      (if (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+             true)
+          (not (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+                  false))))))
+has been added to the assumption base.
+
+Theorem: (forall ?f_list:Fplan-list
+           (forall ?D:Real
+             (forall ?H:Real
+               (if (not (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+                           false))
+                   (not (exists ?fa:Flightplan
+                          (exists ?fb:Flightplan
+                            (and (NMAC.in-Fplan-list ?fa:Flightplan ?f_list:Fplan-list)
+                                 (and (NMAC.in-Fplan-list ?fb:Flightplan ?f_list:Fplan-list)
+                                      (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real))))))))))
+
+Sentence NMAC.T4b-contra defined.
+
+Theorem: (forall ?f_list:Fplan-list
+           (forall ?D:Real
+             (forall ?H:Real
+               (iff (not (exists ?fa:Flightplan
+                           (exists ?fb:Flightplan
+                             (and (NMAC.in-Fplan-list ?fa:Flightplan ?f_list:Fplan-list)
+                                  (and (NMAC.in-Fplan-list ?fb:Flightplan ?f_list:Fplan-list)
+                                       (NMAC.conflict ?fa:Flightplan ?fb:Flightplan ?D:Real ?H:Real))))))
+                    (= (NMAC.safe ?f_list:Fplan-list ?D:Real ?H:Real)
+                       true)))))
+
+Sentence NMAC.Theorem4 defined.
+
+Sentence NMAC.Theorem5a defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?fa:Flightplan
+             (forall ?f_list:Fplan-list
+               (forall ?v_list:V-list
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (if (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                           ?f_list:Fplan-list)
+                                    ?D:Real
+                                    ?H:Real)
+                         (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            true))))))))
+
+Sentence NMAC.Theorem5b defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?fa:Flightplan
+             (forall ?f_list:Fplan-list
+               (forall ?v_list:V-list
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (if (not (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                                ?f_list:Fplan-list)
+                                         ?D:Real
+                                         ?H:Real))
+                         (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            false))))))))
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?fa:Flightplan
+    (forall ?f_list:Fplan-list
+      (forall ?v_list:V-list
+        (forall ?D:Real
+          (forall ?H:Real
+            (if (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                   true)
+                (not (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                        false)))))))))
+has been added to the assumption base.
+
+Theorem: (forall ?board:Matrix
+           (forall ?fa:Flightplan
+             (forall ?f_list:Fplan-list
+               (forall ?v_list:V-list
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (if (not (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                 false))
+                         (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                           ?f_list:Fplan-list)
+                                    ?D:Real
+                                    ?H:Real))))))))
+
+Sentence NMAC.Theorem5b-contra defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?fa:Flightplan
+             (forall ?f_list:Fplan-list
+               (forall ?v_list:V-list
+                 (forall ?D:Real
+                   (forall ?H:Real
+                     (iff (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                            ?f_list:Fplan-list)
+                                     ?D:Real
+                                     ?H:Real)
+                          (= (NMAC.check-safety ?board:Matrix ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                             true))))))))
+
+Sentence NMAC.Theorem5 defined.
+
+Theorem: (forall ?M:Matrix
+           (if (forall ?row:Row
+                 (and (Matrix.in-Matrix ?row:Row ?M:Matrix)
+                      (Matrix.assigned ?row:Row)))
+               (= (Matrix.complete ?M:Matrix)
+                  true)))
+
+Sentence NMAC.Theorem6a defined.
+
+Theorem: (forall ?M:Matrix
+           (if (not (forall ?row:Row
+                      (and (Matrix.in-Matrix ?row:Row ?M:Matrix)
+                           (Matrix.assigned ?row:Row))))
+               (= (Matrix.complete ?M:Matrix)
+                  false)))
+
+Sentence NMAC.Theorem6b defined.
+
+The sentence 
+(forall ?M:Matrix
+  (if (= (Matrix.complete ?M:Matrix)
+         true)
+      (not (= (Matrix.complete ?M:Matrix)
+              false))))
+has been added to the assumption base.
+
+Theorem: (forall ?M:Matrix
+           (if (not (= (Matrix.complete ?M:Matrix)
+                       false))
+               (forall ?row:Row
+                 (and (Matrix.in-Matrix ?row:Row ?M:Matrix)
+                      (Matrix.assigned ?row:Row)))))
+
+Sentence NMAC.T6b-contra defined.
+
+Theorem: (forall ?M:Matrix
+           (iff (forall ?row:Row
+                  (and (Matrix.in-Matrix ?row:Row ?M:Matrix)
+                       (Matrix.assigned ?row:Row)))
+                (= (Matrix.complete ?M:Matrix)
+                   true)))
+
+Sentence NMAC.Theorem6 defined.
+
+Theorem: (forall ?v:Real
+           (forall ?board:Matrix
+             (forall ?num_v:N
+               (forall ?num_intervals:N
+                 (forall ?fa:Flightplan
+                   (forall ?f_list:Fplan-list
+                     (forall ?v_list:V-list
+                       (forall ?D:Real
+                         (forall ?H:Real
+                           (if (and (NMAC.check-safety (Matrix.set ?board:Matrix
+                                                                   (Matrix.unassigned ?board:Matrix)
+                                                                   (V-list.get-index ?v_list:V-list ?v:Real))
+                                                       ?fa:Flightplan
+                                                       ?f_list:Fplan-list
+                                                       ?v_list:V-list
+                                                       ?D:Real
+                                                       ?H:Real)
+                                    (not (= (NMAC.solve (Matrix.set ?board:Matrix
+                                                                    (Matrix.unassigned ?board:Matrix)
+                                                                    (V-list.get-index ?v_list:V-list ?v:Real))
+                                                        ?num_v:N
+                                                        ?num_intervals:N
+                                                        ?fa:Flightplan
+                                                        ?f_list:Fplan-list
+                                                        ?v_list:V-list
+                                                        ?D:Real
+                                                        ?H:Real)
+                                            nilM)))
+                               (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                  true)))))))))))
+
+Sentence NMAC.Theorem7a defined.
+
+Theorem: (forall ?v:Real
+           (forall ?board:Matrix
+             (forall ?num_v:N
+               (forall ?num_intervals:N
+                 (forall ?fa:Flightplan
+                   (forall ?f_list:Fplan-list
+                     (forall ?v_list:V-list
+                       (forall ?D:Real
+                         (forall ?H:Real
+                           (if (not (and (NMAC.check-safety (Matrix.set ?board:Matrix
+                                                                        (Matrix.unassigned ?board:Matrix)
+                                                                        (V-list.get-index ?v_list:V-list ?v:Real))
+                                                            ?fa:Flightplan
+                                                            ?f_list:Fplan-list
+                                                            ?v_list:V-list
+                                                            ?D:Real
+                                                            ?H:Real)
+                                         (not (= (NMAC.solve (Matrix.set ?board:Matrix
+                                                                         (Matrix.unassigned ?board:Matrix)
+                                                                         (V-list.get-index ?v_list:V-list ?v:Real))
+                                                             ?num_v:N
+                                                             ?num_intervals:N
+                                                             ?fa:Flightplan
+                                                             ?f_list:Fplan-list
+                                                             ?v_list:V-list
+                                                             ?D:Real
+                                                             ?H:Real)
+                                                 nilM))))
+                               (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                  false)))))))))))
+
+Sentence NMAC.Theorem7b defined.
+
+The sentence 
+(forall ?v:Real
+  (forall ?board:Matrix
+    (forall ?num_v:N
+      (forall ?num_intervals:N
+        (forall ?fa:Flightplan
+          (forall ?f_list:Fplan-list
+            (forall ?v_list:V-list
+              (forall ?D:Real
+                (forall ?H:Real
+                  (if (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                         true)
+                      (not (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                              false))))))))))))
+has been added to the assumption base.
+
+Theorem: (forall ?v:Real
+           (forall ?board:Matrix
+             (forall ?num_v:N
+               (forall ?num_intervals:N
+                 (forall ?fa:Flightplan
+                   (forall ?f_list:Fplan-list
+                     (forall ?v_list:V-list
+                       (forall ?D:Real
+                         (forall ?H:Real
+                           (if (not (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                       false))
+                               (and (NMAC.check-safety (Matrix.set ?board:Matrix
+                                                                   (Matrix.unassigned ?board:Matrix)
+                                                                   (V-list.get-index ?v_list:V-list ?v:Real))
+                                                       ?fa:Flightplan
+                                                       ?f_list:Fplan-list
+                                                       ?v_list:V-list
+                                                       ?D:Real
+                                                       ?H:Real)
+                                    (not (= (NMAC.solve (Matrix.set ?board:Matrix
+                                                                    (Matrix.unassigned ?board:Matrix)
+                                                                    (V-list.get-index ?v_list:V-list ?v:Real))
+                                                        ?num_v:N
+                                                        ?num_intervals:N
+                                                        ?fa:Flightplan
+                                                        ?f_list:Fplan-list
+                                                        ?v_list:V-list
+                                                        ?D:Real
+                                                        ?H:Real)
+                                            nilM)))))))))))))
+
+Sentence NMAC.T7b-contra defined.
+
+Theorem: (forall ?v:Real
+           (forall ?board:Matrix
+             (forall ?num_v:N
+               (forall ?num_intervals:N
+                 (forall ?fa:Flightplan
+                   (forall ?f_list:Fplan-list
+                     (forall ?v_list:V-list
+                       (forall ?D:Real
+                         (forall ?H:Real
+                           (iff (and (NMAC.check-safety (Matrix.set ?board:Matrix
+                                                                    (Matrix.unassigned ?board:Matrix)
+                                                                    (V-list.get-index ?v_list:V-list ?v:Real))
+                                                        ?fa:Flightplan
+                                                        ?f_list:Fplan-list
+                                                        ?v_list:V-list
+                                                        ?D:Real
+                                                        ?H:Real)
+                                     (not (= (NMAC.solve (Matrix.set ?board:Matrix
+                                                                     (Matrix.unassigned ?board:Matrix)
+                                                                     (V-list.get-index ?v_list:V-list ?v:Real))
+                                                         ?num_v:N
+                                                         ?num_intervals:N
+                                                         ?fa:Flightplan
+                                                         ?f_list:Fplan-list
+                                                         ?v_list:V-list
+                                                         ?D:Real
+                                                         ?H:Real)
+                                             nilM)))
+                                (= (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                   true)))))))))))
+
+Sentence NMAC.Theorem7 defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (and (Matrix.complete ?board:Matrix)
+                                  (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                                    ?f_list:Fplan-list)
+                                             ?D:Real
+                                             ?H:Real))
+                             (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                ?board:Matrix))))))))))
+
+Sentence NMAC.Theorem8a defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (and (Matrix.complete ?board:Matrix)
+                                  (not (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                                         ?f_list:Fplan-list)
+                                                  ?D:Real
+                                                  ?H:Real)))
+                             (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                nilM))))))))))
+
+Sentence NMAC.Theorem8b defined.
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (Matrix.complete ?board:Matrix)
+                    (if (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                          ?f_list:Fplan-list)
+                                   ?D:Real
+                                   ?H:Real)
+                        (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                           ?board:Matrix)))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (Matrix.complete ?board:Matrix)
+                    (if (not (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                               ?f_list:Fplan-list)
+                                        ?D:Real
+                                        ?H:Real))
+                        (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                           nilM)))))))))))
+has been added to the assumption base.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (Matrix.complete ?board:Matrix)
+                             (if (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                         nilM))
+                                 (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                                   ?f_list:Fplan-list)
+                                            ?D:Real
+                                            ?H:Real)))))))))))
+
+Sentence NMAC.T8b-taut-contra defined.
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                       ?board:Matrix)
+                    (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            nilM)))))))))))
+has been added to the assumption base.
+
+Sentence NMAC.Theorem8 defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (Matrix.complete ?board:Matrix)
+                             (iff (NMAC.safe (consP (NMAC.plan ?board:Matrix ?fa:Flightplan ?v_list:V-list)
+                                                    ?f_list:Fplan-list)
+                                             ?D:Real
+                                             ?H:Real)
+                                  (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                     ?board:Matrix)))))))))))
+
+Warning: the asserted sentence
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                       (NMAC.solve (Matrix.set ?board:Matrix
+                                               (Matrix.unassigned ?board:Matrix)
+                                               (V-list.get-index ?v_list:V-list ?v:Real))
+                                   ?num_v:N
+                                   ?num_intervals:N
+                                   ?fa:Flightplan
+                                   ?f_list:Fplan-list
+                                   ?v_list:V-list
+                                   ?D:Real
+                                   ?H:Real))
+                    (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            nilM)))))))))))
+has free variables:
+?v:Real
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                       (NMAC.solve (Matrix.set ?board:Matrix
+                                               (Matrix.unassigned ?board:Matrix)
+                                               (V-list.get-index ?v_list:V-list ?v:Real))
+                                   ?num_v:N
+                                   ?num_intervals:N
+                                   ?fa:Flightplan
+                                   ?f_list:Fplan-list
+                                   ?v_list:V-list
+                                   ?D:Real
+                                   ?H:Real))
+                    (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                            nilM)))))))))))
+has been added to the assumption base.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (and (not (Matrix.complete ?board:Matrix))
+                                  (exists ?v:Real
+                                    (and (V-list.in-V-list ?v:Real ?v_list:V-list)
+                                         (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real))))
+                             (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                     nilM)))))))))))
+
+Sentence NMAC.Theorem9a defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (and (not (Matrix.complete ?board:Matrix))
+                                  (not (exists ?v:Real
+                                         (and (V-list.in-V-list ?v:Real ?v_list:V-list)
+                                              (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)))))
+                             (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                nilM))))))))))
+
+Sentence NMAC.Theorem9b defined.
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (not (Matrix.complete ?board:Matrix))
+                    (if (exists ?v:Real
+                          (and (V-list.in-V-list ?v:Real ?v_list:V-list)
+                               (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)))
+                        (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                nilM))))))))))))
+has been added to the assumption base.
+
+The sentence 
+(forall ?board:Matrix
+  (forall ?num_v:N
+    (forall ?num_intervals:N
+      (forall ?fa:Flightplan
+        (forall ?f_list:Fplan-list
+          (forall ?v_list:V-list
+            (forall ?D:Real
+              (forall ?H:Real
+                (if (not (Matrix.complete ?board:Matrix))
+                    (if (not (exists ?v:Real
+                               (and (V-list.in-V-list ?v:Real ?v_list:V-list)
+                                    (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real))))
+                        (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                           nilM)))))))))))
+has been added to the assumption base.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (not (Matrix.complete ?board:Matrix))
+                             (if (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                         nilM))
+                                 (exists ?v:Real
+                                   (and (V-list.in-V-list ?v:Real ?v_list:V-list)
+                                        (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)))))))))))))
+
+Sentence NMAC.T9b-taut-contra defined.
+
+Sentence NMAC.Theorem9 defined.
+
+Theorem: (forall ?board:Matrix
+           (forall ?num_v:N
+             (forall ?num_intervals:N
+               (forall ?fa:Flightplan
+                 (forall ?f_list:Fplan-list
+                   (forall ?v_list:V-list
+                     (forall ?D:Real
+                       (forall ?H:Real
+                         (if (not (Matrix.complete ?board:Matrix))
+                             (iff (exists ?v:Real
+                                    (and (V-list.in-V-list ?v:Real ?v_list:V-list)
+                                         (NMAC.valid ?v:Real ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)))
+                                  (not (= (NMAC.solve ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real)
+                                          nilM))))))))))))
+
+Module NMAC extended.
+
+Ready...
+
+>

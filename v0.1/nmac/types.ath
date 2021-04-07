@@ -1,0 +1,50 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+
+#****************************************************************************
+#-- 2D vectors 
+datatype Vector_2d := (vec_2d x:Real y:Real)
+
+assert* (datatype-axioms "Vector_2d")
+
+
+#****************************************************************************
+#-- configuration of an aircraft at time t
+datatype Configuration := (config sx:Real sy:Real sz:Real vg:Real h:Real vz:Real t:Real)
+
+#!!! The below line makes the code slow and take forever
+# assert* (datatype-axioms "Configuration")
+
+#****************************************************************************
+#-- state of an aircraft 
+datatype State := (state sx:Real sy:Real sz:Real vx:Real vy:Real vz:Real)
+
+#!!! The below line makes the code slow and take forever
+# assert* (datatype-axioms "State")
+
+#****************************************************************************
+#-- collection of states of an aircraft
+datatype Flightplan := nilF | (consF Configuration Flightplan)
+
+assert* (datatype-axioms "Flightplan")
+
+#****************************************************************************
+#-- List of flightplans
+datatype Fplan-list := nilP | (consP Flightplan Fplan-list)
+
+assert* (datatype-axioms "Fplan-list")
+
+
+#****************************************************************************
+#-- list of ground speed
+datatype V-list := nilV | (consV Real V-list)
+
+assert* (datatype-axioms "V-list")
+
+#****************************************************************************
+#-- a list of times 
+datatype Time-list := nilTl | (consTl Real Time-list)
+
+assert* (datatype-axioms "Time-list")  
+  

@@ -1,0 +1,137 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Reals
+#-- For some reason, cannot extend built-in module Real using extend-module
+
+module RealExt { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Domain of sets of real numbers
+
+	datatype RealSet := emptyRS | (consRS Real RealSet)
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	# All elements of a set of real numbers are equal
+	# We call such sets "Homogenous Sets" for brevity
+	# eg - {1.0, 1.0, 1.0, ... }
+	
+	declare homoRS : [RealSet] -> Boolean
+
+	# return the element of a homogenous set
+	
+	declare elmntHRS : [RealSet] -> Real
+
+	# Length of a set of real numbers
+	
+	declare lenRS : [RealSet] -> Int
+
+	# Product function for set of real numbers
+	
+	declare prod : [RealSet] -> Real	
+
+	# Product function for two real numbers
+	
+	declare prod_2 : [Real Real] -> Real		
+
+	# power function for real numbers
+	
+	declare pow : [Real Int] -> Real
+
+	# square root function for real numbers
+	
+	declare sqrt : [Real] -> Real
+
+	# tends to function for real numbers
+	# x -> infinity
+
+	declare tends_to : [Real Real] -> Boolean	
+
+	#-- membership opertaor for RealSet
+
+	declare inRVS: [RealSet Real] -> Boolean 
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [hS] := [?hS:RealSet]
+
+	define [r r1 r2 r3 r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r4:Real]
+
+	declare INFY : Real # infinity 
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- prod-pow-axiom states that 
+	#   the product of a homogenous set of length N is 
+	#   the Nth power of the valueof elements in the set
+
+	assert prod-pow-axiom :=
+	(forall hS .
+		(homoRS hS)
+		==>
+			(
+				(prod hS)
+					=	
+						(pow (elmntHRS hS) (lenRS hS))
+			)
+	)
+
+
+	#-- prod-split-axiom states that 
+	#   the product of a set whose head and tail are given 
+	#  is the product of the head and the product of tail
+	#  prod([head, [tail]]) = prod([head , prod([tail])])
+
+	assert prod-split-axiom :=
+	(forall r hS .
+		(
+			(prod (consRS r hS))
+				=	
+					(prod_2 r (prod hS))
+		)
+	)
+
+
+	#-- ab-by-cd-axiom states that 
+	# a/c * b/d = ab/cd
+
+	assert ab-by-cd-axiom :=
+	(forall r1 r2 r3 r4 .
+		(
+			((r1 / r2) * (r3 / r4))
+			= 
+				((r1 * r3) / (r2 * r4))
+		)
+	)
+
+
+	#-- ab-by-da-axiom states that 
+	# a/d * b/a = b/d
+
+	assert a-by-d-x-b-by-a-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 / r2) * (r3 / r1))
+			= 
+				((r3 / r2))
+		)
+	)
+
+
+	#-- a-by-b-axiom states that 
+	# a/b = 1/b * a
+
+	assert a-by-b-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 / r2)
+			= 
+				((1.0 / r2) * r1 )
+		)
+	)
+
+
+}# end module
