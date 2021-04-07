@@ -5,22 +5,19 @@
 
 ##### Description:
 
-* `RealExt` -Real Extension    
-	* `RealExt.ath` : Some extension to Reals 
+* `RealExt` - Real Numbers    
 
 * `CharFun` - Charecteristic functions    
-	* `CharFun.ath` : Basic theory of Charecteristic functions  
 
 * `Dist` - Distributions    
-	* `Dist.ath` : Basic theory of distributions    
-	* `NormDist.ath` :Theory of Normal Distributions
+
+* `Function` - Functions
 
 * `Random` - Random Variables    
-	* `Random.ath` : Basic theory of Random Variables
 
 * `Prob` - Probability    
-	* `Prob.ath` : Basic theory of Probability    
-	* `PrbIndRv.ath` : Probability of Independent random variables
+
+* `Queue` - Queues
 
 * A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
 <p align="center">
