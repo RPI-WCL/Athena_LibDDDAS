@@ -28,7 +28,7 @@ extend-module Function {
 
 
 	#-- axiom: limits of product of mathematical functions
-
+	#  if f(x) = g(x)*h(x), then limit (x->y) (f(x)) = limit (x->y) (g(x)) * limit (x->y) (h(x))
 	assert limit-of-prod :=
 	(forall x y f f1 f2 .
 		(

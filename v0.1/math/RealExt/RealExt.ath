@@ -26,7 +26,7 @@ module RealExt {
 
 	# Length of a set of real numbers
 	
-	declare lenRS : [RealSet] -> Int
+	declare lenRS : [RealSet] -> Real
 
 	# Product function for set of real numbers
 	
@@ -38,7 +38,7 @@ module RealExt {
 
 	# power function for real numbers
 	
-	declare pow : [Real Int] -> Real
+	declare pow : [Real Real] -> Real
 
 	# square root function for real numbers
 	
@@ -59,10 +59,38 @@ module RealExt {
 
 	define [r r1 r2 r3 r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r4:Real]
 
-	declare INFY : Real # infinity 
+	declare INFY, EULER : Real # infinity and e 
 
 
 	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- commutative-axiom states that 
+	# a * b = b * a
+
+	assert commutative-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 * r2) = (r2 * r1)
+		)
+	)
+
+
+	#-- inverse-axiom states the relationship betweek inverses
+
+	assert inverse-axiom :=
+	(forall r r1 .
+		 ((r2 = (1.0 / r1)) <==> (r1 = (1.0 / r2)))
+	)
+
+
+	#-- inverse-axiom states the relationship betweek inverses
+
+	assert by-1-axiom :=
+	(forall r .
+		 ( (1.0 / (1.0 / r) ) = r )
+	)
+
 
 	#-- prod-pow-axiom states that 
 	#   the product of a homogenous set of length N is 
@@ -132,6 +160,25 @@ module RealExt {
 				((1.0 / r2) * r1 )
 		)
 	)
+
+
+	#-- a-x-b=c-axiom states that 
+	# a * b = c <==> a = c / b
+
+	assert a-x-b=c-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 * r2) = r3)
+				<==> 
+					(r1 = (r3 * (1.0 / r2)))
+		)
+		&
+		(
+			((r1 * r2) = r3)
+				<==> 
+					(r2 = (r3 * (1.0 / r1)))
+		)		
+	)	
 
 
 }# end module

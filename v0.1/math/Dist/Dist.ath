@@ -4,13 +4,45 @@
 
 load "Athena_LibDDDAS/math/CharFun/CharFun.ath"
 
-module Dist { 
+module Dist {  
 
 
 	#-------------------------  RELEVANT DOMAINS -------------------------  
 
 	#-- Dist is the set of all distributions  
+	
 	domain Dist
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- mean takes a distribution and returns its real mean
+
+	declare mean : [Dist] -> Real
+
+	#-- var takes a distribution and returns its real variance
+
+	declare var : [Dist] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [D] := [?D:Dist]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+}# end module
+
+
+
+#-------------------------------------------------------------------------------
+
+
+extend-module Dist { # These were created by Sam Breese
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
@@ -27,14 +59,6 @@ module Dist {
 
 	(declare is-norm (-> (Dist) Boolean))
 
-	#-- mean takes a distribution and returns its real mean
-
-	(declare mean (-> (Dist) Real))
-
-	#-- var takes a distribution and returns its real variance
-
-	(declare var (-> (Dist) Real))
-
 
 	#-- A probabiliity function that takes in a normal distribution Z and a Real T, and returns the probability-Dist<=c that a random variable that lies in Z will be at most some real T. It returns zero if the distribution is not normal.   
 	#  If need be, we can overload the probability-Dist<=c function according to different input cases
@@ -48,50 +72,5 @@ module Dist {
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
-	#-- normal-cf-forward states that if x is a normal distribution, then its CF can be expressed by using its real mean and var
-	# Sam Breese
-
-	(define normal-cf-forward
-	  (forall ?x:Dist
-	    (if (is-norm ?x:Dist)
-	        (= (charFun ?x:Dist)
-	           (CharFun.NormalCF (mean ?x:Dist) (var ?x:Dist))))))
-
-	#-- normal-cf-backward states that if the CF of a distribution are expressed using its real mean and var, then it is a normal distribution
-	# Sam Breese
-	
-	(define normal-cf-backward
-	  (forall ?x:Dist
-	    (if (= (charFun ?x:Dist)
-	           (CharFun.NormalCF (mean ?x:Dist) (var ?x:Dist)))
-	        (is-norm ?x:Dist))))
-
-	#-- normal-cf-mean-var states that if the CF of a distribution is expressed using reals, then the mean and var can be extracted from it  ????????????????? --- how do you claim this? 
-	# Sam Breese
-	
-	(define normal-cf-mean-var
-	  (forall ?x:Dist
-	    (forall ?m:Real
-	      (forall ?v:Real
-	        (if (= (charFun ?x:Dist)
-	               (CharFun.NormalCF ?m:Real ?v:Real))
-	            (and (= (mean ?x:Dist) ?m:Real)
-	                 (= (var ?x:Dist) ?v:Real)))))))
-
-	(assert normal-cf-forward)
-	(assert normal-cf-backward)
-	(assert normal-cf-mean-var)
-
-	#-- normal-cf-sum states that the CF of the convoof xCramersy distributions can be obtained by the linear combination of the CFs of the xCramersy distributions
-	# Sam Breese
-	
-	(define normal-cf-sum
-	  (forall ?x:Dist
-	    (forall ?y:Dist
-	      (if (and (is-norm ?x:Dist) (is-norm ?y:Dist))
-	          (= (charFun (convo ?x:Dist ?y:Dist))
-	             (CharFun.mul-cf (charFun ?x:Dist) (charFun ?y:Dist)))))))
-	(assert normal-cf-sum)
-	# Sam Breese
 	
 }# end module

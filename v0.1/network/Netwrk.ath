@@ -35,9 +35,9 @@ module Netwrk {
 
 	domain Network
 
-	# The domain of all protocol names
+	# The domain of all network protocol types
 
-	domain ProtocolName
+	domain PrtType
 
 
 
@@ -73,7 +73,7 @@ module Netwrk {
 
 	# Function that returns protocol in use 
 
-	declare netPrtInUse: [Network] -> ProtocolName
+	declare netPrtInUse: [Network] -> PrtType
 
 	# Network property: the time taken to deliver a packet to the destination
 
@@ -137,27 +137,27 @@ module Netwrk {
 
 	# Protocol property: source can directly transmit to the destination
 
-	declare prtSrcCanTrnsmt2Dst: [ProtocolName MobileNode] -> Boolean
+	declare prtSrcCanTrnsmt2Dst: [PrtType MobileNode] -> Boolean
 
 	# Protocol property: source can directly transmit to any realy
 
-	declare prtSrcCanTrnsmt2Rlys: [ProtocolName MobileNode] -> Boolean
+	declare prtSrcCanTrnsmt2Rlys: [PrtType MobileNode] -> Boolean
 
 	# Protocol property: source can directly transmit to only one realy
 
-	declare prtSrcCanTrnsmt2OneRly: [ProtocolName MobileNode] -> Boolean	
+	declare prtSrcCanTrnsmt2OneRly: [PrtType MobileNode] -> Boolean	
 
 	# Protocol property: source can transmit to relay with copy
 
-	declare prtSrcCanTrnsmt2RlyWthCpy: [ProtocolName MobileNode] -> Boolean	
+	declare prtSrcCanTrnsmt2RlyWthCpy: [PrtType MobileNode] -> Boolean	
 
 	# Protocol property: relay can only transmit to destination
 
-	declare prtRlyOnlyTrnsmt2Dst: [ProtocolName MobileNode] -> Boolean		
+	declare prtRlyOnlyTrnsmt2Dst: [PrtType MobileNode] -> Boolean		
 
 	# Protocol property: relay can transmit to other realys
 
-	declare prtRlyCanTrnsmt2Rlys: [ProtocolName MobileNode] -> Boolean				
+	declare prtRlyCanTrnsmt2Rlys: [PrtType MobileNode] -> Boolean				
 
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
@@ -171,7 +171,7 @@ module Netwrk {
 
 	# constant protocol names
 
-	declare MTR_AIMCT, TREC: ProtocolName
+	declare MTR_AIMCT, TREC: PrtType
 
 
 	#-------------------------  RELEVANT THEORY  -------------------------
@@ -179,19 +179,19 @@ module Netwrk {
 	# only one protocol can be in use at a time
 
 	assert onlyOneProtocolInUse :=
-		(forall ?net:Network ?pn1:ProtocolName . 
-			(= (netPrtInUse ?net:Network) ?pn1:ProtocolName) ==>	
-				(~(exists ?pn2:ProtocolName . 
-					( ~(= ?pn1:ProtocolName ?pn2:ProtocolName) 
-					 & (= (netPrtInUse ?net:Network) ?pn2:ProtocolName) ))) 
+		(forall ?net:Network ?pn1:PrtType . 
+			(= (netPrtInUse ?net:Network) ?pn1:PrtType) ==>	
+				(~(exists ?pn2:PrtType . 
+					( ~(= ?pn1:PrtType ?pn2:PrtType) 
+					 & (= (netPrtInUse ?net:Network) ?pn2:PrtType) ))) 
 		)
 
 	# General rules about the transmission predicates
 	assert trnsmssnPrdRls :=
-	(forall ?prtName:ProtocolName ?node:MobileNode .
+	(forall ?prtName:PrtType ?node:MobileNode .
 			(
-				  ( (prtSrcCanTrnsmt2Rlys ?prtName:ProtocolName ?node:MobileNode) <==> (~ (prtSrcCanTrnsmt2OneRly ?prtName:ProtocolName ?node:MobileNode)))
-				& ( (prtRlyCanTrnsmt2Rlys ?prtName:ProtocolName ?node:MobileNode) <==> (~ (prtRlyOnlyTrnsmt2Dst ?prtName:ProtocolName ?node:MobileNode)))	
+				  ( (prtSrcCanTrnsmt2Rlys ?prtName:PrtType ?node:MobileNode) <==> (~ (prtSrcCanTrnsmt2OneRly ?prtName:PrtType ?node:MobileNode)))
+				& ( (prtRlyCanTrnsmt2Rlys ?prtName:PrtType ?node:MobileNode) <==> (~ (prtRlyOnlyTrnsmt2Dst ?prtName:PrtType ?node:MobileNode)))	
 			)
 	)
 

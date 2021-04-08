@@ -1,0 +1,73 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Exponential Distribution
+
+load "Athena_LibDDDAS/math/Dist/Dist.ath"
+load "Athena_LibDDDAS/math/Prob/Prob.ath"
+
+extend-module Dist { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#-- True if distribution is exponential
+
+	declare isExpo : [Dist] -> Boolean	
+
+	#-- Gives the rate parameter or lambda (see Wikipedia)
+
+	declare ratePar : [Dist] -> Real
+
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [x] := [?x:Random.RandVar]
+
+	define [r] := [?r:Real]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- For exponential distribution, rate parameter is the inverse of
+	#   the mean
+	#   lambda = 1/mean
+
+	assert expo-mean-ratePar :=
+	(forall D . 
+		(
+			(isExpo D)
+				==>
+					(
+						(ratePar D) = (1.0 / (mean D))	
+					)
+		)
+	)
+
+
+	#-- For exponential distribution, cdf wrt to a real r, ie, P(X<=r)
+	#   is given by 1 - e ^ (-lambda * r)
+
+	assert expo-cdf :=
+	(forall x r . 
+		(
+			(isExpo (Random.pdf x))
+				==>
+					(
+						(Random.cdf x r) 
+							= (1.0 - 
+								(RealExt.pow 
+									RealExt.EULER  
+									(0.0 - ((ratePar (Random.pdf x)) * r) )
+								)
+							  )	
+					)
+		)
+	)	
+
+}# end module
