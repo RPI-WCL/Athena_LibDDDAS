@@ -1,5 +1,7 @@
 #****************************************************************************
-# Constraints/conditions required specifically for proving progress in Paxos 
+# Constraints/conditions required specifically for proving progress in Paxos
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Eventual Progress Conditions  
 #****************************************************************************
 load "lib/main/nat-less"
 load "symbols.ath"

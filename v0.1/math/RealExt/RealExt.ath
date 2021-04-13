@@ -65,15 +65,88 @@ module RealExt {
 	#-------------------------  RELEVANT THEORY  -------------------------
 
 
-	#-- commutative-axiom states that 
+
+	# >=-transitive1-axiom 
+
+	assert >=-transitive1-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 = r2) & (r2 >= r3)) 
+			==> (r1 >= r3)
+		)
+	)
+
+
+	# >=-transitive2-axiom 
+
+	assert >=-transitive2-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 >= r2) & (r2 = r3)) 
+			==> (r1 >= r3)
+		)
+	)
+
+
+	# >=-transitive2-axiom 
+
+	assert >=-transitive3-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 >= r2) & (r2 >= r3)) 
+			==> (r1 >= r3)
+		)
+	)	
+
+
+	
+
+
+	# <=-inverse->=-axiom
+
+	assert <=-inverse->=-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 >= r2) <==> (r2 <= r1)
+		)
+	)
+
+
+	#-- prod-commutative-axiom states that 
 	# a * b = b * a
 
-	assert commutative-axiom :=
+	assert prod-commutative-axiom :=
 	(forall r1 r2 .
 		(
 			(r1 * r2) = (r2 * r1)
 		)
 	)
+
+
+	#-- prod-with-greater-axiom states that 
+	#   if c <= b, then a * b >= a * c
+
+	assert prod-with-lower-axiom :=
+	(forall r1 r2 r3 .
+		(
+			(r3 <= r2)
+			==>
+			(
+				(r1 * r2) >= (r1 * r3)
+			)			
+		)
+	)
+
+
+	# =-implies->=-axiom
+
+	assert =-implies->=-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 = r2) ==> (r1 >= r2)
+		)
+	)
+
 
 
 	#-- inverse-axiom states the relationship betweek inverses

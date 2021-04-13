@@ -1,6 +1,7 @@
 #****************************************************************************
 # Helpful reusable methods
-
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Reusable Methods for Synod Proof 
 #****************************************************************************
 
 extend-module Synod {

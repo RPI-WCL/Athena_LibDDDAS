@@ -89,6 +89,13 @@ module Random {
 
 	declare sum: [RandVar RandVar]-> RandVar
 
+	overload + sum
+
+	#-- prod returns the product of two random variables
+
+	declare prod: [RandVar RandVar]-> RandVar
+
+	overload * prod
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 

@@ -1,6 +1,9 @@
 #****************************************************************************
 # Constraints/rules defining the Proposer and Acceptor behavior for Synod
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Synod Behavior 
 #****************************************************************************
+
 load "lib/main/nat-less"
 load "symbols.ath"
 

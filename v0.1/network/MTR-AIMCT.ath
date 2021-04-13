@@ -226,7 +226,7 @@ module MTR-AIMCT {
 
 	#-- THEOREM-Prob-AIMCT-Td<=R states that the probability 
 	#   that the Td for MTR-AIMCT will be <= R is given by
-	#   = 1- prod[(1- G(X)), prod[P(X2 > y),...]]
+	#   = 1- prod[(1- G(X)), P(Di > y)^N]
 	#   i.e, Eq 9 in paper 
 
 	define THEOREM-Prob-AIMCT-Td<=R :=

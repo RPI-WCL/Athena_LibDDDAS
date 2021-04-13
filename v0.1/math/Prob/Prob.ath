@@ -26,6 +26,7 @@ module Prob {
 
 	datatype Event  :=  (consE rel:Rel rv:Random.RandVar rl:Real) # wrt to a single rv
 					  | (consErvs rel:Rel rvS:Random.RandVarSet rl:Real) # wrt all in a set of rvs
+					  | (cons2E e1:Event e2:Event) #both event e1 and e2 happen
 
 	#-- sets of events
 
@@ -33,6 +34,7 @@ module Prob {
 
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
 
 	#-- Two events are complementary
 
@@ -51,9 +53,19 @@ module Prob {
 
 	declare get-set-probs : [Event] -> RealExt.RealSet		
 
+	#-- Two events are independent
+
+	declare indEvnt : [Event Event] -> Boolean	
+
+
 	#-- membership opertaor for EventSet
 
 	declare inES: [EventSet Event] -> Boolean 	
+
+	#-- an event happens
+
+	declare happens : [Event] -> Boolean	
+
 
 	#-- Probability of an event
 
@@ -68,19 +80,91 @@ module Prob {
 
 	#-- 
 
-	define [symbl] := [?symbl:Rel] 
+	define [symbl symbl2] := [?symbl:Rel ?symbl2:Rel] 
 
 	define [E1 E2] := [?E1:Event ?E2:Event]
 
 	define [x y] := [?x:Random.RandVar ?y:Random.RandVar]
 
-	define [R] := [?R:Real]
+	define [R R2] := [?R:Real ?R2:Real]
 
 	define [rvSet rvSetTail] := [?rvSet:Random.RandVarSet ?rvSetTail:Random.RandVarSet]
 
 	define [rlSet] := [?rlSet:RealExt.RealSet]
 
 	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- ind-randvar-evnt-rul states that
+	#  if two rvs are independent, then 
+	#  the probability of some event happening for the first
+	#  is independent of the probability of some event happening for the second
+
+	assert ind-randvar-rul :=
+	(forall x y R R2 symbl symbl2 .
+		(Random.ind x y) 
+			==>	
+				(indEvnt
+					(consE symbl x R)  
+					(consE symbl2 y R2)
+				)
+	)
+
+
+	#-- eq-randvar-rul states that
+	#  if two rvs are equal, then 
+	#  the probability of some event happening for the first
+	#  is equal to the probability of some event happening for the second
+	#  (X1 = X2) ==> P(X1 _ R) = P(X2 _ R) where _ can be <, <=, >, >= or = 
+
+	assert eq-randvar-rul :=
+	(forall x y R symbl .
+		(x = y) 
+			==>	
+				(
+					(probE (consE symbl x R)) 
+						= 
+							(probE (consE symbl y R))
+				)
+	)
+
+
+	#-- product-rul states that
+	#  if two events are independent, then 
+	#  the probability of both happening is 
+	#  the product of the probabilities of each happening
+
+	assert product-rul :=
+	(forall E1 E2 .
+		(indEvnt E1 E2) 
+			==>	
+				(
+					(probE (cons2E E1 E2)) 
+						= 
+							( (probE E1) * (probE E2) )
+				)
+	)
+
+
+# ******************************************************
+#  +++++++++++++++++++++++++++++++++++++++++++++++++ NEED TO CHECK THIS
+#-------------------------------------------------------
+	#-- e1==>e2-prob states that if an event A
+	#   implies another event B, then the probability of
+	#   B happening is at least the probability of A
+	#   happeneing since if A happens, then B must happen
+	#   while B can also happen independently of A happening 
+
+
+	assert e1==>e2-prob :=
+	(forall E1 E2 .
+		( (happens E1) ==> (happens E2) ) 
+			==>	
+				(
+					(probE E2) 
+						>= 
+							(probE E1)
+				)
+	)
 
 	#-- comp-<=-&-> states that 
 	#   there is Complementary relationship between 

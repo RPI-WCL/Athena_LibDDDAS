@@ -147,7 +147,6 @@ extend-module Prob {
 		#   If X1,X2,... are independent
 		#   P(min[X1,X2,...] <= y) = 1- prod[P(X1 > y), P(X2 > y),...]
 		#                          = 1- prod[P(X1 > y), prod[P(X2 > y),...]]
-		#						   = 1- prod[(1- G(X)), prod[P(X2 > y),...]]
 
 		define THEOREM-probability-MIN-<=-MInd-RVS :=
 		(forall y rvSetTail R  . 
@@ -191,11 +190,12 @@ extend-module Prob {
 			])
 
 
-		#-- THEOREM-probability-MIN-<=-MInd-RVS states that
+		#-- THEOREM-probability-MIN-<=-MInd-TId-RVS states that
 		#   If X1,X2,... are independent and X2, X3,.... are identical	 
 		#   P(min[X1,X2,...] <= y) = 1- prod[P(X1 > y), P(X2 > y),...]
 		#                          = 1- prod[P(X1 > y), prod[P(Xi > y),...]]
 		#                          = 1- prod[P(X1 > y), P(Xi > y)^N]  
+		#						   = 1- prod[(1- G(X)), P(Xi > y)^N]
 
 		define THEOREM-probability-MIN-<=-MInd-TId-RVS :=
 		(forall y rvSetTail R  . 

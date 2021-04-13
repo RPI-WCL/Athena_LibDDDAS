@@ -1,5 +1,8 @@
 #****************************************************************************
 # The symbols needed to express the Synod algorithm using the actor model 
+
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Symbols for Synod Specification 
 #****************************************************************************
 
 module Synod{

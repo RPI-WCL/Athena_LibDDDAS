@@ -1,5 +1,7 @@
 #****************************************************************************
-# Constraints/rules defining the general system model following the actor model and paxos 
+# Constraints/rules defining the general system model following the actor model and paxos
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- FAM Assumptions  
 #****************************************************************************
 load "lib/main/nat-less"
 load "symbols.ath"

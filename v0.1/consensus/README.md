@@ -5,8 +5,15 @@
 
 ##### Contents:
 
-* `synod` -- theory and proofs about the Synod consensus protocol
+* `synod-eventual` -- theory and proofs about eventual progress in the Synod consensus protocol
 
+* `synod-timely` -- theory and proofs about timely progress in the Synod consensus protocol
+
+
+* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
+<p align="center">
+  <img height="600" src="synod-timely\consensussynod-timely_hierarchy.svg">
+</p>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

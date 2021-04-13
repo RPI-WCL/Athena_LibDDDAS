@@ -156,7 +156,7 @@ extend-module Queue {
 		T := (Dist.mean (Random.pdf (cstDly Q)));
 		conn-2-Little := (!uspec (!uspec LITTLES-THEOREM t) Q);
 		N=LT := (!mp conn-2-Little (!right-and assum)) ;
-		conn-2-commu := (!uspec (!uspec RealExt.commutative-axiom T) L);
+		conn-2-commu := (!uspec (!uspec RealExt.prod-commutative-axiom T) L);
 		N=TL := (!chain [ N
 						= (L * T) [N=LT]
 						= (T * L) [conn-2-commu]
@@ -180,7 +180,7 @@ extend-module Queue {
 
 	#-- THEOREM : Given that the means of the parameters exist as the limits
 	#   this theorem gives the closed for solution of the
-	#  probability of message delay being at most a given real r
+	#   probability of message delay being at most a given real r
 
 	define THEOREM-cstDly-prob :=
 	(forall t Q r .
