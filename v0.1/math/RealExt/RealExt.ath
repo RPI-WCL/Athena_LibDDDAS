@@ -30,11 +30,7 @@ module RealExt {
 
 	# Product function for set of real numbers
 	
-	declare prod : [RealSet] -> Real	
-
-	# Product function for two real numbers
-	
-	declare prod_2 : [Real Real] -> Real		
+	declare prod : [RealSet] -> Real		
 
 	# power function for real numbers
 	
@@ -191,7 +187,7 @@ module RealExt {
 		(
 			(prod (consRS r hS))
 				=	
-					(prod_2 r (prod hS))
+					(* r (prod hS))
 		)
 	)
 

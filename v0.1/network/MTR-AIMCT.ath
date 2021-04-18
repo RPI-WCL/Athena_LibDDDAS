@@ -30,49 +30,19 @@ module MTR-AIMCT {
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
-
-	#-- Axiom: The time Td to deliver packet to destination
-	#  is the minimum of the intermeeting time of the source
-	#  and the dest and the time needed for the relay nodes to deliver
-	#  a copy to the dest
-	# ** DO NOT HAVE A BASIS FOR THIS AXIOM YET
-	#    BUT THIS HAS BEEN USED IN THE PAPER (Since K = N ?)
-
-	assert Td-MIN-IMTSrc-Dest&TTRelays->Dest :=
-	(forall NETWORK .
-	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-	 	(
-	 		(Netwrk.netTd NETWORK)
-	 		= 
-	 			(Random.minRVS 
-				 		(Random.consRVS
-				 			(Netwrk.netIMTSource-Dest NETWORK) 
-				 				(Netwrk.netTTRelays->Dest NETWORK)))
-	 	)
-	)	
-
-	 
-
 	#-- Mobility Model constraints : 
 	# "All nodes move
 	# 	1. independently of each other 
 	#	2. according to the same random mobility model"
+	#-- Captured by intermeetings times are iid --
+	#   The intermeeting time between each pair of nodes
+	#   is represented by a random variable and the times 
+	#   for all different pairs are iid 
 
-	assert mobilityOfMTR-AIMCT :=
+	assert intrMtngTmsIID :=
 	(forall NETWORK .
 	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-		(
-			forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
-			(
-				(  (Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node1:Netwrk.MobileNode) 
-				 & (Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node2:Netwrk.MobileNode) )
-				==>
-					(
-						(Netwrk.nodeMovInd ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode)
-					  &	(= (Netwrk.nodeMobMod ?node1:Netwrk.MobileNode) (Netwrk.nodeMobMod ?node2:Netwrk.MobileNode))
-					)
-			)
-		)
+					  (Random.rvsIID (Netwrk.netNodeIMTmSet NETWORK))
 	)
 
 
@@ -127,56 +97,14 @@ module MTR-AIMCT {
 	)
 
 
-	#-- Assumtpions in Section 3: Arbitrary intermeeting and Constant TTLS
+	#-- All relay nodes have same transmission capabilities
 
-# ** THIS IS WRONG **
-#	# Intermeeting times are IID with a distribution G(t)
-#	# (Each pair of nodes may meet 0 or more times. Therefore
-#	# there is an intermeeting tie between each meeting. 
-#	# Each of those times can be modelled by a random variable)
-#
-#
-#	assert intrMtngTmIID :=
-#	( (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-#		(exists ?gDist:Dist.Dist .
-#			(
-#				forall ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode .
-#					(
-#						(Random.rvsIID (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode))  
-#					  &	(forall ?intrMtngTM:Random.RandVar .
-#					  		(Random.inRVS (Netwrk.nodeIntrMtngTmes ?node1:Netwrk.MobileNode ?node2:Netwrk.MobileNode) ?intrMtngTM:Random.RandVar)
-#					  			==>
-#					  				(= (Random.cdf ?intrMtngTM:Random.RandVar) ?gDist:Dist.Dist)
-#					  	)
-#					)
-#			)
-#		)
-#	)	
-
+	assert rlysSameTrnsmCap :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+							  (Netwrk.netAllRlySameTrnsCap NETWORK)
+	)	
 	
-	#-- Intermeeting times are IID with a distribution G(t)
-	# (The intermeeting time between each pair of nodes
-	# is represented by a random variable and the times 
-	# for all different pairs are iid with a distribution (cdf) gDist)
-
-	assert intrMtngTmsIID :=
-	(forall NETWORK .
-	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-					  (Random.rvsIID (Netwrk.netNodeIMTmSet NETWORK))
-	)		
-
-
-	#-- Intermeetings are mutually independent
-	# (Since intermeeting is a mobility concept, specifying it 
-	# at a very highlevel)
-
-	assert intrMtngsInd :=
-	(forall NETWORK .
-	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-		(
-			(Netwrk.intrmtngOfNodsInd (Netwrk.netNodeSet NETWORK))
-		)
-	)
 
 
 	#-- TTLs are constant 
@@ -184,33 +112,66 @@ module MTR-AIMCT {
 	assert cnstntTTL :=
 	(forall NETWORK .
 	  (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-		(exists ?constantTTL:Netwrk.Duration .
+		(exists ?constantTTL:Real .
 			(forall ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode .
 				(
 					(Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node.Netwrk.MobileNode)
 					==>
-						(= ?constantTTL:Netwrk.Duration (Netwrk.pcktTTL ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode))
+						(= ?constantTTL:Real (Netwrk.pcktTTL ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode))
 				)
 			)
 		)
 	)
 
-	#-- No restrictions on number of packets
 
-	assert noPcktRstrctn :=
+	#-- Number of packets = number of source+relay nodes
+	#  K = N
+
+	assert numPckts=NumSrc+Rly :=
 	(forall NETWORK .
 	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-		 ( (Netwrk.netMaxPckts NETWORK) N.<= (Netwrk.numNodes (Netwrk.netNodeSet NETWORK)))
+		 ( (Netwrk.netNumCopies NETWORK) = (Netwrk.numNodes (Netwrk.netNodeSet-Dest NETWORK)))
 	)
 		
- 
+
+
+	#-- Axiom: The time Td to deliver packet to destination
+	#  is the minimum of the intermeeting time of the source
+	#  and the dest and the time needed for the relay nodes to deliver
+	#  a copy to the dest
+
+	define Td-MIN-IMTSrc-Dest&TTRelays->Dest :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+	 	(
+	 		(Netwrk.netTd NETWORK)
+	 		= 
+	 			(Random.minRVS 
+				 		(Random.consRVS
+				 			(Netwrk.netIMTSource-Dest NETWORK) 
+				 				(Netwrk.netTTRelays->Dest NETWORK)))
+	 	)
+	)
+
+
+	conclude Td-MIN-IMTSrc-Dest&TTRelays->Dest 
+	pick-any NETWORK
+	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
+	let{
+		assum := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
+		conn2-numPckts=NumSrc+Rly := (!mp (!uspec numPckts=NumSrc+Rly NETWORK) assum);  
+		conn2-timeToTransmit-axiom := (!mp (!uspec Netwrk.timeToTransmit-axiom NETWORK) conn2-numPckts=NumSrc+Rly)
+	}
+	(!claim conn2-timeToTransmit-axiom)
+
+  
  	#-- Assumption for equation 9:
  	#  The intermeeting time of source and dest given by Xsd
  	#  and the time taken to deliver by each
  	#  relay node Di,.... are mutually independent 
  	#  and Di forall i are identical
 
-	assert IMTSource-Dest-MI-TTRelays->Source :=
+	define IMTSource-Dest-MI-TTRelays->Source :=
 	(forall NETWORK .
 	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 	 	(
@@ -221,6 +182,21 @@ module MTR-AIMCT {
 	 		& (Random.rvSetId (Netwrk.netTTRelays->Dest NETWORK))
 	 	)
 	)
+
+
+	conclude IMTSource-Dest-MI-TTRelays->Source
+	pick-any NETWORK
+	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
+	let{
+		assum := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
+		imsIID := (!mp (!uspec intrMtngTmsIID NETWORK) assum);
+		conn2-iMTimeSrcDst-ind-RlyTms-axiom := (!mp (!uspec Netwrk.iMTimeSrcDst-ind-RlyTms-axiom NETWORK) imsIID);
+		homoRelys := (!mp (!uspec rlysSameTrnsmCap NETWORK) assum);
+		homoRlys-and-iidIMS:= (!both homoRelys imsIID);
+		conn2-identicalTrnsmTimeOfRlys-axiom := (!uspec Netwrk.identicalTrnsmTimeOfRlys-axiom NETWORK);
+		rlyTrnsDlysId := (!mp conn2-identicalTrnsmTimeOfRlys-axiom homoRlys-and-iidIMS)
+	}
+	(!both conn2-iMTimeSrcDst-ind-RlyTms-axiom rlyTrnsDlysId)
 
 
 
@@ -235,7 +211,7 @@ module MTR-AIMCT {
 		 	(
 		 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
 		 		= (1.0 - 
-		 			(RealExt.prod_2 
+		 			(* 
 		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
 		 				(RealExt.pow 
 		 					(Prob.probE 
@@ -263,7 +239,7 @@ module MTR-AIMCT {
 		conn-to-min := conclude 
 								(= (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) 
 			  						 (1.0 - 
-		  								(RealExt.prod_2 
+		  								(* 
 		  									(1.0 - (Random.cdf y R)) 
 		  									(RealExt.pow 
 		  										(Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
@@ -274,28 +250,12 @@ module MTR-AIMCT {
 	(!chain [ (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
 		    = (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) [Td=Min]
 			= (1.0 - 
-				 (RealExt.prod_2 
+				 (* 
 					 (1.0 - (Random.cdf y R)) 
 					 (RealExt.pow 
 						 (Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
 						 (Random.lenRVS rvSetTail)) )) [conn-to-min]
 		])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }# end module

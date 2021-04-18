@@ -11,10 +11,6 @@ module Netwrk {
 
 	#-------------------------  RELEVANT DOMAINS -------------------------  
 
-	# domain of all time durations
-
-	domain Duration	
-
 	# The domain of all Packets
 
 	domain Packet	
@@ -26,10 +22,6 @@ module Netwrk {
 	#-- set of all sets of MobileNodes
 
 	structure MobileNodeSet := MobileNode | (consMNS MobileNodeSet MobileNode)
-
-	# The domain of all mobility models
-
-	domain MobilityModel
 
 	# The domain of all networks
 
@@ -45,7 +37,7 @@ module Netwrk {
 
 	# Every duration has an associated random variable which maps it to its value
 
-	declare durRandVar: [Duration] -> Random.RandVar
+	declare durRandVar: [Real] -> Random.RandVar
 
 	# Membership operator for MobileNodeSet
 
@@ -55,6 +47,10 @@ module Netwrk {
 
 	declare intrmtngOfNodsInd: [MobileNodeSet] -> Boolean
 
+	# Network property: all relays have same transmission capabilities
+
+	declare netAllRlySameTrnsCap: [Network] -> Boolean
+
 	# Network property: the intermeeting time of source and destination
 
 	declare netIMTSource-Dest: [Network] -> Random.RandVar	
@@ -63,13 +59,21 @@ module Netwrk {
 
 	declare netNodeSet: [Network] -> MobileNodeSet
 
+	# Network property: set of of Mobile nodes in the network excluding the destination
+
+	declare netNodeSet-Dest: [Network] -> MobileNodeSet
+
 	# Network property: set of the random variables represnting the intermeeting times of each pair of Mobile nodes in the network
 
 	declare netNodeIMTmSet: [Network] -> Random.RandVarSet	
 
-	# Network property: restriction on the number of packets in the network
+	# Network property: restriction on the number of copies of packets in the network
 
-	declare netMaxPckts: [Network] -> N	
+	declare netMaxPcktCopys: [Network] -> N	
+
+	# Network property: Total number of copies of a pcaket in the network (including original)
+
+	declare netNumCopies: [Network] -> N
 
 	# Function that returns protocol in use 
 
@@ -91,17 +95,9 @@ module Netwrk {
 
 	declare nodeElgbl2Rcv: [MobileNode Packet] -> Boolean
 
-	# Two nodes follow same random mobility model
-
-	declare nodeFllwSameMobMod: [MobileNode MobileNode] -> Boolean
-
 	# Node has copy of a message 
 
 	declare nodeHasCpy: [MobileNode Packet] -> Boolean
-
-#	# Get random variables representing the intermeeting times of two nodes 
-
-#	declare nodeIntrMtngTmes: [MobileNode MobileNode] -> Random.RandVarSet
 
 	# Node is a destination node 
 
@@ -114,18 +110,10 @@ module Netwrk {
 	# Node is a relay node 
 
 	declare nodeIsRly: [MobileNode] -> Boolean
-
-	# Two nodes move independently
-
-	declare nodeMovInd: [MobileNode MobileNode] -> Boolean
-
-	# Mobility model of a node
-
-	declare nodeMobMod: [MobileNode] -> MobilityModel	
-
+	
 	# Transmission time of a node
 
-	declare nodeTrnsTm: [MobileNode] -> Duration
+	declare nodeTrnsTm: [MobileNode] -> Real
 
 	# number of nodes in a set of nodes
 
@@ -133,7 +121,7 @@ module Netwrk {
 
 	# Function that returns time to live of a packet at a node
 
-	declare pcktTTL: [Packet MobileNode] -> Duration	
+	declare pcktTTL: [Packet MobileNode] -> Real	
 
 	# Protocol property: source can directly transmit to the destination
 
@@ -176,23 +164,65 @@ module Netwrk {
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
-	# only one protocol can be in use at a time
+	#-- If all relays have same transmission capabilities, and 
+	#   the relays have iid intermeeting time with the source, then
+	#   the time taken by each relay is identically distributed
 
-	assert onlyOneProtocolInUse :=
-		(forall ?net:Network ?pn1:PrtType . 
-			(= (netPrtInUse ?net:Network) ?pn1:PrtType) ==>	
-				(~(exists ?pn2:PrtType . 
-					( ~(= ?pn1:PrtType ?pn2:PrtType) 
-					 & (= (netPrtInUse ?net:Network) ?pn2:PrtType) ))) 
-		)
-
-	# General rules about the transmission predicates
-	assert trnsmssnPrdRls :=
-	(forall ?prtName:PrtType ?node:MobileNode .
+	assert identicalTrnsmTimeOfRlys-axiom :=
+	(forall ?net:Network .
+		(
 			(
-				  ( (prtSrcCanTrnsmt2Rlys ?prtName:PrtType ?node:MobileNode) <==> (~ (prtSrcCanTrnsmt2OneRly ?prtName:PrtType ?node:MobileNode)))
-				& ( (prtRlyCanTrnsmt2Rlys ?prtName:PrtType ?node:MobileNode) <==> (~ (prtRlyOnlyTrnsmt2Dst ?prtName:PrtType ?node:MobileNode)))	
+				(netAllRlySameTrnsCap ?net:Network)
+				&
+				(Random.rvsIID (netNodeIMTmSet ?net:Network))
 			)
+		   ==>
+		   	   (Random.rvSetId (netTTRelays->Dest ?net:Network))
+		)   	   
 	)
+
+
+	#-- If all intermeeting times are independent,
+	#   then intermeeting time of source and dest
+	#   is independent of the time taken to deliver
+	#   copy to dest by each relay
+
+	assert iMTimeSrcDst-ind-RlyTms-axiom :=
+	(forall ?net:Network .
+		(
+			(Random.rvsIID (netNodeIMTmSet ?net:Network))
+			   ==>
+		 		(Random.rvSetInd
+			 		(Random.consRVS
+			 			(netIMTSource-Dest ?net:Network) 
+			 				(netTTRelays->Dest ?net:Network)))
+		)   	   
+	)	 
+
+
+	#-- if K = N, it means that the source has transmitted to Every
+	#   relay and the time to transmit is the minimum of the
+	#  time taken by the source to transmit direcly to
+	#  the dest and the time needed for each of the relay nodes to deliver
+	#  a copy to the dest	
+
+
+	assert timeToTransmit-axiom :=
+	(forall ?net:Network .
+		(
+			( (netNumCopies ?net:Network) = (numNodes (netNodeSet-Dest ?net:Network)))
+			==>
+			 	(
+			 		(netTd ?net:Network)
+			 		= 
+			 			(Random.minRVS 
+						 		(Random.consRVS
+						 			(netIMTSource-Dest ?net:Network) 
+						 				(netTTRelays->Dest ?net:Network)))
+			 	)
+	 	)
+	)
+
+
 
 }# end module

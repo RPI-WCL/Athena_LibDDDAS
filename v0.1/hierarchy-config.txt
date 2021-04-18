@@ -1,3 +1,38 @@
-# Manual descriptions
+#### List Manual Descriptions Below
 
 + nat-less.ath Natural Numbers
+
+#### List Files to Ignore Below (also list any files that call these files)
+
+# In math/Dist
+- NormDist.ath
+
+# In consensus/synod-eventual
+- behavior.ath
+- conditions.ath
+- methods.ath
+- progress-proof.ath
+- symbols.ath
+- system.ath
+
+# In consensus/synod-timely
+- TimSyn.ath
+
+# In nmac
+- algorithm.ath
+- configuration.ath
+- flightplan.ath
+- matrix.ath
+- nmac.ath
+- proofs.ath
+- real.ath
+- state.ath
+- types.ath
+- vector_2d.ath
+- violation.ath
+- v-list.ath
+
+
+
+
+

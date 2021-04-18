@@ -156,7 +156,7 @@ extend-module Prob {
 			==> 
 			(
 				(probE (consE <= (Random.minRVS (Random.consRVS y rvSetTail)) R)) 
-					= 	(1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R)))) ) 
+					= 	(1.0 - (* (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R)))) ) 
 			)
 		)
 
@@ -185,7 +185,7 @@ extend-module Prob {
 				 = (1.0 - (RealExt.prod (get-set-probs (consErvs > rvSet R)))) [cnnct-to-rvs-ind] # need to create a composite here
 				 = (1.0 - (RealExt.prod (get-set-probs (consErvs > (Random.consRVS y rvSetTail) R)))) [rvSet]
 				 = (1.0 - (RealExt.prod (RealExt.consRS (probE (consE > y R)) (get-set-probs (consErvs > rvSetTail R))))) [cnnct-to-get-set-probs-axiom2]
-				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [cnnct-to-composite-rvSetInd]
+				 = (1.0 - (* (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [cnnct-to-composite-rvSetInd]
 				  
 			])
 
@@ -206,7 +206,7 @@ extend-module Prob {
 			==> 
 			(
 				(probE (consE <= (Random.minRVS (Random.consRVS y rvSetTail)) R)) 
-			  		= (1.0 - (RealExt.prod_2 (1.0 - (Random.cdf y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) ))
+			  		= (1.0 - (* (1.0 - (Random.cdf y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) ))
 			)
 		)
 	 
@@ -233,12 +233,12 @@ extend-module Prob {
 			conn-to-cdf := (!uspec (!uspec cdf-prob-axiom y) R)
 		}
 		(!chain [  (probE (consE <= (Random.minRVS rvSet) R))
-				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [Mind-THEOReM-stmnt]
-				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (RealExt.elmntHRS (get-set-probs (consErvs > rvSetTail R))) (RealExt.lenRS (get-set-probs (consErvs > rvSetTail R)))) )) [cnnct-to-prod-pow-axm]
-				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (RealExt.lenRS (get-set-probs (consErvs > rvSetTail R)))) )) [cnnct-to-elmntHRS=probE]
-				 = (1.0 - (RealExt.prod_2 (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [cnnct-to-get-set-probs-len]
-				 = (1.0 - (RealExt.prod_2 (1 - (probE (consE <= y R))) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [conn-to-comp-prob]
-				 = (1.0 - (RealExt.prod_2 (1 - (Random.cdf y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [conn-to-cdf]
+				 = (1.0 - (* (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [Mind-THEOReM-stmnt]
+				 = (1.0 - (* (probE (consE > y R)) (RealExt.pow (RealExt.elmntHRS (get-set-probs (consErvs > rvSetTail R))) (RealExt.lenRS (get-set-probs (consErvs > rvSetTail R)))) )) [cnnct-to-prod-pow-axm]
+				 = (1.0 - (* (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (RealExt.lenRS (get-set-probs (consErvs > rvSetTail R)))) )) [cnnct-to-elmntHRS=probE]
+				 = (1.0 - (* (probE (consE > y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [cnnct-to-get-set-probs-len]
+				 = (1.0 - (* (1 - (probE (consE <= y R))) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [conn-to-comp-prob]
+				 = (1.0 - (* (1 - (Random.cdf y R)) (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSetTail) R)) (Random.lenRVS rvSetTail)) )) [conn-to-cdf]
 			])
 
 
