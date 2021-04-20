@@ -1,4 +1,4 @@
-# SYNOD
+# SYNOD-EVENTUAL
 
 ##### This repository contains theory and proofs about the Synod consensus algorithm
 

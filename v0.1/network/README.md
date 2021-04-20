@@ -1,4 +1,4 @@
-# MATH 
+# NETWORK
 
 ##### This repository contains ATHENA theory and proofs about Network theory  
 
