@@ -6,6 +6,7 @@
 
 load "Athena_LibDDDAS/network/Netwrk.ath"
 load "Athena_LibDDDAS/math/Prob/PrbIndRv.ath"
+load "Athena_LibDDDAS/math/Dist/ExpoDist.ath"
 
 module MTR-AIMCT { 
 
@@ -16,10 +17,10 @@ module MTR-AIMCT {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
-	# MTR property: set of the random variables represnting the intermeeting times of the source and each relay with respect to the source
-	# (The set {Xsd, D1, ..., DN-1} in equation 8)
+	#-- The function that takes lambda of G(t), constant TTL and a real t
+	#   and computes and returns the value of P(D_i > t)
 
-	# declare mtrImtngTms: [Random.RandVarSet] -> Random.RandVarSet	
+	declare P_Di>t : [Real Real Real] -> Real
 
 
 
@@ -133,7 +134,23 @@ module MTR-AIMCT {
 	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		 ( (Netwrk.netNumCopies NETWORK) = (Netwrk.numNodes (Netwrk.netNodeSet-Dest NETWORK)))
 	)
-		
+	
+
+	#-- HIGH-LEVEL assumption that there is a function that
+	#   can compute the value of P(D_i > t)	
+
+	assert ASSUMPTION-P_Di>t :=
+	(forall NETWORK R .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 (
+			(Prob.probE 
+				(Prob.consE Prob.> 
+					(Random.rvSetIdElmnt 
+						(Netwrk.netTTRelays->Dest NETWORK)) R)) 
+			= 
+			(P_Di>t (Netwrk.netGetCnstTTL NETWORK) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest NETWORK))) R)
+		 )		 					
+	)		
 
 
 	#-- Axiom: The time Td to deliver packet to destination
@@ -258,5 +275,55 @@ module MTR-AIMCT {
 						 (Random.lenRVS rvSetTail)) )) [conn-to-min]
 		])
 
+
+
+
+	#-- Enhanced version of the above theorem that
+	#  uses the asusmtion that  P_Di>t function
+	#  corectly returns the value of P(Di > t) 
+
+	define THEOREM-Prob-AIMCT-Td<=R-2 :=
+	(forall NETWORK R .
+		(= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 	(
+		 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
+		 		= (1.0 - 
+		 			(* 
+		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
+		 				(RealExt.pow 
+							(P_Di>t (Netwrk.netGetCnstTTL NETWORK) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest NETWORK))) R) 
+		 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) ))
+		 	)
+	)
+
+	conclude THEOREM-Prob-AIMCT-Td<=R-2
+	pick-any NETWORK
+	pick-any R
+	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
+	let{
+		netIsAIMCT := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
+		conn2-THEOREM-Prob-AIMCT-Td<=R := (!uspec (!uspec THEOREM-Prob-AIMCT-Td<=R NETWORK) R);
+		rvSet := (Random.consRVS
+		 			(Netwrk.netIMTSource-Dest NETWORK) 
+		 				(Netwrk.netTTRelays->Dest NETWORK));
+		y :=  (Netwrk.netIMTSource-Dest NETWORK);
+		rvSetTail := (Netwrk.netTTRelays->Dest NETWORK); 		
+		sttmnt := (!mp conn2-THEOREM-Prob-AIMCT-Td<=R netIsAIMCT);
+		assumption := (!uspec ASSUMPTION-P_Di>t NETWORK)  
+	}
+	(!chain [ (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
+			= (1.0 - 
+				 (* 
+					 (1.0 - (Random.cdf y R)) 
+					 (RealExt.pow 
+						 (Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
+						 (Random.lenRVS rvSetTail)) )) [sttmnt]
+	 		= (1.0 - 
+	 			(* 
+	 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
+	 				(RealExt.pow 
+						(P_Di>t (Netwrk.netGetCnstTTL NETWORK) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest NETWORK))) R) 
+	 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) )) [assumption]
+		])
 
 }# end module

@@ -14,6 +14,12 @@ module RealExt {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
+
+	# factorial
+
+	declare fact : [Real] -> Real
+
+
 	# All elements of a set of real numbers are equal
 	# We call such sets "Homogenous Sets" for brevity
 	# eg - {1.0, 1.0, 1.0, ... }
@@ -24,9 +30,17 @@ module RealExt {
 	
 	declare elmntHRS : [RealSet] -> Real
 
+	# largest integer
+
+	declare largest_int : [Real] -> Real # 1.0, 2.0, 3.0 , etc
+
 	# Length of a set of real numbers
 	
 	declare lenRS : [RealSet] -> Real
+
+	# max function
+
+	declare max : [Real Real] -> Real
 
 	# Product function for set of real numbers
 	
@@ -55,7 +69,7 @@ module RealExt {
 
 	define [r r1 r2 r3 r1e r2e r3e r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r1e:Real ?r2e:Real ?r3e:Real ?r4:Real]
 
-	declare INFY, EULER : Real # infinity and e 
+	declare INFY, EULER : Real # infinity and Euler's constant e 
 
 
 	#-------------------------  RELEVANT THEORY  -------------------------
@@ -252,9 +266,9 @@ module RealExt {
 	#-- replace with equal
 	#  this is very obvious that equal values can betweek
 	#   replaced in a real expression
-	#   NEED to find a general version 
+	#****  NEED to find a general version ****
 
-	assert replace-with-equal-axiom1 :=
+	define THEOREM-replace-with-equal :=
 	(forall r1 r2 r3 r4 r1e r2e r3e .
 		(
 			
@@ -268,6 +282,46 @@ module RealExt {
 		)
 	)
 
+
+	conclude THEOREM-replace-with-equal
+	pick-any r1
+	pick-any r2
+	pick-any r3
+	pick-any r4
+	pick-any r1e
+	pick-any r2e
+	pick-any r3e
+	assume
+			(  (r4 >= ((r1 * (r2 * r3))))
+			  &	(r1 = r1e)
+			  & (r2 = r2e)
+			  & (r3 = r3e)
+			)
+	let{
+		assum :=
+			(  (r4 >= ((r1 * (r2 * r3))))
+			  &	(r1 = r1e)
+			  & (r2 = r2e)
+			  & (r3 = r3e)
+			);
+		>=rel := (!left-and assum);
+		r1=r1e := (!left-and (!right-and assum));
+		r2=r2e := (!left-and (!right-and (!right-and assum)));
+		r3=r3e := (!right-and (!right-and (!right-and assum)));
+		mult := (r1 * (r2 * r3));
+		replace := (r1e * (r2e * r3e));
+		mult=replace := conclude (mult = replace)
+					(!chain [ mult
+							= (r1 * (r2 * r3)) [mult]
+							= (r1e * (r2 * r3)) [r1=r1e]
+							= (r1e * (r2e * r3)) [r2=r2e]
+							= (r1e * (r2e * r3e)) [r3=r3e]
+							= replace [replace]
+							]);
+		cond-for-transitive2 := (!both >=rel mult=replace);
+		conn2->=-transitive2-axiom := (!uspec (!uspec (!uspec >=-transitive2-axiom r4) mult) replace)			
+	}
+	(!mp conn2->=-transitive2-axiom cond-for-transitive2)
 
 
 }# end module

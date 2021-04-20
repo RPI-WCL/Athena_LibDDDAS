@@ -12,27 +12,27 @@
 <!-- MTR Protocol \n(MTR&#45;AIMCT.ath) -->
 <g id="node1" class="node">
 <title>MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
-<ellipse fill="none" stroke="black" cx="231.99" cy="-359.73" rx="98.08" ry="26.74"/>
-<text text-anchor="middle" x="231.99" y="-363.53" font-family="CMU Serif Roman" font-size="14.00">MTR Protocol </text>
-<text text-anchor="middle" x="231.99" y="-348.53" font-family="CMU Serif Roman" font-size="14.00">(MTR&#45;AIMCT.ath)</text>
+<ellipse fill="none" stroke="black" cx="357.99" cy="-359.73" rx="98.08" ry="26.74"/>
+<text text-anchor="middle" x="357.99" y="-363.53" font-family="CMU Serif Roman" font-size="14.00">MTR Protocol </text>
+<text text-anchor="middle" x="357.99" y="-348.53" font-family="CMU Serif Roman" font-size="14.00">(MTR&#45;AIMCT.ath)</text>
 </g>
 <!-- Distributed Protocols in
 VANETS \n(Distributed.ath) -->
 <g id="node2" class="node">
 <title>Distributed Protocols in
 VANETS \n(Distributed.ath)</title>
-<ellipse fill="none" stroke="black" cx="370.99" cy="-169.64" rx="116.85" ry="37.45"/>
-<text text-anchor="middle" x="370.99" y="-180.94" font-family="CMU Serif Roman" font-size="14.00">Distributed Protocols in</text>
-<text text-anchor="middle" x="370.99" y="-165.94" font-family="CMU Serif Roman" font-size="14.00">VANETS </text>
-<text text-anchor="middle" x="370.99" y="-150.94" font-family="CMU Serif Roman" font-size="14.00">(Distributed.ath)</text>
+<ellipse fill="none" stroke="black" cx="447.99" cy="-169.64" rx="116.85" ry="37.45"/>
+<text text-anchor="middle" x="447.99" y="-180.94" font-family="CMU Serif Roman" font-size="14.00">Distributed Protocols in</text>
+<text text-anchor="middle" x="447.99" y="-165.94" font-family="CMU Serif Roman" font-size="14.00">VANETS </text>
+<text text-anchor="middle" x="447.99" y="-150.94" font-family="CMU Serif Roman" font-size="14.00">(Distributed.ath)</text>
 </g>
 <!-- MTR Protocol \n(MTR&#45;AIMCT.ath)&#45;&gt;Distributed Protocols in
 VANETS \n(Distributed.ath) -->
 <g id="edge1" class="edge">
 <title>MTR Protocol \n(MTR&#45;AIMCT.ath)&#45;&gt;Distributed Protocols in
 VANETS \n(Distributed.ath)</title>
-<path fill="none" stroke="black" d="M251.03,-332.97C273.57,-302.48 311.46,-251.21 338.63,-214.44"/>
-<polygon fill="black" stroke="black" points="341.47,-216.48 344.6,-206.36 335.84,-212.32 341.47,-216.48"/>
+<path fill="none" stroke="black" d="M370.32,-332.97C384.64,-303.05 408.53,-253.11 426.05,-216.51"/>
+<polygon fill="black" stroke="black" points="429.42,-217.58 430.58,-207.04 423.1,-214.55 429.42,-217.58"/>
 </g>
 <!-- Timely Progress in
 the Knowledge Propagation
@@ -41,11 +41,11 @@ Protocol \n(TimProp.ath) -->
 <title>Timely Progress in
 the Knowledge Propagation
 Protocol \n(TimProp.ath)</title>
-<ellipse fill="none" stroke="black" cx="370.99" cy="-48.08" rx="135.11" ry="48.17"/>
-<text text-anchor="middle" x="370.99" y="-66.88" font-family="CMU Serif Roman" font-size="14.00">Timely Progress in</text>
-<text text-anchor="middle" x="370.99" y="-51.88" font-family="CMU Serif Roman" font-size="14.00">the Knowledge Propagation</text>
-<text text-anchor="middle" x="370.99" y="-36.88" font-family="CMU Serif Roman" font-size="14.00">Protocol </text>
-<text text-anchor="middle" x="370.99" y="-21.88" font-family="CMU Serif Roman" font-size="14.00">(TimProp.ath)</text>
+<ellipse fill="none" stroke="black" cx="447.99" cy="-48.08" rx="135.11" ry="48.17"/>
+<text text-anchor="middle" x="447.99" y="-66.88" font-family="CMU Serif Roman" font-size="14.00">Timely Progress in</text>
+<text text-anchor="middle" x="447.99" y="-51.88" font-family="CMU Serif Roman" font-size="14.00">the Knowledge Propagation</text>
+<text text-anchor="middle" x="447.99" y="-36.88" font-family="CMU Serif Roman" font-size="14.00">Protocol </text>
+<text text-anchor="middle" x="447.99" y="-21.88" font-family="CMU Serif Roman" font-size="14.00">(TimProp.ath)</text>
 </g>
 <!-- Distributed Protocols in
 VANETS \n(Distributed.ath)&#45;&gt;Timely Progress in
@@ -56,23 +56,23 @@ Protocol \n(TimProp.ath) -->
 VANETS \n(Distributed.ath)&#45;&gt;Timely Progress in
 the Knowledge Propagation
 Protocol \n(TimProp.ath)</title>
-<path fill="none" stroke="black" d="M370.99,-132.12C370.99,-124.03 370.99,-115.26 370.99,-106.55"/>
-<polygon fill="black" stroke="black" points="374.5,-106.41 370.99,-96.41 367.5,-106.41 374.5,-106.41"/>
+<path fill="none" stroke="black" d="M447.99,-132.12C447.99,-124.03 447.99,-115.26 447.99,-106.55"/>
+<polygon fill="black" stroke="black" points="451.5,-106.41 447.99,-96.41 444.5,-106.41 451.5,-106.41"/>
 </g>
 <!-- M/M/1 Queue \n(MM1.ath) -->
 <g id="node3" class="node">
 <title>M/M/1 Queue \n(MM1.ath)</title>
-<ellipse fill="none" stroke="black" cx="466.99" cy="-269.99" rx="78.48" ry="26.74"/>
-<text text-anchor="middle" x="466.99" y="-273.79" font-family="CMU Serif Roman" font-size="14.00">M/M/1 Queue </text>
-<text text-anchor="middle" x="466.99" y="-258.79" font-family="CMU Serif Roman" font-size="14.00">(MM1.ath)</text>
+<ellipse fill="none" stroke="black" cx="518.99" cy="-269.99" rx="78.48" ry="26.74"/>
+<text text-anchor="middle" x="518.99" y="-273.79" font-family="CMU Serif Roman" font-size="14.00">M/M/1 Queue </text>
+<text text-anchor="middle" x="518.99" y="-258.79" font-family="CMU Serif Roman" font-size="14.00">(MM1.ath)</text>
 </g>
 <!-- M/M/1 Queue \n(MM1.ath)&#45;&gt;Distributed Protocols in
 VANETS \n(Distributed.ath) -->
 <g id="edge2" class="edge">
 <title>M/M/1 Queue \n(MM1.ath)&#45;&gt;Distributed Protocols in
 VANETS \n(Distributed.ath)</title>
-<path fill="none" stroke="black" d="M442.77,-244.17C433.56,-234.74 422.8,-223.71 412.44,-213.1"/>
-<polygon fill="black" stroke="black" points="414.85,-210.56 405.37,-205.85 409.85,-215.45 414.85,-210.56"/>
+<path fill="none" stroke="black" d="M500.71,-243.66C494.29,-234.77 486.88,-224.51 479.68,-214.53"/>
+<polygon fill="black" stroke="black" points="482.4,-212.32 473.71,-206.26 476.72,-216.42 482.4,-212.32"/>
 </g>
 <!-- Charecteristic Functions \n(CharFun.ath) -->
 <g id="node5" class="node">
@@ -119,6 +119,12 @@ VANETS \n(Distributed.ath)</title>
 <title>Distributions \n(Dist.ath)&#45;&gt;Random Variables \n(Random.ath)</title>
 <path fill="none" stroke="black" d="M414.29,-756C406.94,-744.17 398.09,-729.89 390.17,-717.12"/>
 <polygon fill="black" stroke="black" points="393.11,-715.22 384.86,-708.57 387.16,-718.91 393.11,-715.22"/>
+</g>
+<!-- Exponential Distribution \n(ExpoDist.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath) -->
+<g id="edge21" class="edge">
+<title>Exponential Distribution \n(ExpoDist.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
+<path fill="none" stroke="black" d="M472.39,-434.26C451.52,-420.85 425.62,-404.2 403.75,-390.14"/>
+<polygon fill="black" stroke="black" points="405.57,-387.15 395.27,-384.69 401.79,-393.04 405.57,-387.15"/>
 </g>
 <!-- Queue \n(Queue.ath) -->
 <g id="node15" class="node">
@@ -239,8 +245,8 @@ Random Variables \n(PrbIndRv.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath) -->
 <g id="edge20" class="edge">
 <title>Probabilities of Independent
 Random Variables \n(PrbIndRv.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
-<path fill="none" stroke="black" d="M231.99,-422.46C231.99,-414.09 231.99,-405.19 231.99,-396.84"/>
-<polygon fill="black" stroke="black" points="235.5,-396.64 231.99,-386.64 228.5,-396.64 235.5,-396.64"/>
+<path fill="none" stroke="black" d="M276.42,-424.4C290.15,-413.69 305.17,-401.96 318.54,-391.53"/>
+<polygon fill="black" stroke="black" points="320.9,-394.13 326.62,-385.22 316.59,-388.61 320.9,-394.13"/>
 </g>
 <!-- Random Variables \n(Random.ath)&#45;&gt;Probability \n(Prob.ath) -->
 <g id="edge12" class="edge">
@@ -260,7 +266,7 @@ VANETS \n(Netwrk.ath)</title>
 </g>
 <!-- Random Variables \n(Random.ath)&#45;&gt;Network Theory for
 VANETS \n(Netwrk.ath) -->
-<g id="edge21" class="edge">
+<g id="edge22" class="edge">
 <title>Random Variables \n(Random.ath)&#45;&gt;Network Theory for
 VANETS \n(Netwrk.ath)</title>
 <path fill="none" stroke="black" d="M315.97,-659.59C275.83,-643.39 220.12,-620.91 175.2,-602.78"/>
@@ -269,16 +275,16 @@ VANETS \n(Netwrk.ath)</title>
 <!-- Queue \n(Queue.ath)&#45;&gt;M/M/1 Queue \n(MM1.ath) -->
 <g id="edge14" class="edge">
 <title>Queue \n(Queue.ath)&#45;&gt;M/M/1 Queue \n(MM1.ath)</title>
-<path fill="none" stroke="black" d="M556.09,-336.13C541.31,-325.33 523.41,-312.24 507.55,-300.64"/>
-<polygon fill="black" stroke="black" points="509.61,-297.81 499.47,-294.74 505.48,-303.46 509.61,-297.81"/>
+<path fill="none" stroke="black" d="M567.69,-333.82C560.57,-324.64 552.39,-314.08 544.79,-304.28"/>
+<polygon fill="black" stroke="black" points="547.48,-302.03 538.58,-296.26 541.94,-306.31 547.48,-302.03"/>
 </g>
 <!-- Network Theory for
 VANETS \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath) -->
 <g id="edge19" class="edge">
 <title>Network Theory for
 VANETS \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
-<path fill="none" stroke="black" d="M84.32,-533.87C73.91,-501.94 65.27,-455.49 86.99,-422.6 100.26,-402.52 121.52,-388.93 143.72,-379.75"/>
-<polygon fill="black" stroke="black" points="145.19,-382.93 153.27,-376.08 142.68,-376.4 145.19,-382.93"/>
+<path fill="none" stroke="black" d="M83.28,-533.83C71.81,-501.2 62.18,-453.72 86.99,-422.6 108.21,-396 188.28,-379.93 255.92,-370.86"/>
+<polygon fill="black" stroke="black" points="256.77,-374.28 266.23,-369.52 255.87,-367.34 256.77,-374.28"/>
 </g>
 <!-- Natural Numbers
  \n(nat&#45;less.ath) -->
@@ -293,7 +299,7 @@ VANETS \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
 <!-- Natural Numbers
  \n(nat&#45;less.ath)&#45;&gt;Network Theory for
 VANETS \n(Netwrk.ath) -->
-<g id="edge22" class="edge">
+<g id="edge23" class="edge">
 <title>Natural Numbers
  \n(nat&#45;less.ath)&#45;&gt;Network Theory for
 VANETS \n(Netwrk.ath)</title>

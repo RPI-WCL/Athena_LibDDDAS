@@ -4,6 +4,8 @@
 
 #### List Files to Ignore Below (also list any files that call these files)
 
+- prove-all.ath
+
 # In math/Dist
 - NormDist.ath
 

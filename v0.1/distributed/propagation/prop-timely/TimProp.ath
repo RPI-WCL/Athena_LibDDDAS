@@ -62,12 +62,9 @@ extend-module Distributed {
 	 		= (1.0 - 
 	 			(* 
 	 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)) r2))
-	 				(RealExt.pow 
-	 					(Prob.probE 
-	 						(Prob.consE Prob.> 
-	 							(Random.rvSetIdElmnt 
-	 								(Netwrk.netTTRelays->Dest (cnPrtNet KP))) r2)) 
-	 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ))
+		 				(RealExt.pow 
+							(MTR-AIMCT.P_Di>t (Netwrk.netGetCnstTTL (cnPrtNet KP)) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)))) r2) 
+		 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ))
  		)
  	)	
 
@@ -76,9 +73,9 @@ extend-module Distributed {
  	pick-any r2
  	let{
  		isMTR := (!left-and KP-System-Model);
- 		conn2-THEOREM-Prob-AIMCT-Td<=R := (!uspec (!uspec MTR-AIMCT.THEOREM-Prob-AIMCT-Td<=R (cnPrtNet KP)) r2) 
+ 		conn2-THEOREM-Prob-AIMCT-Td<=R-2 := (!uspec (!uspec MTR-AIMCT.THEOREM-Prob-AIMCT-Td<=R-2 (cnPrtNet KP)) r2) 
  	}
- 	(!mp conn2-THEOREM-Prob-AIMCT-Td<=R isMTR)
+ 	(!mp conn2-THEOREM-Prob-AIMCT-Td<=R-2 isMTR)
 
 
 	#-- bound on processing delay for KP
@@ -132,10 +129,7 @@ extend-module Distributed {
 		 			(* 
 		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)) r2))
 		 				(RealExt.pow 
-		 					(Prob.probE 
-		 						(Prob.consE Prob.> 
-		 							(Random.rvSetIdElmnt 
-		 								(Netwrk.netTTRelays->Dest (cnPrtNet KP))) r2)) 
+							(MTR-AIMCT.P_Di>t (Netwrk.netGetCnstTTL (cnPrtNet KP)) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)))) r2) 
 		 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ))
 				  
 
@@ -174,11 +168,8 @@ extend-module Distributed {
 	 			(* 
 	 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)) r2))
 	 				(RealExt.pow 
-	 					(Prob.probE 
-	 						(Prob.consE Prob.> 
-	 							(Random.rvSetIdElmnt 
-	 								(Netwrk.netTTRelays->Dest (cnPrtNet KP))) r2)) 
-	 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ));
+							(MTR-AIMCT.P_Di>t (Netwrk.netGetCnstTTL (cnPrtNet KP)) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)))) r2) 
+		 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ));
 
 		R3e := 	 (1.0 - 
 					(RealExt.pow 
@@ -196,9 +187,9 @@ extend-module Distributed {
 		R1=R1e := KP-Deterministic-Msgs;
 		R2=R2e := (!uspec THEOREM-KP-Transmission r2);
 		R3=R3e := (!uspec THEOREM-KP-Processing r3);  		  	
-		conn2-replace-with-equal-axiom1 := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec RealExt.replace-with-equal-axiom1 R1) R2) R3) R4) R1e) R2e) R3e);
+		conn2-THEOREM-replace-with-equal := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec RealExt.THEOREM-replace-with-equal R1) R2) R3) R4) R1e) R2e) R3e);
 		conditions := (!both conn2-THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP (!both R1=R1e (!both R2=R2e R3=R3e)));
-		proof := (!mp conn2-replace-with-equal-axiom1 conditions)
+		proof := (!mp conn2-THEOREM-replace-with-equal conditions)
 	}
 	(!claim proof)
 

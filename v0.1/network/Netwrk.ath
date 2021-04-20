@@ -51,6 +51,10 @@ module Netwrk {
 
 	declare netAllRlySameTrnsCap: [Network] -> Boolean
 
+	# Network property: get the value f constant ttl
+
+	declare netGetCnstTTL: [Network] -> Real
+
 	# Network property: the intermeeting time of source and destination
 
 	declare netIMTSource-Dest: [Network] -> Random.RandVar	

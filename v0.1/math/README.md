@@ -3,9 +3,7 @@
 ##### This repository contains ATHENA theory and proofs about mathematical concepts like random variables, probability, distributions, etc  
 
 
-##### Description:
-
-* `RealExt` - Real Numbers    
+##### Description: 
 
 * `CharFun` - Charecteristic functions    
 
@@ -13,11 +11,13 @@
 
 * `Function` - Functions
 
-* `Random` - Random Variables    
-
 * `Prob` - Probability    
 
 * `Queue` - Queues
+
+* `Random` - Random Variables    
+
+* `RealExt` - Real Numbers   
 
 * A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
 <p align="center">
