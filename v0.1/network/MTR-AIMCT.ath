@@ -1,6 +1,7 @@
 #-------------------------------------------------------------------------
 # Lines beginning with '#+-' are used to create the hierarchy graph
-#+- Multicopy Two-Hop Relay Protocol with Arbitrary Inter-meeting and Constant TTLs
+#+- MTR Protocol
+#-- Multicopy Two-Hop Relay Protocol with Arbitrary Inter-meeting and Constant TTLs
 #-- Based on - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
 
 load "Athena_LibDDDAS/network/Netwrk.ath"

@@ -1,50 +1,44 @@
 #-------------------------------------------------------------------------
 # Lines beginning with '#+-' are used to create the hierarchy graph
-#+- Timely Progress in Knowledge Propagation Protocol
+#+- Distributed Protocols in VANETS
 
 load "Athena_LibDDDAS/network/MTR-AIMCT.ath"
 load "Athena_LibDDDAS/math/Queue/MM1.ath"
 
-module TimSyn { 
+module Distributed { 
 
 
 	#-------------------------  RELEVANT DOMAINS -------------------------  
 
-	#-- domain of conensus protocols (will separate into a different module later)
+	#-- domain of distributed protocols 
 
-	domain ConProt
-
+	domain DisProt
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
 	#-- number of messages 
 
-	declare cnPrtNM : [ConProt] -> Random.RandVar 
+	declare cnPrtNM : [DisProt] -> Random.RandVar 
 
 	#-- Queue used for implementation 
 
-	declare cnPrtQ : [ConProt] -> Queue.Queue	
+	declare cnPrtQ : [DisProt] -> Queue.Queue	
 
 	#-- Network over which the implementation is running 
 
-	declare cnPrtNet : [ConProt] -> Netwrk.Network
+	declare cnPrtNet : [DisProt] -> Netwrk.Network
 
 	#-- Total time required for consensus
 
-	declare cnPrtTS : [ConProt] -> Random.RandVar
+	declare cnPrtTS : [DisProt] -> Random.RandVar
 
 	#-- Total delay om messages : - transmission + processing 
 
-	declare cnPrtTM : [ConProt] -> Random.RandVar
+	declare cnPrtTM : [DisProt] -> Random.RandVar
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
-	#-- SYNOD is a consensus protocol
-
-	declare SYNOD : ConProt 
-
-
-	define [CP] := [?CP:ConProt]
+	define [DP] := [?DP:DisProt]
 
 	define [r1 r2 r3] := [?r1:Real ?r2:Real ?r3:Real]
 
@@ -55,17 +49,17 @@ module TimSyn {
 	# ((T_D <= x) & (T_P <= y)) ==> (T_M <= x + y)
 
 	assert TD-&-TP==>TM :=
-	(forall CP r1 r2 .
+	(forall DP r1 r2 .
 		(	
 			(Prob.happens	
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2)
+					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
+					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
 				)
 			)
 			==>
 				(Prob.happens	
-					(Prob.consE Prob.<= (cnPrtTM CP) (r1 + r2) ) 
+					(Prob.consE Prob.<= (cnPrtTM DP) (r1 + r2) ) 
 				)						
 		)			
 	)
@@ -75,17 +69,17 @@ module TimSyn {
 	# (NM * TM) <= xy <== (NM <= x) & (TM <= y)
 
 	assert NM-&-TM==>NM-x-TM :=
-	(forall CP r1 r2 .
+	(forall DP r1 r2 .
 		(	
 			(Prob.happens	
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (cnPrtNM CP) r1) 
-					(Prob.consE Prob.<= (cnPrtTM CP) r2)
+					(Prob.consE Prob.<= (cnPrtNM DP) r1) 
+					(Prob.consE Prob.<= (cnPrtTM DP) r2)
 				)
 			)
 			==>
 				(Prob.happens	
-					(Prob.consE Prob.<= ((cnPrtNM CP) Random.* (cnPrtTM CP)) (r1 * r2) ) 
+					(Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2) ) 
 				)						
 		)			
 	)
@@ -95,16 +89,16 @@ module TimSyn {
 	# NM-ind-TM
 
 	assert NM-ind-TM :=
-	(forall CP .
-		(Random.ind (cnPrtNM CP) (cnPrtTM CP) ) 
+	(forall DP .
+		(Random.ind (cnPrtNM DP) (cnPrtTM DP) ) 
 	)
 
 
 	# TD-ind-TP
 
 	assert TD-ind-TP :=
-	(forall CP .
-		(Random.ind (Netwrk.netTd (cnPrtNet CP)) (Queue.cstDly (cnPrtQ CP)) ) 
+	(forall DP .
+		(Random.ind (Netwrk.netTd (cnPrtNet DP)) (Queue.cstDly (cnPrtQ DP)) ) 
 	)
 
 
@@ -112,8 +106,8 @@ module TimSyn {
 	# TS = NM * TM
 
 	assert TS=NM-x-TM :=
-	(forall CP .
-		( (cnPrtTS CP) = ( (cnPrtNM CP) Random.* (cnPrtTM CP) ) )
+	(forall DP .
+		( (cnPrtTS DP) = ( (cnPrtNM DP) Random.* (cnPrtTM DP) ) )
 	)
 
 
@@ -121,9 +115,9 @@ module TimSyn {
 	#   TM = TD + TP
 
 	assert TM=TD+TP :=
-	(forall CP .
-		( (cnPrtTM CP) = 
-			( (Netwrk.netTd (cnPrtNet CP)) Random.+ (Queue.cstDly (cnPrtQ CP)) ) )
+	(forall DP .
+		( (cnPrtTM DP) = 
+			( (Netwrk.netTd (cnPrtNet DP)) Random.+ (Queue.cstDly (cnPrtQ DP)) ) )
 	)
 
 
@@ -132,44 +126,44 @@ module TimSyn {
 	#  P( (NM <= x) & (TM <= (y+z)) ) = P(NM <= x) * P(TM <= (y+z))
 
 	define prob-NM-&-TM=P-NM-x-P-TM :=
-	(forall CP r1 r2 .
+	(forall DP r1 r2 .
 		(
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (cnPrtNM CP) r1) 
-					(Prob.consE Prob.<= (cnPrtTM CP) r2)
+					(Prob.consE Prob.<= (cnPrtNM DP) r1) 
+					(Prob.consE Prob.<= (cnPrtTM DP) r2)
 				)
 			)
 			= 
-				(   (Prob.probE (Prob.consE Prob.<= (cnPrtNM CP) r1))
-				  * (Prob.probE (Prob.consE Prob.<= (cnPrtTM CP) r2))	
+				(   (Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
+				  * (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) r2))	
 				)
 		)		
 	)
 
 
 	conclude prob-NM-&-TM=P-NM-x-P-TM
-	pick-any CP
+	pick-any DP
 	pick-any r1
 	pick-any r2
 	let{
 		lhs :=
 				(Prob.probE 
 					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM CP) r1) 
-						(Prob.consE Prob.<= (cnPrtTM CP) r2)
+						(Prob.consE Prob.<= (cnPrtNM DP) r1) 
+						(Prob.consE Prob.<= (cnPrtTM DP) r2)
 					)
 				);		
 		rhs := 
-			(   (Prob.probE (Prob.consE Prob.<= (cnPrtNM CP) r1))
-			  * (Prob.probE (Prob.consE Prob.<= (cnPrtTM CP) r2))	
+			(   (Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
+			  * (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) r2))	
 			);					
-		NM := (cnPrtNM CP);
-		TM := (cnPrtTM CP); 
-		NM-ind-TM := (!uspec NM-ind-TM CP);
+		NM := (cnPrtNM DP);
+		TM := (cnPrtTM DP); 
+		NM-ind-TM := (!uspec NM-ind-TM DP);
 		conn2-ind-randvar-rul := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec Prob.ind-randvar-rul NM) TM) r1) r2) Prob.<=) Prob.<=);	
-		e1 := (Prob.consE Prob.<= (cnPrtNM CP) r1);
-		e2 := (Prob.consE Prob.<= (cnPrtTM CP) r2);
+		e1 := (Prob.consE Prob.<= (cnPrtNM DP) r1);
+		e2 := (Prob.consE Prob.<= (cnPrtTM DP) r2);
 		e1-ind-e2 := (!mp conn2-ind-randvar-rul NM-ind-TM);		
 		conn2-product-rul := (!uspec (!uspec Prob.product-rul e1) e2);
 		P-e1-e2=P-e1-xP-e2 := (!mp conn2-product-rul e1-ind-e2) 
@@ -185,41 +179,41 @@ module TimSyn {
 
 
 	define prob-TD-&-TP=P-TD-x-P-TP :=
-	(forall CP r1 r2 .
+	(forall DP r1 r2 .
 		(
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2)
+					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
+					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
 				)
 			)
 			=
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2))
+				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2))
 				)
 		)		
 	)
 
 
 	conclude prob-TD-&-TP=P-TD-x-P-TP
-	pick-any CP
+	pick-any DP
 	pick-any r1
 	pick-any r2
 	let{
 		lhs :=
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2)
+					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
+					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
 				)
 			);		
 		rhs := 
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2))
+				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2))
 				);					
-		TD := (Netwrk.netTd (cnPrtNet CP));
-		TP := (Queue.cstDly (cnPrtQ CP)); 
-		TD-ind-TP := (!uspec TD-ind-TP CP);
+		TD := (Netwrk.netTd (cnPrtNet DP));
+		TP := (Queue.cstDly (cnPrtQ DP)); 
+		TD-ind-TP := (!uspec TD-ind-TP DP);
 		conn2-ind-randvar-rul := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec Prob.ind-randvar-rul TD) TP) r1) r2) Prob.<=) Prob.<=);	
 		e1 := (Prob.consE Prob.<= TD r1);
 		e2 := (Prob.consE Prob.<= TP r2);
@@ -237,45 +231,45 @@ module TimSyn {
 	#  P((T_D <= x) & (T_P <= y)) <= P(TM <= y+z) 
 
 	define prb-TD-&-TP-<=-p-TM :=
-	(forall CP r1 r2 .
+	(forall DP r1 r2 .
 		(
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2)
+					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
+					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
 				)
 			)
 			<=
-		 	  (Prob.probE (Prob.consE Prob.<= (cnPrtTM CP) (r1 + r2))) 
+		 	  (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) (r1 + r2))) 
 				
 		)		
 	)
 
 
 	conclude prb-TD-&-TP-<=-p-TM 
-	pick-any CP
+	pick-any DP
 	pick-any r1
 	pick-any r2
 	let{
 		lhs :=
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r2)
+					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
+					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
 				)
 			);		
 		rhs := 
-		 	  (Prob.probE (Prob.consE Prob.<= (cnPrtTM CP) (r1 + r2)));					
-		TD := (Netwrk.netTd (cnPrtNet CP));
-		TP := (Queue.cstDly (cnPrtQ CP));
-		TM := (cnPrtTM CP);		
+		 	  (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) (r1 + r2)));					
+		TD := (Netwrk.netTd (cnPrtNet DP));
+		TP := (Queue.cstDly (cnPrtQ DP));
+		TM := (cnPrtTM DP);		
 		e1 := 
 				(Prob.cons2E 
 					(Prob.consE Prob.<= TD r1) 
 					(Prob.consE Prob.<= TP r2)
 				);		 
 		e2 := (Prob.consE Prob.<= TM (r1 + r2)); 
-		conn2-TD-&-TP==>TM := (!uspec (!uspec (!uspec TD-&-TP==>TM CP) r1) r2);	
+		conn2-TD-&-TP==>TM := (!uspec (!uspec (!uspec TD-&-TP==>TM DP) r1) r2);	
 		conn2-e1==>e2-prob := (!uspec (!uspec Prob.e1==>e2-prob e1) e2);
 		p-e2->=-p-e1 := (!mp conn2-e1==>e2-prob conn2-TD-&-TP==>TM);
 		conn2-<=-inverse->=-axiom := (!uspec (!uspec RealExt.<=-inverse->=-axiom rhs) lhs);
@@ -289,14 +283,14 @@ module TimSyn {
 	# P( (NM * TM) <= x(y+z))    >=   P( (NM <= x) & (TM <= (y+z)) )  
 
 	define prb-NM-x-TM-<=-p-NM-&-TM :=
-	(forall CP r1 r2 .
+	(forall DP r1 r2 .
 		(
-			(Prob.probE (Prob.consE Prob.<= ((cnPrtNM CP) Random.* (cnPrtTM CP)) (r1 * r2))) 
+			(Prob.probE (Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2))) 
 			>=
 				(Prob.probE 
 					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM CP) r1) 
-						(Prob.consE Prob.<= (cnPrtTM CP) r2)
+						(Prob.consE Prob.<= (cnPrtNM DP) r1) 
+						(Prob.consE Prob.<= (cnPrtTM DP) r2)
 					)
 				)				
 		)		
@@ -304,28 +298,28 @@ module TimSyn {
 
 
 	conclude prb-NM-x-TM-<=-p-NM-&-TM
-	pick-any CP
+	pick-any DP
 	pick-any r1
 	pick-any r2
 	let{
 		lhs :=
-			(Prob.probE (Prob.consE Prob.<= ((cnPrtNM CP) Random.* (cnPrtTM CP)) (r1 * r2))) ;		
+			(Prob.probE (Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2))) ;		
 		rhs := 
 				(Prob.probE 
 					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM CP) r1) 
-						(Prob.consE Prob.<= (cnPrtTM CP) r2)
+						(Prob.consE Prob.<= (cnPrtNM DP) r1) 
+						(Prob.consE Prob.<= (cnPrtTM DP) r2)
 					)
 				);				
-		NM := (cnPrtNM CP);
-		TM := (cnPrtTM CP);
-		conn2-NM-&-TM==>NM-x-TM := (!uspec (!uspec (!uspec NM-&-TM==>NM-x-TM CP) r1) r2);
+		NM := (cnPrtNM DP);
+		TM := (cnPrtTM DP);
+		conn2-NM-&-TM==>NM-x-TM := (!uspec (!uspec (!uspec NM-&-TM==>NM-x-TM DP) r1) r2);
 		e2 := 
-			(Prob.consE Prob.<= ((cnPrtNM CP) Random.* (cnPrtTM CP)) (r1 * r2));		 
+			(Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2));		 
 		e1 := 
 			(Prob.cons2E 
-				(Prob.consE Prob.<= (cnPrtNM CP) r1) 
-				(Prob.consE Prob.<= (cnPrtTM CP) r2)
+				(Prob.consE Prob.<= (cnPrtNM DP) r1) 
+				(Prob.consE Prob.<= (cnPrtTM DP) r2)
 			); 
 		conn2-e1==>e2-prob := (!uspec (!uspec Prob.e1==>e2-prob e1) e2);
 		p-e2->=-p-e1 := (!mp conn2-e1==>e2-prob conn2-NM-&-TM==>NM-x-TM)
@@ -337,15 +331,15 @@ module TimSyn {
 	#-- THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP 
 
 	define THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP :=
-	(forall CP r1 r2 r3 .
+	(forall DP r1 r2 r3 .
 		(
-			(Prob.probE (Prob.consE Prob.<= (cnPrtTS CP) (r1 * (r2 + r3)))) 
+			(Prob.probE (Prob.consE Prob.<= (cnPrtTS DP) (r1 * (r2 + r3)))) 
 			>=
 			(
-				(Prob.probE (Prob.consE Prob.<= (cnPrtNM CP) r1))
+				(Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
 				*
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r2)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r3))
+				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r2)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r3))
 				)
 			)
 		)		
@@ -358,50 +352,50 @@ module TimSyn {
 	#				     = P(NM <= x) * P(T_D <= y) * P(T_P <= z)	
 
 	conclude THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP 
-	pick-any CP
+	pick-any DP
 	pick-any r1
 	pick-any r2
 	pick-any r3
 	let{
-		lhs := (Prob.probE (Prob.consE Prob.<= (cnPrtTS CP) (r1 * (r2 + r3))));
+		lhs := (Prob.probE (Prob.consE Prob.<= (cnPrtTS DP) (r1 * (r2 + r3))));
 		rhs :=  
 			(
-				(Prob.probE (Prob.consE Prob.<= (cnPrtNM CP) r1))
+				(Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
 				*
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) r2)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) r3))
+				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r2)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r3))
 				)
 			);
-		TS := (cnPrtTS CP);	
-		NM := (cnPrtNM CP);
-		TM := (cnPrtTM CP);
+		TS := (cnPrtTS DP);	
+		NM := (cnPrtNM DP);
+		TM := (cnPrtTM DP);
 		NMxTM := (NM Random.* TM);
-		TD := (Netwrk.netTd (cnPrtNet CP));
-		TP := (Queue.cstDly (cnPrtQ CP));
-		conn2-TS=NM-x-TM := (!uspec TS=NM-x-TM CP);
+		TD := (Netwrk.netTd (cnPrtNet DP));
+		TP := (Queue.cstDly (cnPrtQ DP));
+		conn2-TS=NM-x-TM := (!uspec TS=NM-x-TM DP);
 		x := r1;
 		y := r2;
 		z := r3;
 		y+z := (y + z);
 		xXy+z := (x * y+z);
-		P-TS := (Prob.probE (Prob.consE Prob.<= (cnPrtTS CP) xXy+z));
-		P-NM := (Prob.probE (Prob.consE Prob.<= (cnPrtNM CP) x));
-		P-TM := (Prob.probE (Prob.consE Prob.<= (cnPrtTM CP) y+z));
-		P-TD := (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) y)); 
-		P-TP := (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) z));
+		P-TS := (Prob.probE (Prob.consE Prob.<= (cnPrtTS DP) xXy+z));
+		P-NM := (Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) x));
+		P-TM := (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) y+z));
+		P-TD := (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) y)); 
+		P-TP := (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) z));
 		P-NMxTM := (Prob.probE (Prob.consE Prob.<= (NM Random.* TM) xXy+z)); 
 		P-NM-&-TM := 
 				(Prob.probE 
 					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM CP) x) 
-						(Prob.consE Prob.<= (cnPrtTM CP) y+z)
+						(Prob.consE Prob.<= (cnPrtNM DP) x) 
+						(Prob.consE Prob.<= (cnPrtTM DP) y+z)
 					)
 				);		
 		P-TD-&-TP := 
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet CP)) y) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ CP)) z)
+					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) y) 
+					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) z)
 				)
 			);						
 		P-NM-x-P-TM := (P-NM * P-TM);
@@ -410,14 +404,14 @@ module TimSyn {
 		P-TS->=P-NM-&-TM := conclude (P-TS >= P-NM-&-TM)
 							let {
 								P-TS=P-NM-x-TM := (!mp (!uspec (!uspec (!uspec (!uspec Prob.eq-randvar-rul TS) NMxTM) xXy+z) Prob.<=) conn2-TS=NM-x-TM);
-								conn2-prb-NM-x-TM-<=-p-NM-&-TM := (!uspec (!uspec (!uspec prb-NM-x-TM-<=-p-NM-&-TM CP) x) y+z);
+								conn2-prb-NM-x-TM-<=-p-NM-&-TM := (!uspec (!uspec (!uspec prb-NM-x-TM-<=-p-NM-&-TM DP) x) y+z);
 								a-&-b := (!both P-TS=P-NM-x-TM conn2-prb-NM-x-TM-<=-p-NM-&-TM); 
 								conn2->=-transitive1-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive1-axiom P-TS) P-NMxTM) P-NM-&-TM)
 							} 
 							(!mp conn2->=-transitive1-axiom a-&-b);
 		P-TS->=P-NM-x-P-TM := conclude (P-TS >= (P-NM * P-TM) )
 							  let {
-							  		conn2-prob-NM-&-TM=P-NM-x-P-TM := (!uspec (!uspec (!uspec prob-NM-&-TM=P-NM-x-P-TM CP) x) y+z);
+							  		conn2-prob-NM-&-TM=P-NM-x-P-TM := (!uspec (!uspec (!uspec prob-NM-&-TM=P-NM-x-P-TM DP) x) y+z);
 							  		conn2-=-implies->=-axiom := (!mp (!uspec (!uspec RealExt.=-implies->=-axiom P-NM-&-TM) P-NM-x-P-TM) conn2-prob-NM-&-TM=P-NM-x-P-TM);
 							  		a-&-b := (!both P-TS->=P-NM-&-TM conn2-=-implies->=-axiom); 
 							  		conn2->=-transitive3-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive3-axiom P-TS) P-NM-&-TM) (P-NM * P-TM))
@@ -425,7 +419,7 @@ module TimSyn {
 							  (!mp conn2->=-transitive3-axiom a-&-b);
 		P-TS->=P-NM-x-P-TD-&-TP := conclude (P-TS >= (P-NM * P-TD-&-TP) )
 							  let {
-							  		conn2-prb-TD-&-TP-<=-p-TM := (!uspec (!uspec (!uspec prb-TD-&-TP-<=-p-TM CP) y) z);
+							  		conn2-prb-TD-&-TP-<=-p-TM := (!uspec (!uspec (!uspec prb-TD-&-TP-<=-p-TM DP) y) z);
 							  		conn2-<=-inverse->=-axiom := (!uspec (!uspec RealExt.<=-inverse->=-axiom P-TM) P-TD-&-TP);
 							  		P-TM>=P-TD-&-TP := (!mp (!right-iff conn2-<=-inverse->=-axiom) conn2-prb-TD-&-TP-<=-p-TM); 
 							  		conn2-prod-with-lower-axiom := (!uspec (!uspec (!uspec RealExt.prod-with-lower-axiom P-NM) P-TM) P-TD-&-TP);
@@ -436,7 +430,7 @@ module TimSyn {
 							  (!mp conn2->=-transitive3-axiom a-&-b);
 		P-TS->=P-NM-x-P-TD-x-P-TP := conclude (P-TS >= (P-NM * P-TD-x-P-TP) )
 									 let {
-									 	P-TD-&-TP=P-TD-x-P-TP := (!uspec (!uspec (!uspec prob-TD-&-TP=P-TD-x-P-TP CP) y) z);
+									 	P-TD-&-TP=P-TD-x-P-TP := (!uspec (!uspec (!uspec prob-TD-&-TP=P-TD-x-P-TP DP) y) z);
 									 	P-NM-x-P-TD-&-TP=P-NM-x-P-TD-x-P-TP := (!chain [  (P-NM * P-TD-&-TP)
 									 													= (P-NM * P-TD-x-P-TP) [P-TD-&-TP=P-TD-x-P-TP]  
 									 		                                           ]);

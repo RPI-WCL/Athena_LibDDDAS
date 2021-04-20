@@ -5,7 +5,7 @@
 
 #### Contents:
 
-* `consensus` -- theory and proofs about consensus protocols
+* `distributed` -- theory and proofs about distributed protocols
 
 * `network` -- theory and proofs about network, relay protocols, etc
 

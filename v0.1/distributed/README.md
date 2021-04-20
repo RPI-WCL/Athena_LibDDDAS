@@ -1,19 +1,40 @@
-# CONSENSUS
+# Athena_LibDDDAS
 
-##### This repository contains theory and proofs about consensus algorithms
+### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Applications Systems
 
 
-##### Contents:
+#### Contents:
 
-* `synod-eventual` -- theory and proofs about eventual progress in the Synod consensus protocol
+* `consensus` -- theory and proofs about consensus protocols
 
-* `synod-timely` -- theory and proofs about timely progress in the Synod consensus protocol
-
+* `propagation` -- theory and proofs about a knowledge propagation protocol
 
 * A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
 <p align="center">
-  <img height="600" src="synod-timely\consensussynod-timely_hierarchy.svg">
+  <img height="600" src="distributed_hierarchy.svg">
 </p>
+
+##### Instructions:
+
+1. [Download and install ATHENA](https://proofcentral.org/athena/1.4/) 
+
+2. Place this directory in the `ATHENA_HOME` directory created during installation
+
+3. Rename this directory to `Athena_LibDDDAS` (E.g., `vx.x` will be renamed to `Athena_LibDDDAS`) 
+
+3. Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory
+
+
+##### ATHENA Resources:
+
+* [ATHENA Website](http://proofcentral.org/)
+
+* [Athena Library](http://proofcentral.org/athena/lib/)
+
+* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
+
+* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
+
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

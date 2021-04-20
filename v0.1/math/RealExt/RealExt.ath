@@ -53,13 +53,12 @@ module RealExt {
 
 	define [hS] := [?hS:RealSet]
 
-	define [r r1 r2 r3 r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r4:Real]
+	define [r r1 r2 r3 r1e r2e r3e r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r1e:Real ?r2e:Real ?r3e:Real ?r4:Real]
 
 	declare INFY, EULER : Real # infinity and e 
 
 
 	#-------------------------  RELEVANT THEORY  -------------------------
-
 
 
 	# >=-transitive1-axiom 
@@ -248,6 +247,27 @@ module RealExt {
 					(r2 = (r3 * (1.0 / r1)))
 		)		
 	)	
+
+
+	#-- replace with equal
+	#  this is very obvious that equal values can betweek
+	#   replaced in a real expression
+	#   NEED to find a general version 
+
+	assert replace-with-equal-axiom1 :=
+	(forall r1 r2 r3 r4 r1e r2e r3e .
+		(
+			
+			(  (r4 >= ((r1 * (r2 * r3))))
+			  &	(r1 = r1e)
+			  & (r2 = r2e)
+			  & (r3 = r3e)
+			)
+
+			==> (r4 >= ((r1e * (r2e * r3e))))
+		)
+	)
+
 
 
 }# end module

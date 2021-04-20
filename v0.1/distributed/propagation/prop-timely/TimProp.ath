@@ -1,0 +1,206 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Timely Progress in the Knowledge Propagation Protocol
+
+load "Athena_LibDDDAS/distributed/Distributed.ath"
+
+extend-module Distributed { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	#-- KP (knowledge propagation) is a distributed protocol
+
+	declare KP : DisProt 
+
+	declare numMsgsInKP : Real #constant number of messages
+
+	define [t] := [?t:Real]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- Probability that number of messages <= numMsgsInKP is 1
+	assert KP-Deterministic-Msgs :=
+	((Prob.probE (Prob.consE Prob.<= (cnPrtNM KP) numMsgsInKP)) = 1.0)
+
+
+	#-- The network protocol used for KP is MTRAIMCT
+	#   and the queue used is M/M/1 queue with all the limits existing
+	#   for Little
+
+	assert KP-System-Model :=
+	(
+		(= (Netwrk.netPrtInUse (cnPrtNet KP)) Netwrk.MTR_AIMCT) 
+		& 
+		(forall t .
+			(	((Queue.qTyp (cnPrtQ KP)) = Queue.MM1)
+			  & ((Dist.mean (Random.pdf (Queue.numCst (cnPrtQ KP)))) 
+					= (Function.limit t RealExt.INFY (Function.consUF Queue.N_ t)) )
+			  & ((Dist.mean (Random.pdf (Queue.cstArRat (cnPrtQ KP)))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF Queue.L_ t)) )
+			  & ((Dist.mean (Random.pdf (Queue.cstDly (cnPrtQ KP)))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF Queue.T_ t)) )		  
+			)
+		)
+	)
+
+
+
+	#-- bound on transmission delay for KP
+
+	define THEOREM-KP-Transmission :=
+ 	(forall r2 .
+ 		(
+	 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet KP)) r2))
+	 		= (1.0 - 
+	 			(* 
+	 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)) r2))
+	 				(RealExt.pow 
+	 					(Prob.probE 
+	 						(Prob.consE Prob.> 
+	 							(Random.rvSetIdElmnt 
+	 								(Netwrk.netTTRelays->Dest (cnPrtNet KP))) r2)) 
+	 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ))
+ 		)
+ 	)	
+
+
+ 	conclude THEOREM-KP-Transmission 
+ 	pick-any r2
+ 	let{
+ 		isMTR := (!left-and KP-System-Model);
+ 		conn2-THEOREM-Prob-AIMCT-Td<=R := (!uspec (!uspec MTR-AIMCT.THEOREM-Prob-AIMCT-Td<=R (cnPrtNet KP)) r2) 
+ 	}
+ 	(!mp conn2-THEOREM-Prob-AIMCT-Td<=R isMTR)
+
+
+	#-- bound on processing delay for KP
+
+	define THEOREM-KP-Processing :=
+ 	(forall r3 .
+		(
+			(Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ KP)) r3))   # T 
+			= 
+			 (1.0 - 
+				(RealExt.pow 
+					RealExt.EULER  
+					(0.0 - (
+							 ( 
+							   (Dist.ratePar (Random.pdf (Queue.srvcTm (cnPrtQ KP)))) # mu	
+							   -
+							   (Dist.mean (Random.pdf (Queue.cstArRat (cnPrtQ KP)))) # lambda
+							 )								 
+
+							 * r3 ) )
+				)
+			  )	
+		)
+ 	)	
+
+
+ 	conclude THEOREM-KP-Processing 
+ 	pick-any r3
+ 	let{
+ 		isMM1 := (!right-and KP-System-Model);
+ 		conn2-isMM1 := (!uspec isMM1 t);
+ 		conn2-THEOREM-cstDly-prob := (!uspec (!uspec (!uspec Queue.THEOREM-cstDly-prob t) (cnPrtQ KP)) r3) 
+ 	}
+ 	(!mp conn2-THEOREM-cstDly-prob conn2-isMM1)
+
+
+
+	#--Bound on Total delay for knowledge propagation
+
+	define THEOREM-KP-Time-Bound :=
+	(forall r2 r3 .
+		(
+			(Prob.probE (Prob.consE Prob.<= (cnPrtTS KP) (numMsgsInKP * (r2 + r3)))) 
+			>=
+			(
+				1.0
+				*
+				( 
+
+		 		  (1.0 - 
+		 			(* 
+		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)) r2))
+		 				(RealExt.pow 
+		 					(Prob.probE 
+		 						(Prob.consE Prob.> 
+		 							(Random.rvSetIdElmnt 
+		 								(Netwrk.netTTRelays->Dest (cnPrtNet KP))) r2)) 
+		 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ))
+				  
+
+
+				  * 
+					 (1.0 - 
+						(RealExt.pow 
+							RealExt.EULER  
+							(0.0 - (
+									 ( 
+									   (Dist.ratePar (Random.pdf (Queue.srvcTm (cnPrtQ KP)))) # mu	
+									   -
+									   (Dist.mean (Random.pdf (Queue.cstArRat (cnPrtQ KP)))) # lambda
+									 )								 
+
+									 * r3 ) )
+						)
+					  )
+				)
+			)
+		)		
+	)
+
+
+	conclude THEOREM-KP-Time-Bound
+	pick-any r2
+	pick-any r3
+	let{
+		conn2-THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP := (!uspec (!uspec (!uspec (!uspec THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP KP) numMsgsInKP) r2) r3);
+		R1 := (Prob.probE (Prob.consE Prob.<= (cnPrtNM KP) numMsgsInKP));
+		R2 := (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet KP)) r2));
+		R3 := (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ KP)) r3));
+		R4 := (Prob.probE (Prob.consE Prob.<= (cnPrtTS KP) (numMsgsInKP * (r2 + r3)))) ;
+		R1e := 1.0;
+		R2e := (1.0 - 
+	 			(* 
+	 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest (cnPrtNet KP)) r2))
+	 				(RealExt.pow 
+	 					(Prob.probE 
+	 						(Prob.consE Prob.> 
+	 							(Random.rvSetIdElmnt 
+	 								(Netwrk.netTTRelays->Dest (cnPrtNet KP))) r2)) 
+	 					(Random.lenRVS (Netwrk.netTTRelays->Dest (cnPrtNet KP)))) ));
+
+		R3e := 	 (1.0 - 
+					(RealExt.pow 
+						RealExt.EULER  
+						(0.0 - (
+								 ( 
+								   (Dist.ratePar (Random.pdf (Queue.srvcTm (cnPrtQ KP)))) # mu	
+								   -
+								   (Dist.mean (Random.pdf (Queue.cstArRat (cnPrtQ KP)))) # lambda
+								 )								 
+
+								 * r3 ) )
+					)
+				  );
+		R1=R1e := KP-Deterministic-Msgs;
+		R2=R2e := (!uspec THEOREM-KP-Transmission r2);
+		R3=R3e := (!uspec THEOREM-KP-Processing r3);  		  	
+		conn2-replace-with-equal-axiom1 := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec RealExt.replace-with-equal-axiom1 R1) R2) R3) R4) R1e) R2e) R3e);
+		conditions := (!both conn2-THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP (!both R1=R1e (!both R2=R2e R3=R3e)));
+		proof := (!mp conn2-replace-with-equal-axiom1 conditions)
+	}
+	(!claim proof)
+
+
+}# end module

@@ -1,16 +1,11 @@
 # PROPAGATION
 
-##### This repository contains theory and proofs about knowledge propagation protocol
+##### This repository contains theory and proofs about a knowledge propagation protocol 
 
 
 ##### Contents:
 
 * `prop-timely` -- theory and proofs about timely progress in the knowledge propagation protocol
-
-* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
-<p align="center">
-  <img height="600" src="propagation_hierarchy.svg">
-</p>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 
