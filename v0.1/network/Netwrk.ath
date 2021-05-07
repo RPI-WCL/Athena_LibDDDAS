@@ -87,9 +87,17 @@ module Netwrk {
 
 	declare netTd: [Network] -> Random.RandVar
 
+	# Network property: the number of source and realy nodes (not including destination)
+
+	declare netNumSrcDst: [Network] -> Real	
+
 	# Network property: the set of times taken by relay nodes to transfer to destination
 
 	declare netTTRelays->Dest: [Network] -> Random.RandVarSet
+
+	# Network property: TTL is unrestricted
+
+	declare netUnrstTTL: [Network] -> Boolean		
 
 	# Node A can transmit to node B 
 
@@ -149,10 +157,15 @@ module Netwrk {
 
 	# Protocol property: relay can transmit to other realys
 
-	declare prtRlyCanTrnsmt2Rlys: [PrtType MobileNode] -> Boolean				
+	declare prtRlyCanTrnsmt2Rlys: [PrtType MobileNode] -> Boolean	
+
+
+
 
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [R] := [?R:Real]
 
 	# The network that is being talked about 
 	# (we will only need to reason about one network at a time
@@ -168,21 +181,15 @@ module Netwrk {
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
-	#-- If all relays have same transmission capabilities, and 
-	#   the relays have iid intermeeting time with the source, then
-	#   the time taken by each relay is identically distributed
-
-	assert identicalTrnsmTimeOfRlys-axiom :=
-	(forall ?net:Network .
-		(
-			(
-				(netAllRlySameTrnsCap ?net:Network)
-				&
-				(Random.rvsIID (netNodeIMTmSet ?net:Network))
-			)
-		   ==>
-		   	   (Random.rvSetId (netTTRelays->Dest ?net:Network))
-		)   	   
+	#-- Number of nodes
+	assert numNodes-axiom :=
+	(forall NETWORK
+		((Random.lenRVS
+	 		(Random.consRVS
+	 			(Netwrk.netIMTSource-Dest NETWORK) 
+	 				(Netwrk.netTTRelays->Dest NETWORK)))
+		= (netNumSrcDst NETWORK)
+		)		
 	)
 
 
@@ -228,5 +235,41 @@ module Netwrk {
 	)
 
 
+
+	#-- If unrestricted TTL, and intermeeting times are iid
+	#   then the set of [time to deliver by source and
+	#   times to deliver by all relays] is iid 
+	#   and the common cdf is the common cdf of  
+	#   the intermeeting times
+	assert unrstrctTTL-axiom :=
+	(forall NETWORK .
+		(
+			  (netUnrstTTL NETWORK)
+			& (Random.rvsIID (Netwrk.netNodeIMTmSet NETWORK))
+		)
+		==>
+			(
+	 			(Random.rvsIID 
+				 		(Random.consRVS
+				 			(netIMTSource-Dest NETWORK) 
+				 				(netTTRelays->Dest NETWORK)))
+	 			& (forall R . 
+	 					(
+	 						(Random.cdf 
+					 			(Random.rvSetIdElmnt 
+								 		(Random.consRVS
+								 			(netIMTSource-Dest NETWORK) 
+								 				(netTTRelays->Dest NETWORK)))
+
+				 		    R)
+	 						=
+	 						(Random.cdf 
+					 			(Random.rvSetIdElmnt 
+								 		(Netwrk.netNodeIMTmSet NETWORK)) R)
+				 		)    	 					
+	 			  )
+
+			)
+	)
 
 }# end module

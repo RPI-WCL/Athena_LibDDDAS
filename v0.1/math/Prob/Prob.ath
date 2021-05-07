@@ -88,11 +88,38 @@ module Prob {
 
 	define [R R2] := [?R:Real ?R2:Real]
 
+	define [r1 r2] := [?r1:Real ?r2:Real]
+
 	define [rvSet rvSetTail] := [?rvSet:Random.RandVarSet ?rvSetTail:Random.RandVarSet]
 
 	define [rlSet] := [?rlSet:RealExt.RealSet]
 
 	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- (Z = X + Y) ==> ((X<=x & Y<=y) ==>  (Z <= x+y))
+	#   Property of addition 
+
+	assert sum-implies-axiom :=
+	(forall x y z r1 r2 .
+		(
+			(z = (x Random.+ y))
+			==> 
+				(	
+					(Prob.happens	
+						(Prob.cons2E 
+							(Prob.consE Prob.<= x r1) 
+							(Prob.consE Prob.<= y r2)
+						)
+					)
+					==>
+						(Prob.happens	
+							(Prob.consE Prob.<= z (r1 + r2)
+							) 
+						)						
+				)
+		)
+	)
+
 
 	#-- ind-randvar-evnt-rul states that
 	#  if two rvs are independent, then 

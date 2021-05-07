@@ -98,34 +98,7 @@ module MTR-AIMCT {
 		)
 	)
 
-
-	#-- All relay nodes have same transmission capabilities
-
-	assert rlysSameTrnsmCap :=
-	(forall NETWORK .
-	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-							  (Netwrk.netAllRlySameTrnsCap NETWORK)
-	)	
 	
-
-
-	#-- TTLs are constant 
-
-	assert cnstntTTL :=
-	(forall NETWORK .
-	  (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-		(exists ?constantTTL:Real .
-			(forall ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode .
-				(
-					(Netwrk.inMNS (Netwrk.netNodeSet NETWORK) ?node.Netwrk.MobileNode)
-					==>
-						(= ?constantTTL:Real (Netwrk.pcktTTL ?pckt:Netwrk.Packet ?node:Netwrk.MobileNode))
-				)
-			)
-		)
-	)
-
-
 	#-- Number of packets = number of source+relay nodes
 	#  K = N
 
@@ -136,24 +109,25 @@ module MTR-AIMCT {
 	)
 	
 
-	#-- HIGH-LEVEL assumption that there is a function that
-	#   can compute the value of P(D_i > t)	
+	#-- MTR has unrestricted TTL
 
-	assert ASSUMPTION-P_Di>t :=
-	(forall NETWORK R .
+	assert unrsrctdTTL :=
+	(forall NETWORK .
 	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-		 (
-			(Prob.probE 
-				(Prob.consE Prob.> 
-					(Random.rvSetIdElmnt 
-						(Netwrk.netTTRelays->Dest NETWORK)) R)) 
-			= 
-			(P_Di>t (Netwrk.netGetCnstTTL NETWORK) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest NETWORK))) R)
-		 )		 					
-	)		
+					  				(Netwrk.netUnrstTTL NETWORK)
+	)	
 
 
-	#-- Axiom: The time Td to deliver packet to destination
+	#-- Intermeetin times are exponentially distributed
+
+	assert imTmsExpo :=
+	(forall NETWORK .
+	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		(Dist.isExpo (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet NETWORK))))
+	)	
+
+
+	#-- Theorem: The time Td to deliver packet to destination
 	#  is the minimum of the intermeeting time of the source
 	#  and the dest and the time needed for the relay nodes to deliver
 	#  a copy to the dest
@@ -182,148 +156,172 @@ module MTR-AIMCT {
 	}
 	(!claim conn2-timeToTransmit-axiom)
 
-  
- 	#-- Assumption for equation 9:
- 	#  The intermeeting time of source and dest given by Xsd
- 	#  and the time taken to deliver by each
- 	#  relay node Di,.... are mutually independent 
- 	#  and Di forall i are identical
-
-	define IMTSource-Dest-MI-TTRelays->Source :=
-	(forall NETWORK .
-	 (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
-	 	(
-	 		(Random.rvSetInd
-		 		(Random.consRVS
-		 			(Netwrk.netIMTSource-Dest NETWORK) 
-		 				(Netwrk.netTTRelays->Dest NETWORK)))
-	 		& (Random.rvSetId (Netwrk.netTTRelays->Dest NETWORK))
-	 	)
-	)
-
-
-	conclude IMTSource-Dest-MI-TTRelays->Source
-	pick-any NETWORK
-	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
-	let{
-		assum := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
-		imsIID := (!mp (!uspec intrMtngTmsIID NETWORK) assum);
-		conn2-iMTimeSrcDst-ind-RlyTms-axiom := (!mp (!uspec Netwrk.iMTimeSrcDst-ind-RlyTms-axiom NETWORK) imsIID);
-		homoRelys := (!mp (!uspec rlysSameTrnsmCap NETWORK) assum);
-		homoRlys-and-iidIMS:= (!both homoRelys imsIID);
-		conn2-identicalTrnsmTimeOfRlys-axiom := (!uspec Netwrk.identicalTrnsmTimeOfRlys-axiom NETWORK);
-		rlyTrnsDlysId := (!mp conn2-identicalTrnsmTimeOfRlys-axiom homoRlys-and-iidIMS)
-	}
-	(!both conn2-iMTimeSrcDst-ind-RlyTms-axiom rlyTrnsDlysId)
 
 
 
 	#-- THEOREM-Prob-AIMCT-Td<=R states that the probability 
 	#   that the Td for MTR-AIMCT will be <= R is given by
-	#   = 1- prod[(1- G(X)), P(Di > y)^N]
-	#   i.e, Eq 9 in paper 
+	#   = 1-(1- G(X))^N
+ 
 
 	define THEOREM-Prob-AIMCT-Td<=R :=
 	(forall NETWORK R .
 		(= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		 	(
 		 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
-		 		= (1.0 - 
-		 			(* 
-		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
+		 		= (1.0 -  
 		 				(RealExt.pow 
-		 					(Prob.probE 
-		 						(Prob.consE Prob.> 
-		 							(Random.rvSetIdElmnt 
-		 								(Netwrk.netTTRelays->Dest NETWORK)) R)) 
-		 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) ))
+			 				(1.0 -  
+		 						(Random.cdf 
+						 			(Random.rvSetIdElmnt 
+									 		(Netwrk.netNodeIMTmSet NETWORK)) R) 
+		 					)
+	 						(Random.lenRVS
+						 		(Random.consRVS
+						 			(Netwrk.netIMTSource-Dest NETWORK) 
+						 				(Netwrk.netTTRelays->Dest NETWORK)))
+		 				)		 				
+		 		  )
+		 		  	
 		 	)
 	)
+
+
 
 	conclude THEOREM-Prob-AIMCT-Td<=R
 	pick-any NETWORK
 	pick-any R
 	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
 	let{
+		lhs := (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R));
+		rhs := 
+		 		  (1.0 -  
+		 				(RealExt.pow 
+			 				(1.0 -  
+		 						(Random.cdf 
+						 			(Random.rvSetIdElmnt 
+									 		(Netwrk.netNodeIMTmSet NETWORK)) R) 
+		 					)
+	 						(Random.lenRVS
+						 		(Random.consRVS
+						 			(Netwrk.netIMTSource-Dest NETWORK) 
+						 				(Netwrk.netTTRelays->Dest NETWORK)))
+		 				)		 				
+		 		  );		
 		netIsAIMCT := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
-		Mi-&-Id := (!mp (!uspec IMTSource-Dest-MI-TTRelays->Source NETWORK) netIsAIMCT);
 		Td=Min := (!mp (!uspec Td-MIN-IMTSrc-Dest&TTRelays->Dest NETWORK) netIsAIMCT);
+		unrsTTL :=  (!mp (!uspec unrsrctdTTL NETWORK) netIsAIMCT);
+		iidIMT :=  (!mp (!uspec intrMtngTmsIID NETWORK) netIsAIMCT);
+		iidIMT+unsrTTL := (!both unrsTTL iidIMT);
 		rvSet := (Random.consRVS
 		 			(Netwrk.netIMTSource-Dest NETWORK) 
 		 				(Netwrk.netTTRelays->Dest NETWORK));
-		y :=  (Netwrk.netIMTSource-Dest NETWORK);
-		rvSetTail := (Netwrk.netTTRelays->Dest NETWORK); 						
-		PrbMin<= := (!uspec (!uspec (!uspec Prob.PrbIndRv.THEOREM-probability-MIN-<=-MInd-TId-RVS y) rvSetTail) R);
+		rvSetIID+cdfEqual := (!mp (!uspec Netwrk.unrstrctTTL-axiom NETWORK) iidIMT+unsrTTL);
+		rvSetIID := (!left-and rvSetIID+cdfEqual);
+		cdfEqual := (!uspec (!right-and rvSetIID+cdfEqual) R);
+		PrbMin<=x := (!uspec (!uspec Prob.PrbIndRv.THEOREM-probability-MIN-<=-IID-RVS-Gx rvSet) R);
 		conn-to-min := conclude 
-								(= (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) 
-			  						 (1.0 - 
-		  								(* 
-		  									(1.0 - (Random.cdf y R)) 
-		  									(RealExt.pow 
-		  										(Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
-		  										(Random.lenRVS rvSetTail)) ))
-			  				    )
-			  			(!mp PrbMin<= Mi-&-Id)				
+							((Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) 
+								= 
+									(1.0 - (RealExt.pow (1.0 - (Random.cdf (Random.rvSetIdElmnt rvSet) R))  (Random.lenRVS rvSet) ) ))
+			  			(!mp PrbMin<=x rvSetIID)
+
 	}
-	(!chain [ (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
-		    = (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) [Td=Min]
-			= (1.0 - 
-				 (* 
-					 (1.0 - (Random.cdf y R)) 
-					 (RealExt.pow 
-						 (Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
-						 (Random.lenRVS rvSetTail)) )) [conn-to-min]
-		])
+	(!chain [ lhs
+			= (Prob.probE (Prob.consE Prob.<= (Random.minRVS rvSet) R)) [Td=Min]
+		    = (1.0 - (RealExt.pow (1.0 - (Random.cdf (Random.rvSetIdElmnt rvSet) R))  (Random.lenRVS rvSet) ) ) [conn-to-min]
+		    = (1.0 - (RealExt.pow (1.0 - (Random.cdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet NETWORK)) R))  (Random.lenRVS rvSet) ) ) [cdfEqual]
+		    = rhs 
+		    ])
 
 
 
+	#-- THEOREM-Prob-AIMCT-Td<=R-expanded-for-G-Expo states that the probability 
+	#   that the Td for MTR-AIMCT will be <= R is given by
+	#   = 1-(1- G(X))^N = 1-(1- (1- e^{rate x}))^N
+ 
 
-	#-- Enhanced version of the above theorem that
-	#  uses the asusmtion that  P_Di>t function
-	#  corectly returns the value of P(Di > t) 
-
-	define THEOREM-Prob-AIMCT-Td<=R-2 :=
+	define THEOREM-Prob-AIMCT-Td<=R-expanded-for-G-Expo :=
 	(forall NETWORK R .
 		(= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
 		 	(
 		 		(Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
-		 		= (1.0 - 
-		 			(* 
-		 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
+		 		= (1.0 -  
 		 				(RealExt.pow 
-							(P_Di>t (Netwrk.netGetCnstTTL NETWORK) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest NETWORK))) R) 
-		 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) ))
+			 				(1.0 -  
+								  (1.0 - 
+									(RealExt.pow 
+										RealExt.EULER  
+										(0.0 - ((Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet NETWORK)))) * R) )
+									)
+								  )	
+ 		 					)
+		 					(Netwrk.netNumSrcDst NETWORK)	
+		 				)		 				
+		 		  )
+		 		  	
 		 	)
 	)
 
-	conclude THEOREM-Prob-AIMCT-Td<=R-2
+
+	conclude THEOREM-Prob-AIMCT-Td<=R-expanded-for-G-Expo
 	pick-any NETWORK
 	pick-any R
 	assume (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT)
 	let{
+		lhs := (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R));
+		rhs := 
+		 		  (1.0 -  
+		 				(RealExt.pow 
+			 				(1.0 -  
+								  (1.0 - 
+									(RealExt.pow 
+										RealExt.EULER  
+										(0.0 - ((Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet NETWORK)))) * R) )
+									)
+								  )	
+ 		 					)
+		 					(Netwrk.netNumSrcDst NETWORK)	
+		 				)		 				
+		 		  );		
+		ImT :=  (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet NETWORK));		  
 		netIsAIMCT := (= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT);
-		conn2-THEOREM-Prob-AIMCT-Td<=R := (!uspec (!uspec THEOREM-Prob-AIMCT-Td<=R NETWORK) R);
-		rvSet := (Random.consRVS
-		 			(Netwrk.netIMTSource-Dest NETWORK) 
-		 				(Netwrk.netTTRelays->Dest NETWORK));
-		y :=  (Netwrk.netIMTSource-Dest NETWORK);
-		rvSetTail := (Netwrk.netTTRelays->Dest NETWORK); 		
-		sttmnt := (!mp conn2-THEOREM-Prob-AIMCT-Td<=R netIsAIMCT);
-		assumption := (!uspec ASSUMPTION-P_Di>t NETWORK)  
-	}
-	(!chain [ (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd NETWORK) R))
-			= (1.0 - 
-				 (* 
-					 (1.0 - (Random.cdf y R)) 
-					 (RealExt.pow 
-						 (Prob.probE (Prob.consE Prob.> (Random.rvSetIdElmnt rvSetTail) R)) 
-						 (Random.lenRVS rvSetTail)) )) [sttmnt]
-	 		= (1.0 - 
-	 			(* 
-	 				(1.0 - (Random.cdf (Netwrk.netIMTSource-Dest NETWORK) R))
-	 				(RealExt.pow 
-						(P_Di>t (Netwrk.netGetCnstTTL NETWORK) (Dist.ratePar (Random.pdf (Netwrk.netIMTSource-Dest NETWORK))) R) 
-	 					(Random.lenRVS (Netwrk.netTTRelays->Dest NETWORK))) )) [assumption]
-		])
+		Imt-expo := (!mp (!uspec imTmsExpo NETWORK) netIsAIMCT);
+		conn-to-THEOREM<=R := (!uspec (!uspec THEOREM-Prob-AIMCT-Td<=R NETWORK) R);
+		conn-to-expo-cdf := (!mp (!uspec (!uspec Dist.expo-cdf ImT) R) Imt-expo);
+		conn-to-numNodes-axiom := (!uspec Netwrk.numNodes-axiom NETWORK)
+
+ 	}
+	(!chain [ lhs
+		    = rhs [conn-to-THEOREM<=R conn-to-expo-cdf conn-to-numNodes-axiom]
+		    ])
+
+
+	#-- (UNPROVEN theorem taken as assumption)
+	#-- Prob-AIMCT-Td<=R-expo states that Td is exponentially
+	#   distributed with a rate parameter ratexN
+	#   (This can be proven by differentiating the cdf or probability
+	#   for Td presented in THEOREM-Prob-AIMCT-Td<=R-expanded-for-G-Expo)
+
+	define Prob-AIMCT-Td<=R-expo :=
+	(forall NETWORK R .
+		(= (Netwrk.netPrtInUse NETWORK) Netwrk.MTR_AIMCT) ==>
+		 	(
+		 		  	(Dist.isExpo (Random.pdf (Netwrk.netTd NETWORK)))
+		 		  &	(=
+		 		  		(Dist.ratePar (Random.pdf (Netwrk.netTd NETWORK))) 
+		 		  	 	(*
+		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet NETWORK))))
+		 		  	 		(Netwrk.netNumSrcDst NETWORK) 		
+		 		  	 	)
+
+		 		  	) 
+		 	)
+	)
+
+
+	assert Prob-AIMCT-Td<=R-expo
+
+
 
 }# end module

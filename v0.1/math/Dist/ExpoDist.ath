@@ -2,8 +2,8 @@
 # Lines beginning with '#+-' are used to create the hierarchy graph
 #+- Exponential Distribution
 
-load "Athena_LibDDDAS/math/Dist/Dist.ath"
 load "Athena_LibDDDAS/math/Prob/Prob.ath"
+load "Athena_LibDDDAS/math/Dist/ErlangDist.ath"
 
 extend-module Dist { 
 
@@ -28,6 +28,8 @@ extend-module Dist {
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
 	define [x] := [?x:Random.RandVar]
+
+	define [rvs] := [?rvs:Random.RandVarSet]
 
 	define [r] := [?r:Real]
 
@@ -69,5 +71,31 @@ extend-module Dist {
 					)
 		)
 	)	
+
+
+
+	#-- Sum of a set of iid exponentially distributed 
+	#   random variables is an Erlang distribution
+	#   whose shapepar is the number of variables
+	#   and ratepar is the ratepar of the exponential
+	#   distributions 
+
+	assert iid-expo-sum :=
+	(forall rvs .
+		(
+			(
+				  (Random.rvsIID rvs)
+				& (isExpo (Random.pdf (Random.rvSetIdElmnt rvs)))
+			)
+			==>
+			( 	
+				 (Dist.isErlang (Random.pdf (Random.SUM rvs))) 
+			   & ((Dist.shapePar (Random.pdf (Random.SUM rvs))) = (Random.lenRVS rvs))
+   			   & ((Dist.rateParEr (Random.pdf (Random.SUM rvs))) = (ratePar (Random.pdf (Random.rvSetIdElmnt rvs))))
+			)
+		)
+	)
+
+
 
 }# end module

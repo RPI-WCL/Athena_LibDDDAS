@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 # Lines beginning with '#+-' are used to create the hierarchy graph
-#+- Distributed Protocols in VANETS
+#+- Distributed Protocols in VANETs
 
 load "Athena_LibDDDAS/network/MTR-AIMCT.ath"
 load "Athena_LibDDDAS/math/Queue/MM1.ath"
@@ -10,31 +10,44 @@ module Distributed {
 
 	#-------------------------  RELEVANT DOMAINS -------------------------  
 
+	#-- domain of all messages
+
+	domain Msg
+
+	#-- set of all sets of random variables
+
+	structure MsgSet := emptyMS | (consMS Msg MsgSet)
+
 	#-- domain of distributed protocols 
 
 	domain DisProt
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
-	#-- number of messages 
 
-	declare cnPrtNM : [DisProt] -> Random.RandVar 
+	#-- Set of messages involved in progress
 
-	#-- Queue used for implementation 
+	declare dpGetMsgs : [DisProt] -> MsgSet
 
-	declare cnPrtQ : [DisProt] -> Queue.Queue	
+	#-- Random variables representing transmission delays of a set of messages
 
-	#-- Network over which the implementation is running 
+	declare msGetTd : [MsgSet] -> Random.RandVarSet
 
-	declare cnPrtNet : [DisProt] -> Netwrk.Network
+	#-- Random variables representing processing delays of a set of messages
 
-	#-- Total time required for consensus
+	declare msGetTp : [MsgSet] -> Random.RandVarSet
 
-	declare cnPrtTS : [DisProt] -> Random.RandVar
+	#-- Random variable representing the total time for worst case progress
 
-	#-- Total delay om messages : - transmission + processing 
+	declare dpTotTim : [DisProt] -> Random.RandVar
 
-	declare cnPrtTM : [DisProt] -> Random.RandVar
+	#-- The Network model (communication protocol) being used 
+
+	declare dpNet : [DisProt] -> Netwrk.Network
+
+	#-- The queueing model being used 
+
+	declare dpQ : [DisProt] -> Queue.Queue	
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
@@ -45,154 +58,158 @@ module Distributed {
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
-	#-- TD-&-TP==>TM 
-	# ((T_D <= x) & (T_P <= y)) ==> (T_M <= x + y)
 
-	assert TD-&-TP==>TM :=
-	(forall DP r1 r2 .
-		(	
-			(Prob.happens	
-				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
-				)
-			)
-			==>
-				(Prob.happens	
-					(Prob.consE Prob.<= (cnPrtTM DP) (r1 + r2) ) 
-				)						
-		)			
-	)
+	#-- Relationship to network protocol
+	#   assuming iid transmission times
 
-
-	#-- NM-&-TM==>NM-x-TM 
-	# (NM * TM) <= xy <== (NM <= x) & (TM <= y)
-
-	assert NM-&-TM==>NM-x-TM :=
-	(forall DP r1 r2 .
-		(	
-			(Prob.happens	
-				(Prob.cons2E 
-					(Prob.consE Prob.<= (cnPrtNM DP) r1) 
-					(Prob.consE Prob.<= (cnPrtTM DP) r2)
-				)
-			)
-			==>
-				(Prob.happens	
-					(Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2) ) 
-				)						
-		)			
-	)
-
-
-
-	# NM-ind-TM
-
-	assert NM-ind-TM :=
+	assert disProt-network-rel :=
 	(forall DP .
-		(Random.ind (cnPrtNM DP) (cnPrtTM DP) ) 
+		( (Random.rvsIID (msGetTd (dpGetMsgs DP)))
+			==>
+				(
+					  (Random.rvSetIdElmnt (msGetTd (dpGetMsgs DP))) 
+					=
+					  (Netwrk.netTd (dpNet DP))
+				)
+		)
 	)
+
+
+	#-- Relationship to queueing model
+	#   assuming iid processing times
+
+	assert disProt-Queue-rel :=
+	(forall DP .
+		( (Random.rvsIID (msGetTp (dpGetMsgs DP)))
+			==>
+				(
+					  (Random.rvSetIdElmnt (msGetTp (dpGetMsgs DP))) 
+					=
+					  (Queue.cstDly (dpQ DP))
+				)
+		)
+	)
+
+
+
+	#-- TS = SUM[msGetTd[dpGetMsgs]] + SUM[msGetTp[dpGetMsgs]]
+
+	assert total-time-axiom :=
+	(forall DP .
+		(
+			(dpTotTim DP) 
+			=
+			 ((Random.SUM (msGetTd (dpGetMsgs DP))) Random.+ (Random.SUM (msGetTp (dpGetMsgs DP))))
+		)
+	)
+
 
 
 	# TD-ind-TP
 
 	assert TD-ind-TP :=
 	(forall DP .
-		(Random.ind (Netwrk.netTd (cnPrtNet DP)) (Queue.cstDly (cnPrtQ DP)) ) 
-	)
-
-
-	#-- TS=NM-x-TM
-	# TS = NM * TM
-
-	assert TS=NM-x-TM :=
-	(forall DP .
-		( (cnPrtTS DP) = ( (cnPrtNM DP) Random.* (cnPrtTM DP) ) )
-	)
-
-
-	#-- TM=TD+TP
-	#   TM = TD + TP
-
-	assert TM=TD+TP :=
-	(forall DP .
-		( (cnPrtTM DP) = 
-			( (Netwrk.netTd (cnPrtNet DP)) Random.+ (Queue.cstDly (cnPrtQ DP)) ) )
+		(Random.ind (Random.SUM (msGetTd (dpGetMsgs DP))) (Random.SUM (msGetTp (dpGetMsgs DP))) ) 
 	)
 
 
 
-	#-- prob-NM-&-TM=P-NM-x-P-TM
-	#  P( (NM <= x) & (TM <= (y+z)) ) = P(NM <= x) * P(TM <= (y+z))
+	#-- THEOREM-sum-implies-TS
+	# (SUM[msGetTd[dpGetMsgs]] <= x & SUM[msGetTp[dpGetMsgs]] <= y ) 
+	#  ==> 
+	#   ((dpTotTim DP) <= (x+y))
 
-	define prob-NM-&-TM=P-NM-x-P-TM :=
+	define THEOREM-sum-implies-TS :=
 	(forall DP r1 r2 .
-		(
-			(Prob.probE 
-				(Prob.cons2E 
-					(Prob.consE Prob.<= (cnPrtNM DP) r1) 
-					(Prob.consE Prob.<= (cnPrtTM DP) r2)
+			(	
+				(Prob.happens	
+					(Prob.cons2E 
+						(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+						(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+					)
 				)
+				==>
+					(Prob.happens	
+						(Prob.consE Prob.<= (dpTotTim DP) (r1 + r2)
+						) 
+					)						
 			)
-			= 
-				(   (Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
-				  * (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) r2))	
-				)
-		)		
 	)
 
 
-	conclude prob-NM-&-TM=P-NM-x-P-TM
+	conclude THEOREM-sum-implies-TS 
 	pick-any DP
 	pick-any r1
 	pick-any r2
 	let{
-		lhs :=
-				(Prob.probE 
-					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM DP) r1) 
-						(Prob.consE Prob.<= (cnPrtTM DP) r2)
-					)
-				);		
-		rhs := 
-			(   (Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
-			  * (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) r2))	
-			);					
-		NM := (cnPrtNM DP);
-		TM := (cnPrtTM DP); 
-		NM-ind-TM := (!uspec NM-ind-TM DP);
-		conn2-ind-randvar-rul := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec Prob.ind-randvar-rul NM) TM) r1) r2) Prob.<=) Prob.<=);	
-		e1 := (Prob.consE Prob.<= (cnPrtNM DP) r1);
-		e2 := (Prob.consE Prob.<= (cnPrtTM DP) r2);
-		e1-ind-e2 := (!mp conn2-ind-randvar-rul NM-ind-TM);		
-		conn2-product-rul := (!uspec (!uspec Prob.product-rul e1) e2);
-		P-e1-e2=P-e1-xP-e2 := (!mp conn2-product-rul e1-ind-e2) 
+		z := (dpTotTim DP);
+		x := (Random.SUM (msGetTd (dpGetMsgs DP)));
+		y := (Random.SUM (msGetTp (dpGetMsgs DP)));
+		conn2-sum-implies-axiom := (!uspec (!uspec (!uspec (!uspec (!uspec Prob.sum-implies-axiom x) y) z) r1) r2);
+		conn2-total-time-axiom := (!uspec total-time-axiom DP)
 	}
-	(!chain [ lhs
-			= rhs [P-e1-e2=P-e1-xP-e2]
-			])
+	(!mp conn2-sum-implies-axiom conn2-total-time-axiom)	
+
+
+	#-- THEOREM-P-TS>=P-TD&TP 
+	# P(TS ≤ (x + y)) ≥ P((TD ≤ x) ∧ (TP ≤ y))
+
+	define THEOREM-P-TS>=P-TD&TP :=
+	(forall DP r1 r2 .
+			(	
+				(Prob.probE	(Prob.consE Prob.<= (dpTotTim DP) (r1 + r2)))
+				>=
+				(Prob.probE	
+					(Prob.cons2E 
+						(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+						(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+					)
+				)
+
+			)
+	)	
+
+
+	conclude THEOREM-P-TS>=P-TD&TP
+	pick-any DP
+	pick-any r1
+	pick-any r2
+	let{
+		E1 := (Prob.consE Prob.<= (dpTotTim DP) (r1 + r2));
+		E2 :=  
+			(Prob.cons2E 
+				(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+				(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+			);
+		conn2-e1==>e2-prob := (!uspec (!uspec Prob.e1==>e2-prob E2) E1);
+		conn2-THEOREM-sum-implies-TS := (!uspec (!uspec (!uspec THEOREM-sum-implies-TS DP) r1) r2)
+	}
+	(!mp conn2-e1==>e2-prob conn2-THEOREM-sum-implies-TS)		
+
+
+
 
 
 
 	#-- prob-TD-&-TP=P-TD-x-P-TP
 	#  P((T_D <= x) & (T_P <= y)) = P(T_D <= x) * P(T_P <= y)
 
-
 	define prob-TD-&-TP=P-TD-x-P-TP :=
 	(forall DP r1 r2 .
 		(
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
+					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
 				)
 			)
 			=
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2))
+				(   (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2))
 				)
 		)		
 	)
+
 
 
 	conclude prob-TD-&-TP=P-TD-x-P-TP
@@ -203,16 +220,16 @@ module Distributed {
 		lhs :=
 			(Prob.probE 
 				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
+					(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
 				)
 			);		
 		rhs := 
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2))
+				(   (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2))
 				);					
-		TD := (Netwrk.netTd (cnPrtNet DP));
-		TP := (Queue.cstDly (cnPrtQ DP)); 
+		TD := (Random.SUM (msGetTd (dpGetMsgs DP)));
+		TP := (Random.SUM (msGetTp (dpGetMsgs DP))); 
 		TD-ind-TP := (!uspec TD-ind-TP DP);
 		conn2-ind-randvar-rul := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec Prob.ind-randvar-rul TD) TP) r1) r2) Prob.<=) Prob.<=);	
 		e1 := (Prob.consE Prob.<= TD r1);
@@ -226,221 +243,6 @@ module Distributed {
 			])
 
 
-
-	#-- prb-TD-&-TP-<=-p-TM
-	#  P((T_D <= x) & (T_P <= y)) <= P(TM <= y+z) 
-
-	define prb-TD-&-TP-<=-p-TM :=
-	(forall DP r1 r2 .
-		(
-			(Prob.probE 
-				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
-				)
-			)
-			<=
-		 	  (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) (r1 + r2))) 
-				
-		)		
-	)
-
-
-	conclude prb-TD-&-TP-<=-p-TM 
-	pick-any DP
-	pick-any r1
-	pick-any r2
-	let{
-		lhs :=
-			(Prob.probE 
-				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r1) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r2)
-				)
-			);		
-		rhs := 
-		 	  (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) (r1 + r2)));					
-		TD := (Netwrk.netTd (cnPrtNet DP));
-		TP := (Queue.cstDly (cnPrtQ DP));
-		TM := (cnPrtTM DP);		
-		e1 := 
-				(Prob.cons2E 
-					(Prob.consE Prob.<= TD r1) 
-					(Prob.consE Prob.<= TP r2)
-				);		 
-		e2 := (Prob.consE Prob.<= TM (r1 + r2)); 
-		conn2-TD-&-TP==>TM := (!uspec (!uspec (!uspec TD-&-TP==>TM DP) r1) r2);	
-		conn2-e1==>e2-prob := (!uspec (!uspec Prob.e1==>e2-prob e1) e2);
-		p-e2->=-p-e1 := (!mp conn2-e1==>e2-prob conn2-TD-&-TP==>TM);
-		conn2-<=-inverse->=-axiom := (!uspec (!uspec RealExt.<=-inverse->=-axiom rhs) lhs);
-		p-e1-<=-p-e2 := (!mp (!left-iff conn2-<=-inverse->=-axiom) p-e2->=-p-e1)
-	}
-	(!claim p-e1-<=-p-e2)
-
-
-
-	#-- prb-NM-x-TM->=-p-NM-&-TM
-	# P( (NM * TM) <= x(y+z))    >=   P( (NM <= x) & (TM <= (y+z)) )  
-
-	define prb-NM-x-TM-<=-p-NM-&-TM :=
-	(forall DP r1 r2 .
-		(
-			(Prob.probE (Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2))) 
-			>=
-				(Prob.probE 
-					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM DP) r1) 
-						(Prob.consE Prob.<= (cnPrtTM DP) r2)
-					)
-				)				
-		)		
-	)
-
-
-	conclude prb-NM-x-TM-<=-p-NM-&-TM
-	pick-any DP
-	pick-any r1
-	pick-any r2
-	let{
-		lhs :=
-			(Prob.probE (Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2))) ;		
-		rhs := 
-				(Prob.probE 
-					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM DP) r1) 
-						(Prob.consE Prob.<= (cnPrtTM DP) r2)
-					)
-				);				
-		NM := (cnPrtNM DP);
-		TM := (cnPrtTM DP);
-		conn2-NM-&-TM==>NM-x-TM := (!uspec (!uspec (!uspec NM-&-TM==>NM-x-TM DP) r1) r2);
-		e2 := 
-			(Prob.consE Prob.<= ((cnPrtNM DP) Random.* (cnPrtTM DP)) (r1 * r2));		 
-		e1 := 
-			(Prob.cons2E 
-				(Prob.consE Prob.<= (cnPrtNM DP) r1) 
-				(Prob.consE Prob.<= (cnPrtTM DP) r2)
-			); 
-		conn2-e1==>e2-prob := (!uspec (!uspec Prob.e1==>e2-prob e1) e2);
-		p-e2->=-p-e1 := (!mp conn2-e1==>e2-prob conn2-NM-&-TM==>NM-x-TM)
-	}
-	(!claim p-e2->=-p-e1)	
-
-
-
-	#-- THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP 
-
-	define THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP :=
-	(forall DP r1 r2 r3 .
-		(
-			(Prob.probE (Prob.consE Prob.<= (cnPrtTS DP) (r1 * (r2 + r3)))) 
-			>=
-			(
-				(Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
-				*
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r2)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r3))
-				)
-			)
-		)		
-	)
-
-	#-- PROOF:
-	#   P(TS <= x(y+z)) >= P( (NM <= x) & (TM <= (y+z)) )
-	#	  			     = P(NM <= x) * P(TM <= (y+z))
-	#				    >= P(NM <= x) * P((T_D <= y) & (T_P <= z)) []
-	#				     = P(NM <= x) * P(T_D <= y) * P(T_P <= z)	
-
-	conclude THEOREM-P-TS->=-P-NM-x-P-TD-x-P-TP 
-	pick-any DP
-	pick-any r1
-	pick-any r2
-	pick-any r3
-	let{
-		lhs := (Prob.probE (Prob.consE Prob.<= (cnPrtTS DP) (r1 * (r2 + r3))));
-		rhs :=  
-			(
-				(Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) r1))
-				*
-				(   (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) r2)) 
-				  * (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) r3))
-				)
-			);
-		TS := (cnPrtTS DP);	
-		NM := (cnPrtNM DP);
-		TM := (cnPrtTM DP);
-		NMxTM := (NM Random.* TM);
-		TD := (Netwrk.netTd (cnPrtNet DP));
-		TP := (Queue.cstDly (cnPrtQ DP));
-		conn2-TS=NM-x-TM := (!uspec TS=NM-x-TM DP);
-		x := r1;
-		y := r2;
-		z := r3;
-		y+z := (y + z);
-		xXy+z := (x * y+z);
-		P-TS := (Prob.probE (Prob.consE Prob.<= (cnPrtTS DP) xXy+z));
-		P-NM := (Prob.probE (Prob.consE Prob.<= (cnPrtNM DP) x));
-		P-TM := (Prob.probE (Prob.consE Prob.<= (cnPrtTM DP) y+z));
-		P-TD := (Prob.probE (Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) y)); 
-		P-TP := (Prob.probE (Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) z));
-		P-NMxTM := (Prob.probE (Prob.consE Prob.<= (NM Random.* TM) xXy+z)); 
-		P-NM-&-TM := 
-				(Prob.probE 
-					(Prob.cons2E 
-						(Prob.consE Prob.<= (cnPrtNM DP) x) 
-						(Prob.consE Prob.<= (cnPrtTM DP) y+z)
-					)
-				);		
-		P-TD-&-TP := 
-			(Prob.probE 
-				(Prob.cons2E 
-					(Prob.consE Prob.<= (Netwrk.netTd (cnPrtNet DP)) y) 
-					(Prob.consE Prob.<= (Queue.cstDly (cnPrtQ DP)) z)
-				)
-			);						
-		P-NM-x-P-TM := (P-NM * P-TM);
-		P-NM-x-P-TD-&-TP := (P-NM * P-TD-&-TP);
-		P-TD-x-P-TP := (P-TD * P-TP);			
-		P-TS->=P-NM-&-TM := conclude (P-TS >= P-NM-&-TM)
-							let {
-								P-TS=P-NM-x-TM := (!mp (!uspec (!uspec (!uspec (!uspec Prob.eq-randvar-rul TS) NMxTM) xXy+z) Prob.<=) conn2-TS=NM-x-TM);
-								conn2-prb-NM-x-TM-<=-p-NM-&-TM := (!uspec (!uspec (!uspec prb-NM-x-TM-<=-p-NM-&-TM DP) x) y+z);
-								a-&-b := (!both P-TS=P-NM-x-TM conn2-prb-NM-x-TM-<=-p-NM-&-TM); 
-								conn2->=-transitive1-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive1-axiom P-TS) P-NMxTM) P-NM-&-TM)
-							} 
-							(!mp conn2->=-transitive1-axiom a-&-b);
-		P-TS->=P-NM-x-P-TM := conclude (P-TS >= (P-NM * P-TM) )
-							  let {
-							  		conn2-prob-NM-&-TM=P-NM-x-P-TM := (!uspec (!uspec (!uspec prob-NM-&-TM=P-NM-x-P-TM DP) x) y+z);
-							  		conn2-=-implies->=-axiom := (!mp (!uspec (!uspec RealExt.=-implies->=-axiom P-NM-&-TM) P-NM-x-P-TM) conn2-prob-NM-&-TM=P-NM-x-P-TM);
-							  		a-&-b := (!both P-TS->=P-NM-&-TM conn2-=-implies->=-axiom); 
-							  		conn2->=-transitive3-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive3-axiom P-TS) P-NM-&-TM) (P-NM * P-TM))
-							  }					
-							  (!mp conn2->=-transitive3-axiom a-&-b);
-		P-TS->=P-NM-x-P-TD-&-TP := conclude (P-TS >= (P-NM * P-TD-&-TP) )
-							  let {
-							  		conn2-prb-TD-&-TP-<=-p-TM := (!uspec (!uspec (!uspec prb-TD-&-TP-<=-p-TM DP) y) z);
-							  		conn2-<=-inverse->=-axiom := (!uspec (!uspec RealExt.<=-inverse->=-axiom P-TM) P-TD-&-TP);
-							  		P-TM>=P-TD-&-TP := (!mp (!right-iff conn2-<=-inverse->=-axiom) conn2-prb-TD-&-TP-<=-p-TM); 
-							  		conn2-prod-with-lower-axiom := (!uspec (!uspec (!uspec RealExt.prod-with-lower-axiom P-NM) P-TM) P-TD-&-TP);
-							  		P-NM-x-P-TM>=P-NM-x-P-TD-&-TP := (!mp conn2-prod-with-lower-axiom conn2-prb-TD-&-TP-<=-p-TM); 
-							  		conn2->=-transitive3-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive3-axiom P-TS) P-NM-x-P-TM) P-NM-x-P-TD-&-TP);
-							  		a-&-b := (!both P-TS->=P-NM-x-P-TM P-NM-x-P-TM>=P-NM-x-P-TD-&-TP)
-							  }					
-							  (!mp conn2->=-transitive3-axiom a-&-b);
-		P-TS->=P-NM-x-P-TD-x-P-TP := conclude (P-TS >= (P-NM * P-TD-x-P-TP) )
-									 let {
-									 	P-TD-&-TP=P-TD-x-P-TP := (!uspec (!uspec (!uspec prob-TD-&-TP=P-TD-x-P-TP DP) y) z);
-									 	P-NM-x-P-TD-&-TP=P-NM-x-P-TD-x-P-TP := (!chain [  (P-NM * P-TD-&-TP)
-									 													= (P-NM * P-TD-x-P-TP) [P-TD-&-TP=P-TD-x-P-TP]  
-									 		                                           ]);
-									 	conn2->=-transitive2-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive2-axiom P-TS) P-NM-x-P-TD-&-TP) (P-NM * P-TD-x-P-TP));
-									 	a-&-b := (!both P-TS->=P-NM-x-P-TD-&-TP P-NM-x-P-TD-&-TP=P-NM-x-P-TD-x-P-TP)	
-
-									 }
-		 				  			 (!mp conn2->=-transitive2-axiom a-&-b)		  
-	}
-	(!claim P-TS->=P-NM-x-P-TD-x-P-TP)
 
 
 

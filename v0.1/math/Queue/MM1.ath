@@ -180,6 +180,79 @@ extend-module Queue {
 
 	#-- THEOREM : Given that the means of the parameters exist as the limits
 	#   this theorem gives the closed for solution of the
+	#   rate parameter for the customer delay's distribution
+
+	define THEOREM-cstDly-ratepar=Mu-Lambda :=
+	(forall t Q r .
+		(
+			(	((qTyp Q) = MM1)
+			  & ((Dist.mean (Random.pdf (numCst Q))) 
+					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+			  & ((Dist.mean (Random.pdf (cstDly Q))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+			)
+			==>
+					(
+						(Dist.ratePar (Random.pdf (cstDly Q))) 
+						= 
+						 ( 
+						   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
+						   -
+						   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+						 )		
+					)
+		)	
+	)
+
+	conclude THEOREM-cstDly-ratepar=Mu-Lambda
+	pick-any t
+	pick-any Q
+	pick-any r:Real  # Wasn't working without the ':Real'. Why ? ? ?
+	assume  
+			(	((qTyp Q) = MM1)
+			  & ((Dist.mean (Random.pdf (numCst Q))) 
+					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+			  & ((Dist.mean (Random.pdf (cstDly Q))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+			)	
+	let{
+		assum := 
+			(	((qTyp Q) = MM1)
+			  & ((Dist.mean (Random.pdf (numCst Q))) 
+					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+			  & ((Dist.mean (Random.pdf (cstDly Q))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+			);			
+		Q-is-mm1 := (!left-and assum);
+		conn-2-THEOREM-mean-T-value := (!uspec (!uspec THEOREM-mean-T-value t) Q);
+		T=1-by-mu-L := (!mp conn-2-THEOREM-mean-T-value assum);
+		T-dist-mean := (Dist.mean (Random.pdf (cstDly Q)));
+		T-dist := (Random.pdf (cstDly Q));
+		T-dist-is-expo := (!mp (!uspec MM1-cstDly-expo Q) Q-is-mm1);
+		mu-minus-L := 
+					 ( 
+					   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
+					   -
+					   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+					 );
+		conn-2-by-1-axiom := (!uspec RealExt.by-1-axiom mu-minus-L);
+		conn-2-expo-mean-ratePar := (!mp (!uspec Dist.expo-mean-ratePar T-dist) T-dist-is-expo)
+	}
+	(!chain [  (Dist.ratePar T-dist)
+		    = (1.0 / T-dist-mean) [conn-2-expo-mean-ratePar]
+		    =  mu-minus-L [conn-2-by-1-axiom T=1-by-mu-L]
+		  ])
+
+
+
+	#-- THEOREM : Given that the means of the parameters exist as the limits
+	#   this theorem gives the closed for solution of the
 	#   probability of message delay being at most a given real r
 
 	define THEOREM-cstDly-prob :=

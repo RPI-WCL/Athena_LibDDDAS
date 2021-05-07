@@ -1226,6 +1226,26 @@ forall ?fa:Flightplan ?fb:Flightplan ?t:Real ?t2:Real ?D:Real ?H:Real .
                     ])
             }
             (!equiv p==>q q==>p)    
+
+
+  #-- Below is just for testing 
+            
+  define Theorem9 :=
+  (
+    forall ?board:Matrix ?num_v:N ?num_intervals:N ?fa:Flightplan 
+    ?f_list:Fplan-list ?v_list:V-list ?D:Real ?H:Real . 
+    (
+		(~(Matrix.complete ?board))
+	    ==>
+	    (
+	    (forall v . ~((V-list.in-V-list v ?v_list) &  (valid v ?board ?num_v 
+	    	?num_intervals ?fa ?f_list ?v_list ?D ?H)) )  <==>
+	    ( ( (solve ?board ?num_v ?num_intervals ?fa ?f_list ?v_list ?D ?H) = nilM) )
+	    )
+    )      
+  )
+
+  (!prove Theorem9_Second_form [Theorem9])            
 #__________________________________________________________________________
 
 

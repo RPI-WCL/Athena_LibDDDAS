@@ -97,6 +97,10 @@ module Random {
 
 	overload * prod
 
+	#-- SUM returns the sum of a set of random variables
+
+	declare SUM: [RandVarSet]-> RandVar
+
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
 	define [x y z] := [?x:RandVar ?y:RandVar ?z:RandVar]
@@ -107,6 +111,7 @@ module Random {
 
 
 	#-------------------------  RELEVANT THEORY  -------------------------	
+
 
 	#-- iIDRvs-axiom states that
 	#   if a rvSet is IID, then it is 
