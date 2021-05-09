@@ -1,6 +1,6 @@
 # PROPAGATION
 
-##### This repository contains theory and proofs about a knowledge propagation protocol 
+##### This repository contains theory and proofs about the knowledge propagation protocol presented in DASC 2020
 
 
 ##### Contents:

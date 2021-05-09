@@ -57,9 +57,9 @@ extend-module Queue {
 						(Dist.mean (Random.pdf (numCst Q)))   # N 
 						= ( (Dist.mean (Random.pdf (cstArRat Q)))  #lambda  
 							/  
-							( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
+							( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu is ratepar of service time since mean = 1 / mu and service time is exponential 	
 							  -
-							  (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+							  (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 							)
 						  )
 					)
@@ -105,7 +105,7 @@ extend-module Queue {
 							/  
 							( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 							  -
-							  (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+							  (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 							)
 						  )
 					)
@@ -148,7 +148,7 @@ extend-module Queue {
 		N_d := 	# denominator of N from Eq 3.24
 			( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 			  -
-			  (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+			  (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 			);		
 		Q-is-mm1 := (!left-and assum);	
 		N := (Dist.mean (Random.pdf (numCst Q)));
@@ -200,7 +200,7 @@ extend-module Queue {
 						 ( 
 						   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 						   -
-						   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+						   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 						 )		
 					)
 		)	
@@ -239,7 +239,7 @@ extend-module Queue {
 					 ( 
 					   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 					   -
-					   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+					   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 					 );
 		conn-2-by-1-axiom := (!uspec RealExt.by-1-axiom mu-minus-L);
 		conn-2-expo-mean-ratePar := (!mp (!uspec Dist.expo-mean-ratePar T-dist) T-dist-is-expo)
@@ -277,7 +277,7 @@ extend-module Queue {
 										 ( 
 										   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 										   -
-										   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+										   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 										 )								 
 
 										 * r ) )
@@ -319,7 +319,7 @@ extend-module Queue {
 							 ( 
 							   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 							   -
-							   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+							   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 							 )								 
 
 							 * r ) )
@@ -335,7 +335,7 @@ extend-module Queue {
 					 ( 
 					   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 					   -
-					   (Dist.mean (Random.pdf (cstArRat Q))) # lambda
+					   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 					 );
 		conn-2-by-1-axiom := (!uspec RealExt.by-1-axiom mu-minus-L);
 		conn-2-expo-mean-ratePar := (!mp (!uspec Dist.expo-mean-ratePar T-dist) T-dist-is-expo);

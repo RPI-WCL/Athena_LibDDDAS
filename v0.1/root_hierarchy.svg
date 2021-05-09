@@ -269,20 +269,20 @@ Random Variables \n(PrbIndRv.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</ti
 <polygon fill="black" stroke="black" points="328.19,-676.72 325.62,-666.44 321.22,-676.08 328.19,-676.72"/>
 </g>
 <!-- Network Theory for
-VANETS \n(Netwrk.ath) -->
+VANETs \n(Netwrk.ath) -->
 <g id="node17" class="node">
 <title>Network Theory for
-VANETS \n(Netwrk.ath)</title>
+VANETs \n(Netwrk.ath)</title>
 <ellipse fill="none" stroke="black" cx="98.99" cy="-639.56" rx="98.99" ry="37.45"/>
 <text text-anchor="middle" x="98.99" y="-650.86" font-family="CMU Serif Roman" font-size="14.00">Network Theory for</text>
-<text text-anchor="middle" x="98.99" y="-635.86" font-family="CMU Serif Roman" font-size="14.00">VANETS </text>
+<text text-anchor="middle" x="98.99" y="-635.86" font-family="CMU Serif Roman" font-size="14.00">VANETs </text>
 <text text-anchor="middle" x="98.99" y="-620.86" font-family="CMU Serif Roman" font-size="14.00">(Netwrk.ath)</text>
 </g>
 <!-- Random Variables \n(Random.ath)&#45;&gt;Network Theory for
-VANETS \n(Netwrk.ath) -->
+VANETs \n(Netwrk.ath) -->
 <g id="edge24" class="edge">
 <title>Random Variables \n(Random.ath)&#45;&gt;Network Theory for
-VANETS \n(Netwrk.ath)</title>
+VANETs \n(Netwrk.ath)</title>
 <path fill="none" stroke="black" d="M272.35,-726.8C241.86,-711.63 201.21,-691.41 166.93,-674.36"/>
 <polygon fill="black" stroke="black" points="168.42,-671.19 157.91,-669.87 165.3,-677.46 168.42,-671.19"/>
 </g>
@@ -293,10 +293,10 @@ VANETS \n(Netwrk.ath)</title>
 <polygon fill="black" stroke="black" points="521.48,-280.81 512.58,-275.05 515.94,-285.1 521.48,-280.81"/>
 </g>
 <!-- Network Theory for
-VANETS \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath) -->
+VANETs \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath) -->
 <g id="edge21" class="edge">
 <title>Network Theory for
-VANETS \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
+VANETs \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
 <path fill="none" stroke="black" d="M77.9,-602.51C51.37,-551.93 14.59,-459.58 60.99,-401.39 82.21,-374.78 162.28,-358.72 229.92,-349.65"/>
 <polygon fill="black" stroke="black" points="230.77,-353.07 240.23,-348.31 229.87,-346.13 230.77,-353.07"/>
 </g>
@@ -312,11 +312,11 @@ VANETS \n(Netwrk.ath)&#45;&gt;MTR Protocol \n(MTR&#45;AIMCT.ath)</title>
 </g>
 <!-- Natural Numbers
  \n(nat&#45;less.ath)&#45;&gt;Network Theory for
-VANETS \n(Netwrk.ath) -->
+VANETs \n(Netwrk.ath) -->
 <g id="edge25" class="edge">
 <title>Natural Numbers
  \n(nat&#45;less.ath)&#45;&gt;Network Theory for
-VANETS \n(Netwrk.ath)</title>
+VANETs \n(Netwrk.ath)</title>
 <path fill="none" stroke="black" d="M98.99,-712.93C98.99,-704.75 98.99,-695.97 98.99,-687.45"/>
 <polygon fill="black" stroke="black" points="102.5,-687.23 98.99,-677.23 95.5,-687.23 102.5,-687.23"/>
 </g>

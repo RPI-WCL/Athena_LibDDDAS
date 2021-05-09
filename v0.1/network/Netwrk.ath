@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 # Lines beginning with '#+-' are used to create the hierarchy graph
-#+- Network Theory for VANETS
+#+- Network Theory for VANETs
 #-- Inspiration - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
 
 load "Athena_LibDDDAS/math/Random/Random.ath"

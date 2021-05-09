@@ -12,6 +12,9 @@ extend-module Distributed {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
+	#-- returns number of Replicas in Knowledge propagation protocol
+
+	declare KPNumReplicas : [DisProt] -> Real
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
@@ -24,6 +27,14 @@ extend-module Distributed {
 	define [t] := [?t:Real]
 
 	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- number of messages in KP is 4 * number of replicas
+
+	assert KPNumMsgs :=
+	(
+		   ((Random.lenRVS (msGetTd (dpGetMsgs KP))) = (4.0 * (KPNumReplicas KP)))
+		 & ((Random.lenRVS (msGetTp (dpGetMsgs KP))) = (4.0 * (KPNumReplicas KP)))
+	)
 
 
 	#-- msGetTd[dpGetMsgs] iid
@@ -177,7 +188,7 @@ extend-module Distributed {
 			=
 				(   
 					(Dist.erlangCDF 
-						(Random.lenRVS (msGetTd (dpGetMsgs KP))) 
+						(4.0 * (KPNumReplicas KP)) 
 		 		  	 	(*
 		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
 		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
@@ -186,10 +197,10 @@ extend-module Distributed {
 
 
 				  * (Dist.erlangCDF 
-				  		(Random.lenRVS (msGetTp (dpGetMsgs KP))) 
+				  		(4.0 * (KPNumReplicas KP)) 
 						 (- 
 						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 						 )
 				  		r2)	 
 				)
@@ -213,7 +224,7 @@ extend-module Distributed {
 		rhs :=
 				(   
 					(Dist.erlangCDF 
-						(Random.lenRVS (msGetTd (dpGetMsgs KP))) 
+						(4.0 * (KPNumReplicas KP)) 
 		 		  	 	(*
 		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
 		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
@@ -222,10 +233,10 @@ extend-module Distributed {
 
 
 				  * (Dist.erlangCDF 
-				  		(Random.lenRVS (msGetTp (dpGetMsgs KP))) 
+				  		(4.0 * (KPNumReplicas KP))
 						 (- 
 						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 						 )
 				  		r2)	 
 				);
@@ -270,14 +281,14 @@ extend-module Distributed {
 								  =
 									 (- 
 									   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-									   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+									   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 									 )
 							)
 							(!chain [ (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP)))))
 									= (Dist.ratePar (Random.pdf (Queue.cstDly (dpQ KP)))) [rel-with-Q]
 									= (- 
 									   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-									   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+									   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 									  ) [conn2-THEOREM-cstDly-ratepar=Mu-Lambda]
 									])
 
@@ -289,30 +300,30 @@ extend-module Distributed {
 				) [lhs=intermediate]
 			=	(   
 					(Dist.erlangCDF 
-						(Random.lenRVS (msGetTd (dpGetMsgs KP))) 
+						(4.0 * (KPNumReplicas KP))
 		 		  	 	(*
 		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
 		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
 		 		  	 	)
 						r1) 	 
 				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
-				) [Net-lamda]
+				) [Net-lamda KPNumMsgs]
 			=	(   
 					(Dist.erlangCDF 
-						(Random.lenRVS (msGetTd (dpGetMsgs KP))) 
+						(4.0 * (KPNumReplicas KP)) 
 		 		  	 	(*
 		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
 		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
 		 		  	 	)
 						r1) 	 
 				  * (Dist.erlangCDF 
-				  		(Random.lenRVS (msGetTp (dpGetMsgs KP))) 
+				  		(4.0 * (KPNumReplicas KP))
 						 (- 
 						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 						 )
 				  		r2)	 
-				) [Q-lamda]
+				) [Q-lamda KPNumMsgs]
 			])
 
 
@@ -327,7 +338,7 @@ extend-module Distributed {
 			>=
 				(   
 					(Dist.erlangCDF 
-						(Random.lenRVS (msGetTd (dpGetMsgs KP))) 
+						(4.0 * (KPNumReplicas KP)) 
 		 		  	 	(*
 		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
 		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
@@ -336,10 +347,10 @@ extend-module Distributed {
 
 
 				  * (Dist.erlangCDF 
-				  		(Random.lenRVS (msGetTp (dpGetMsgs KP))) 
+				  		(4.0 * (KPNumReplicas KP))
 						 (- 
 						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 						 )
 				  		r2)	 
 				)
@@ -362,7 +373,7 @@ extend-module Distributed {
 		C := 			
 				(   
 					(Dist.erlangCDF 
-						(Random.lenRVS (msGetTd (dpGetMsgs KP))) 
+						(4.0 * (KPNumReplicas KP)) 
 		 		  	 	(*
 		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
 		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
@@ -371,10 +382,10 @@ extend-module Distributed {
 
 
 				  * (Dist.erlangCDF 
-				  		(Random.lenRVS (msGetTp (dpGetMsgs KP))) 
+				  		(4.0 * (KPNumReplicas KP)) 
 						 (- 
 						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
 						 )
 				  		r2)	 
 				);
@@ -384,5 +395,6 @@ extend-module Distributed {
 		A>=B&B=C := (!both A>=B B=C)	
 	}
 	(!mp conn2->=-transitive2-axiom A>=B&B=C)
+
 
 }# end module

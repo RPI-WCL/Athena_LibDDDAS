@@ -238,7 +238,7 @@ module MTR-AIMCT {
 
 	#-- THEOREM-Prob-AIMCT-Td<=R-expanded-for-G-Expo states that the probability 
 	#   that the Td for MTR-AIMCT will be <= R is given by
-	#   = 1-(1- G(X))^N = 1-(1- (1- e^{rate x}))^N
+	#   = 1-(1- G(X))^N = 1-(1- (1- e^{-rate x}))^N
  
 
 	define THEOREM-Prob-AIMCT-Td<=R-expanded-for-G-Expo :=
