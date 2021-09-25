@@ -258,16 +258,18 @@ module Prob {
 	)
 
 
-	#-- cdf-prob-axiom states that 
+	#-- cdf-prob-conjencture states that 
 	#   cdf(X,x) = P(X <= x)
 
-	assert cdf-prob-axiom :=
+	define cdf-prob-conjencture :=
 	(forall x R .
 		(
 			(Random.cdf x R) = (probE (consE <= x R))
 		)
 	)
 
+	conclude cdf-prob-conjencture
+		(!force cdf-prob-conjencture)
 
 
 #	#-- evnt-RVS-axiom states that defining an event over an entire set of rvS
