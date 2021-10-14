@@ -1,6 +1,6 @@
 # Athena_LibDDDAS
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Applications Systems
+### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
 
 
 #### Contents:
