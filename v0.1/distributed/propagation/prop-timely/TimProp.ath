@@ -132,10 +132,10 @@ extend-module Distributed {
 						ratPar := (!right-and (!right-and conn2-iid-expo-sum));
 						shpPar := (!left-and (!right-and conn2-iid-expo-sum));
 						conn2-erlang-cdf := (!mp (!uspec (!uspec Dist.erlang-cdf TD) r1) TD-Erlang);
-						conn2-cdf-prob-conjencture := (!uspec (!uspec Prob.cdf-prob-conjencture TD) r1)
+						conn2-cdf-prob-conjecture := (!uspec (!uspec Prob.cdf-prob-conjecture TD) r1)
 					}
 					(!chain [ (Prob.probE (Prob.consE Prob.<= TD r1))
-							= (Random.cdf TD r1) [conn2-cdf-prob-conjencture]
+							= (Random.cdf TD r1) [conn2-cdf-prob-conjecture]
 							= (Dist.erlangCDF (Dist.shapePar (Random.pdf TD)) (Dist.rateParEr (Random.pdf TD)) r1) [conn2-erlang-cdf]
 							= (Dist.erlangCDF (Random.lenRVS rvsTD) (Dist.rateParEr (Random.pdf TD)) r1) [shpPar]
 							= (Dist.erlangCDF (Random.lenRVS rvsTD) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt rvsTD))) r1) [ratPar]	
@@ -153,10 +153,10 @@ extend-module Distributed {
 						ratPar := (!right-and (!right-and conn2-iid-expo-sum));
 						shpPar := (!left-and (!right-and conn2-iid-expo-sum));
 						conn2-erlang-cdf := (!mp (!uspec (!uspec Dist.erlang-cdf TP) r2) TP-Erlang);
-						conn2-cdf-prob-conjencture := (!uspec (!uspec Prob.cdf-prob-conjencture TP) r2)
+						conn2-cdf-prob-conjecture := (!uspec (!uspec Prob.cdf-prob-conjecture TP) r2)
 					}
 					(!chain [ (Prob.probE (Prob.consE Prob.<= TP r2))
-							= (Random.cdf TP r2) [conn2-cdf-prob-conjencture]
+							= (Random.cdf TP r2) [conn2-cdf-prob-conjecture]
 							= (Dist.erlangCDF (Dist.shapePar (Random.pdf TP)) (Dist.rateParEr (Random.pdf TP)) r2) [conn2-erlang-cdf]
 							= (Dist.erlangCDF (Random.lenRVS rvsTP) (Dist.rateParEr (Random.pdf TP)) r2) [shpPar]
 							= (Dist.erlangCDF (Random.lenRVS rvsTP) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt rvsTP))) r2)[ratPar]	

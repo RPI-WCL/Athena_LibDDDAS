@@ -132,7 +132,7 @@ extend-module Prob {
 			conn-to-complement := (!uspec (!uspec comp-<=-&-> (Random.rvSetIdElmnt rvSet)) R);
 			conn-to-comp2way := (!uspec (!uspec comp-2-way (consE <= (Random.rvSetIdElmnt rvSet) R)) (consE > (Random.rvSetIdElmnt rvSet) R));
 			conn-to-comp-rul := (!left-and (!mp (!left-iff (!uspec (!uspec complement-rule (consE <= (Random.rvSetIdElmnt rvSet) R)) (consE > (Random.rvSetIdElmnt rvSet) R))) conn-to-complement));
-			conn-to-cdf-prob := (!uspec (!uspec cdf-prob-conjencture (Random.rvSetIdElmnt rvSet)) R)
+			conn-to-cdf-prob := (!uspec (!uspec cdf-prob-conjecture (Random.rvSetIdElmnt rvSet)) R)
 		}
 		(!chain [ (probE (consE <= (Random.minRVS rvSet) R)) 
 				= (1.0 - (RealExt.pow (probE (consE > (Random.rvSetIdElmnt rvSet) R)) (Random.lenRVS rvSet) ) ) [conn-to-MIN-<=-IID-RVS]
@@ -230,7 +230,7 @@ extend-module Prob {
 			cnnct-to-prod-pow-axm := (!mp (!uspec RealExt.prod-pow-axiom (get-set-probs (consErvs > rvSetTail R))) cnnct-to-get-set-homo);
 			cnnct-to-get-set-probs-len := (!uspec (!uspec (!uspec get-set-probs-axiom1 rvSetTail) >) R);
 			conn-to-comp-prob := (!uspec (!uspec THEOREM-probability-X->-&-<= y) R);
-			conn-to-cdf := (!uspec (!uspec cdf-prob-conjencture y) R)
+			conn-to-cdf := (!uspec (!uspec cdf-prob-conjecture y) R)
 		}
 		(!chain [  (probE (consE <= (Random.minRVS rvSet) R))
 				 = (1.0 - (* (probE (consE > y R)) (RealExt.prod (get-set-probs (consErvs > rvSetTail R))))) [Mind-THEOReM-stmnt]

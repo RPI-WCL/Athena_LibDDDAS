@@ -345,10 +345,10 @@ extend-module Queue {
 								  ]);
 		conn-2-expo-cdf := (!uspec (!uspec Dist.expo-cdf (cstDly Q)) r);
 		cdf=1-pow-e-ratePar-x := (!mp conn-2-expo-cdf T-dist-is-expo);
-		conn-2-cdf-prob-conjencture := (!uspec (!uspec Prob.cdf-prob-conjencture (cstDly Q)) r)
+		conn-2-cdf-prob-conjecture := (!uspec (!uspec Prob.cdf-prob-conjecture (cstDly Q)) r)
 	}
 	(!chain [ (Prob.probE (Prob.consE Prob.<= (cstDly Q) r))
-			= (Random.cdf (cstDly Q) r) [conn-2-cdf-prob-conjencture]
+			= (Random.cdf (cstDly Q) r) [conn-2-cdf-prob-conjecture]
 			= rhs [cdf=1-pow-e-ratePar-x T-dist-ratePar] 
 			])
 

@@ -7,7 +7,9 @@
 
 * The `progress-proof.ath` file contains the proof of eventual progress for the Synod consensus protocol using the failure-aware actor model under soem specific asynchronous conditions
 
-* The proof makes use of the SPASS Automatic Theorem Prover for proving the proof obligation at each step
+* The `conditions-proof.ath` file contains the proof of our conditions under predicate fairness for FAM
+
+* The proofs make use of the SPASS Automatic Theorem Prover for proving the proof obligation at each step
 
 * Refer to the ATHENA [Download Instructions](https://proofcentral.org/athena/1.4/) to properly set up SPASS in your operating system
 
@@ -17,6 +19,7 @@
 
 * The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA
 
+* The `OUTPUT_conditions-proof` file contains preverified output of `conditions-proof.ath` in ATHENA
 
 ###### Note: This library is under development and many modules may be currently just stubs
 
