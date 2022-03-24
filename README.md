@@ -3,6 +3,9 @@
 ### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
 
 
+#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+
+
 ##### ATHENA Resources:
 
 * [ATHENA Website](http://proofcentral.org/)
