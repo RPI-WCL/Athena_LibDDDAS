@@ -25,19 +25,21 @@ extend-module Synod{
 	assert msg-persists-until-read # can be proven, but asserting for now
 	#-- Synod behavior specific axioms
 	assert synod-quorum-axioms
-	assert synod-ready-to-send-axioms
-	assert synod-ready-to-receive-general-axiom
+	assert Snd-Ruls
+	assert Rcv-Rul
 	assert synod-state-axioms
 	# predicate definition axioms	
 	assert synod-has-promises-def-axiom	
 	assert synod-has-votes-def-axiom
 	assert synod-learn-def-axiom		
 	assert nonfaulty-def-axioms
-	assert P1+P2-True-beta-def-axioms 
+	assert P1-P2-Def
+	# extra symbol definitions
+	assert symbol-defs
 
 
-	#SANITY CHECK: There is no contradiction in the assertions -- FAILS
-	#(!prove false [model-fair-axioms model-step-axioms msg-persists-until-read synod-quorum-axioms synod-ready-to-send-axioms synod-ready-to-receive-general-axiom synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom nonfaulty-def-axioms P1+P2-True-beta-def-axioms])
+	#SANITY CHECK: With high probability, there is no contradiction in the assertions! -- FAILS
+	#(!prove false [model-fair-axioms model-step-axioms msg-persists-until-read synod-quorum-axioms Snd-Ruls Rcv-Rul synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom nonfaulty-def-axioms P1-P2-Def])
 
 
 #---------------------------------------------------------------------------- 
@@ -45,24 +47,165 @@ extend-module Synod{
 #----------------------------------------------------------------------------
 
 
-#-- DEFINING THE MAIN PROGRESS THEOREM
+
 #----------------------------------------------------------------------------
-	#-- Our main progress theorem states that for all transaction paths, there is an indexed position such that
-	#-- a proposer has learnt of a ballot's success at that position 
-	define Progress-Theorem :=
-	(progress_conditions
-		==>
-			(forall T . 
-				(exists p i b .
-					 (learn p (config (rho T i)) b)	
-				)
-			)
+#-- INTERMEDIATE LEMMAS & THEOREMS FOR PROVING EVENTUAL PROGRESS
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# Splitting the behavior of nonfaulty actors into simpler forms
+
+	#-- A nonfaulty acceptor is available if there is a message for it in the multiset
+	define acceptor-nonfaulty1 :=
+	(forall a .
+		( (   (acc a) 
+			& (nonfaulty a) 
+		  )
+				==>
+					(forall p T b i v typ .
+
+	  		  	       (inMSet (consM p a typ b v) (mu (config (rho T i))))
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) a))
+	    		    	  	  )		
+					)
+		) 
 	)
 
+	(!prove acceptor-nonfaulty1 [nonfaulty-def-axioms Acc-NF-Axm])
+
+	#-- An nonfaulty acceptor is available if its local state satisfies conditions for it to send a 
+	#-- 1b or 2b message 
+	define acceptor-nonfaulty2 :=
+	(forall a .
+		( (   (acc a) 
+			& (nonfaulty a) 
+		  )
+				==>
+					(forall p T b i v typ .
+					  	(  (inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
+					  	 & (   ((beta (als (config (rho T i)) a)) < b)
+                             | ((beta (als (config (rho T i)) a)) =< b)
+					  	   )	
+                        )
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) a))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+	(!prove acceptor-nonfaulty2 [nonfaulty-def-axioms Acc-NF-Axm])
+
+	#-- A nonfaulty proposer is available if there is a message for it in the multiset
+	define proposer-nonfaulty1 :=
+	(forall p .
+		( (   (prp p) 
+			& (nonfaulty p) 
+		  )
+				==>
+					(forall T i a typ b v .   
+        	   		  	  (inMSet (consM a p typ b v) (mu (config (rho T i))) )
+		
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) p)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) p))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+	(!prove proposer-nonfaulty1 [nonfaulty-def-axioms Prp-NF-Axm])
+
+	#-- A nonfaulty proposer is available if its local state satisfies conditions for it to send a 
+	#-- 2a message 
+	define proposer-nonfaulty2 :=
+	(forall p .
+		( (   (prp p) 
+			& (nonfaulty p) 
+		  )	
+				==>
+					(forall T i typ b v Q .
+						(
+							(forall a .
+								(inQ a Q) 
+									==> 
+										(exists j v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )	       
+							)
+	        	  		  ==> (
+	        	  		  		  (available (rho T i) p)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (rho T j) p))
+	    		    	  	  )			    
+	        	  		)  
+					)
+		) 
+	)
+
+	(!prove proposer-nonfaulty2 [nonfaulty-def-axioms Prp-NF-Axm])
+
 
 #----------------------------------------------------------------------------
-#-- INTERMEDIATE LEMMAS & THEOREMS FOR PROVING "Progress-Thorem"
-#----------------------------------------------------------------------------
+#-- Send and receive transitions for a nonfaulty actor are IOE
+
+	define nonfaulty->IOE-rcv :=
+		(forall x .
+			(nonfaulty x) ==>
+			(forall m T i .
+		        ((inMSet m (mu (config (rho T i)))) 
+		        & (ready-to (rho T i) x (receive x m)))  
+	            	==>
+	            	(
+	            		  (exists j . (i N.<= j) 
+	            		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )                  
+	            	    |  (forall k .  (i N.< k)
+	            	    				==>
+	            	    				(exists j .
+		            	    				  (k N.<= j) 
+		            	    				& (inMSet m (mu (config (rho T j)))) 
+		            	    				& (ready-to (rho T j) x (receive x m))
+		            	    			)
+	            	    	)			              
+	            	) 
+    		)
+     	)	
+
+	(!prove nonfaulty->IOE-rcv [nonfaulty-def-axioms NF-IOE-Axm])
+
+	define nonfaulty->IOE-snd :=
+		(forall x m T i .
+				(nonfaulty x) ==>
+				(
+			        (ready-to (rho T i) x (send x m))  
+		            	==>
+		            	(
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+		            	    |  (forall k .  (i N.< k)
+		            	    				==>
+		            	    				(exists j .
+			            	    				  (k N.<= j) 
+			            	    				& (ready-to (rho T j) x (send x m))
+			            	    			)
+		            	    	) 
+		            	) 
+	            )	
+        )
+
+	(!prove nonfaulty->IOE-snd [nonfaulty-def-axioms NF-IOE-Axm])
 
 #----------------------------------------------------------------------------
 	#-- Fair-receive: If at any index in a transition path, a receive transition is enabled
@@ -167,7 +310,7 @@ extend-module Synod{
     	inRT := ((inMSet m (mu (config (rho T i)))) & (ready-to (rho T i) x (receive x m)));
      	IOE-axiom := (!uspec (!uspec (!uspec (!uspec nonfaulty->IOE-rcv-transformed x) m) T) i);
      	IOE-disjunction := (!mp IOE-axiom (!both NFx inRT));
-     	FAIR-axiom := (!uspec (!uspec (!uspec (!uspec fair-rcv x) m) T) i);
+     	FAIR-axiom := (!uspec (!uspec (!uspec (!uspec F-Rcv-Axm x) m) T) i);
      	FAIR-disjunction :=  (!mp FAIR-axiom inRT);
 		IOE-rd := (forall k .  (i N.< k)
 						==>
@@ -203,7 +346,7 @@ extend-module Synod{
     (!absurd FAIR-rd-true FAIR-rd-false) 		
     )
     # Alternative
-	# (!prove IOE->Fair-Rcv-Theorem [nonfaulty->IOE-rcv-transformed fair-rcv IOErcv-FAIRrcv-rd-absurd])	
+	# (!prove IOE->Fair-Rcv-Theorem [nonfaulty->IOE-rcv-transformed F-Rcv-Axm IOErcv-FAIRrcv-rd-absurd])	
 
 
 
@@ -354,7 +497,7 @@ extend-module Synod{
     	inRT := (ready-to (rho T i) x (send x m));
      	IOE-axiom := (!uspec (!uspec (!uspec (!uspec nonfaulty->IOE-snd-transformed x) m) T) i);
      	IOE-disjunction := (!mp IOE-axiom (!both NFx inRT));
-     	FAIR-axiom := (!uspec (!uspec (!uspec (!uspec fair-snd x) m) T) i);
+     	FAIR-axiom := (!uspec (!uspec (!uspec (!uspec F-Snd-Axm x) m) T) i);
      	FAIR-disjunction :=  (!mp FAIR-axiom inRT);
 		IOE-rd := (forall k . (i N.< k)
 						==>
@@ -689,6 +832,7 @@ extend-module Synod{
 		)
     )
 
+
 	define persistent-unresponded-local-2a-msgs-causes-step1 :=
 	(forall T i a p b v .
 		(
@@ -801,6 +945,8 @@ extend-module Synod{
    
     (!prove persistent-unresponded-local-1a-msgs-causes [persistent-unresponded-local-1a-msgs-causes-step2])
 
+
+
 #----------------------------------------------------------------------------
 # Intermediate lemmas for ready-to receive behavior by message 
 
@@ -808,64 +954,56 @@ extend-module Synod{
 	define synod-ready-to-receive-lemma1a :=
 		(forall T i b p a .
 				  (	
-				  	#	(prp p)
-				  	#  & (acc a)	
 					   (available (rho T i) a)
 					  & (inMSet (consM p a 1a b nilV) (mu (config (rho T i))))
 				  )
-					<==>
+					==>
 						(ready-to (rho T i) a (receive a (consM p a 1a b nilV)))
 					
 		)
 
-	(!prove synod-ready-to-receive-lemma1a [synod-ready-to-receive-general-axiom])
+	(!prove synod-ready-to-receive-lemma1a [Rcv-Rul])
 
 	define synod-ready-to-receive-lemma1b :=
 		(forall T i b v p a .
 				  (	
-				  	#	(prp p)
-				  	#  & (acc a)	
 					    (available (rho T i) p)
 					  & (inMSet (consM a p 1b b v) (mu (config (rho T i))))
 				  )
-					<==>
+					==>
 						(ready-to (rho T i) p (receive p (consM a p 1b b v)))
 					
 		)
 
-	(!prove synod-ready-to-receive-lemma1b [synod-ready-to-receive-general-axiom])
+	(!prove synod-ready-to-receive-lemma1b [Rcv-Rul])
 
 
 	define synod-ready-to-receive-lemma2a :=
 		(forall T i b v p a .
 				  (	
-				  	#	(prp p)
-				  	#  & (acc a)	
 					    (available (rho T i) a)
 					  & (inMSet (consM p a 2a b v) (mu (config (rho T i))))
 				  )
-					<==>
+					==>
 						(ready-to (rho T i) a (receive a (consM p a 2a b v)))
 					
 		)
 
 
-	(!prove synod-ready-to-receive-lemma2a [synod-ready-to-receive-general-axiom])
+	(!prove synod-ready-to-receive-lemma2a [Rcv-Rul])
 
 	define synod-ready-to-receive-lemma2b :=
 		(forall T i b p a v .
 				  (	
-				  	#	(prp p)
-				  	#  & (acc a)	
 					    (available (rho T i) p)
 					  & (inMSet (consM a p 2b b v) (mu (config (rho T i))))
 				  )
-					<==>
+					==>
 						(ready-to (rho T i) p (receive p (consM a p 2b b v)))
 					
 		)
 
-	(!prove synod-ready-to-receive-lemma2b [synod-ready-to-receive-general-axiom])
+	(!prove synod-ready-to-receive-lemma2b [Rcv-Rul])
 
 	define synod-ready-to-receive-lemmas := [ synod-ready-to-receive-lemma1a
 								 			  synod-ready-to-receive-lemma1b
@@ -900,17 +1038,87 @@ extend-module Synod{
 	(!prove collect-1b-from-quorum [received-from-quorum-general])
 	(!prove collect-2b-from-quorum [received-from-quorum-general])
 
+
+
+#----------------------------------------------------------------------------
+# Intermediate lemmas for P1-P2-true behavior of a proposal number 
+
+
+ 	define P1+P2-True-1a-beta :=                                                                  
+ 		(forall b . 
+ 			 	(P1+P2-True b)                                                                    
+				 ==> 
+				 	(forall p T a i .
+				 		(
+					 		(
+					 			  (acc a) 
+						 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+							)
+							==>	((beta (als (config (rho T i)) a)) < b) # In an actual implementation, the beta will be updated after responding to a message
+				 		)												# and if a message has been responded to, it will be removed from local state
+				 	)													# Therefore, this cannot lead to a fallacy when beta is updated
+		)		 	
+
+	(!prove P1+P2-True-1a-beta [P1-P2-Def])	
+
+ 	define P1+P2-True-2a-beta :=
+ 		(forall b . 
+ 			(P1+P2-True b)
+				 ==> 
+				 	(forall p T a i v .
+				 		(
+					 		(
+					 			  (acc a) 
+						 		& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+							)
+							==>	((beta (als (config (rho T i)) a)) =< b)
+						) 
+				 	)
+	 	)
+
+	(!prove P1+P2-True-2a-beta [P1-P2-Def])	
+
+#----------------------------------------------------------------------------
+# Some consequences of the syntactic sugar predicate definitions
+
+ 	define CND-def :=
+	(forall T i p b Q .
+		(
+					  (prp p) 
+					& (P1+P2-True b)
+					& (nonfaulty p) 
+					& ((all-inQ-NF Q) & (rdy2snd-1a-all-inQ p Q (rho T i) b))
+
+		)
+
+		==> 
+
+		(
+					  (prp p) 
+					& (P1+P2-True b)
+					& (nonfaulty p) 
+					& (forall a . (inQ a Q) 
+						                ==> 
+						                      (nonfaulty a) 
+						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+					  )
+		)
+
+	)
+
+	(!prove CND-def [symbol-defs])
+
 #----------------------------------------------------------------------------
 # Some intermediate Lemmas 
 
 
 
-	#-- Lemma1
+	#-- Lemma1a
 	#-- In a fair transition path, if eventually a nonfaulty proposer P becomes ready to propose a ballot b that satisfies P1+P2-True, 
 	#-- to a quorum Q of nonfaulty acceptors, then the 1a messages will be eventually received by all members of Q
 	#------------------------------------------------------------------------
 
-	define Lemma1 := 
+	define Lemma1a := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -937,7 +1145,7 @@ extend-module Synod{
 
 
 
-	define Lemma1-step1 := 
+	define Lemma1a-step1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -959,10 +1167,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step1 [IOE->Fair-Snd-Theorem])
+	(!prove Lemma1a-step1 [IOE->Fair-Snd-Theorem])
 
 
-	define Lemma1-step2 := 
+	define Lemma1a-step2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -987,9 +1195,9 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step2 [Lemma1-step1 N.Less=.S3])
+	(!prove Lemma1a-step2 [Lemma1a-step1 N.Less=.S3])
 
-	define Lemma1-step2_1 := 
+	define Lemma1a-step2_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1015,10 +1223,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step2_1 [Lemma1-step2 N.Less=.transitive])
+	(!prove Lemma1a-step2_1 [Lemma1a-step2 N.Less=.transitive])
 
 
-	define Lemma1-step3 := 
+	define Lemma1a-step3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1043,12 +1251,12 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step3 [Lemma1-step2_1 model-step-axioms])	
+	(!prove Lemma1a-step3 [Lemma1a-step2_1 model-step-axioms])	
 
 
 
 
-	define Lemma1-step4 := 
+	define Lemma1a-step4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1074,10 +1282,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step4 [Lemma1-step3 synod-quorum-axioms])
+	(!prove Lemma1a-step4 [Lemma1a-step3 synod-quorum-axioms])
 
 
-	define Lemma1-step5 := 
+	define Lemma1a-step5 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1110,10 +1318,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step5 [Lemma1-step4 nonfaulty-def-axioms acceptor-nonfaulty1])
+	(!prove Lemma1a-step5 [Lemma1a-step4 acceptor-nonfaulty1])
 
 
-	define Lemma1-step6 := 
+	define Lemma1a-step6 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1149,10 +1357,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step6 [Lemma1-step5 N.Less=.Implied-by-<])	
+	(!prove Lemma1a-step6 [Lemma1a-step5 N.Less=.Implied-by-<])	
 
 
-	define Lemma1-step7 := 
+	define Lemma1a-step7 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1194,10 +1402,10 @@ extend-module Synod{
 				) 
 	)
 
-	(!prove Lemma1-step7 [Lemma1-step6 synod-msg-persistance-axioms])
+	(!prove Lemma1a-step7 [Lemma1a-step6 synod-msg-persistance-axioms])
 
 
-	define Lemma1-step8 := 
+	define Lemma1a-step8 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1251,10 +1459,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step8 [Lemma1-step7 synod-quorum-axioms])	
+	(!prove Lemma1a-step8 [Lemma1a-step7 synod-quorum-axioms])	
 
 
-	define Lemma1-step9 := 
+	define Lemma1a-step9 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1306,9 +1514,9 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step9 [Lemma1-step8 acceptor-nonfaulty1])	
+	(!prove Lemma1a-step9 [Lemma1a-step8 acceptor-nonfaulty1])	
 
-	define Lemma1-step10 := 
+	define Lemma1a-step10 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1362,10 +1570,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step10 [Lemma1-step9 synod-ready-to-receive-lemmas synod-quorum-axioms])
+	(!prove Lemma1a-step10 [Lemma1a-step9 synod-ready-to-receive-lemmas synod-quorum-axioms])
 
 
-	define Lemma1-step10_1 := 
+	define Lemma1a-step10_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1427,11 +1635,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step10_1 [Lemma1-step10 Fair-Rcv-Causes-Theorem])
+	(!prove Lemma1a-step10_1 [Lemma1a-step10 Fair-Rcv-Causes-Theorem])
 
 
 
-	define Lemma1-step10_2 := 
+	define Lemma1a-step10_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1481,10 +1689,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step10_2 [Lemma1-step10_1 ])
+	(!prove Lemma1a-step10_2 [Lemma1a-step10_1 ])
 
 
-	define Lemma1-step10_3 := 
+	define Lemma1a-step10_3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1534,10 +1742,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step10_3 [Lemma1-step10_2 model-step-axioms])
+	(!prove Lemma1a-step10_3 [Lemma1a-step10_2 model-step-axioms])
 
 
-	define Lemma1-step10_4 := 
+	define Lemma1a-step10_4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1589,10 +1797,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step10_4 [Lemma1-step10_3 N.Less=.transitive])	
+	(!prove Lemma1a-step10_4 [Lemma1a-step10_3 N.Less=.transitive])	
 
 
-	define Lemma1-step10_5 := 
+	define Lemma1a-step10_5 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1642,11 +1850,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step10_5 [Lemma1-step10_4 N.Less=.transitive])	
+	(!prove Lemma1a-step10_5 [Lemma1a-step10_4 N.Less=.transitive])	
 
 
 
-	define Lemma1-step15 := 
+	define Lemma1a-step15 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1671,18 +1879,18 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma1-step15 [Lemma1-step10_5])
+	(!prove Lemma1a-step15 [Lemma1a-step10_5])
 
-	(!prove Lemma1 [Lemma1-step15])	
+	(!prove Lemma1a [Lemma1a-step15])	
 
 
-	#-- Lemma2 (corresponds to Lemma 1 in NFM21 paper)
+	#-- Lemma1b 
 	#-- In a fair transition path, if eventually a nonfaulty proposer P becomes ready to propose a ballot b that satisfies P1+P2-True, 
 	#-- to a quorum Q of nonfaulty acceptors, then 1b messages will be eventually received by P from all members of Q for the ballot b
 	#------------------------------------------------------------------------	 
 		
 
-	define Lemma2 := 
+	define Lemma1b := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1703,7 +1911,7 @@ extend-module Synod{
 
 
 
-	define Lemma2-step1 := 
+	define Lemma1b-step1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1729,10 +1937,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step1 [Lemma1 synod-quorum-axioms])
+	(!prove Lemma1b-step1 [Lemma1a synod-quorum-axioms])
 
 
-	define Lemma2-step2 := 
+	define Lemma1b-step2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1759,11 +1967,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step2 [Lemma2-step1 P1+P2-True-beta-def-axioms])
+	(!prove Lemma1b-step2 [Lemma1b-step1 P1+P2-True-1a-beta])
 
 
 
-	define Lemma2-step3 := 
+	define Lemma1b-step3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1795,12 +2003,12 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step3 [Lemma2-step2 synod-ready-to-send-axioms])	
+	(!prove Lemma1b-step3 [Lemma1b-step2 Snd-Ruls])	
 
 
  
 
-	define Lemma2-step4 := 
+	define Lemma1b-step4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1834,11 +2042,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step4 [Lemma2-step3])		
+	(!prove Lemma1b-step4 [Lemma1b-step3])		
 
 
 
-	define Lemma2-step5 := 
+	define Lemma1b-step5 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1877,10 +2085,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step5 [Lemma2-step4 acceptor-nonfaulty2])	
+	(!prove Lemma1b-step5 [Lemma1b-step4 acceptor-nonfaulty2])	
 
 
-	define Lemma2-step5_1 := 
+	define Lemma1b-step5_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1922,9 +2130,9 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step5_1 [Lemma2-step5])
+	(!prove Lemma1b-step5_1 [Lemma1b-step5])
 
-	define Lemma2-step5_2 := 
+	define Lemma1b-step5_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -1964,9 +2172,9 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step5_2 [Lemma2-step5_1 N.Less=.Implied-by-< collect-1b-from-quorum N.Less=.transitive])
+	(!prove Lemma1b-step5_2 [Lemma1b-step5_1 N.Less=.Implied-by-< collect-1b-from-quorum N.Less=.transitive])
 
-	define Lemma2-step6 := 
+	define Lemma1b-step6 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2016,12 +2224,12 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step6 [Lemma2-step5_2 persistent-unresponded-local-1a-msgs-causes])
+	(!prove Lemma1b-step6 [Lemma1b-step5_2 persistent-unresponded-local-1a-msgs-causes])
 
 
 
 
-	define Lemma2-step6_1 := 
+	define Lemma1b-step6_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2074,11 +2282,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step6_1 [Lemma2-step6 P1+P2-True-beta-def-axioms])
+	(!prove Lemma1b-step6_1 [Lemma1b-step6 P1+P2-True-1a-beta])
 
 
 
-	define Lemma2-step6_2 := 
+	define Lemma1b-step6_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2132,10 +2340,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step6_2 [Lemma2-step6_1 synod-ready-to-send-axioms N.Less=.Implied-by-< N.Less=.transitive])
+	(!prove Lemma1b-step6_2 [Lemma1b-step6_1 Snd-Ruls N.Less=.Implied-by-< N.Less=.transitive])
 
 
-	define Lemma2-step6_3 := 
+	define Lemma1b-step6_3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2189,11 +2397,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step6_3 [Lemma2-step6_2 ])
+	(!prove Lemma1b-step6_3 [Lemma1b-step6_2 ])
 
 
 
-	define Lemma2-step7 := 
+	define Lemma1b-step7 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2250,12 +2458,12 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step7 [Lemma2-step6_3 Fair-Snd-Causes-Theorem])
+	(!prove Lemma1b-step7 [Lemma1b-step6_3 Fair-Snd-Causes-Theorem])
 
 
 
 
-	define Lemma2-step7_1 := 
+	define Lemma1b-step7_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2311,10 +2519,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step7_1 [Lemma2-step7 model-step-axioms])
+	(!prove Lemma1b-step7_1 [Lemma1b-step7 model-step-axioms])
 	
 
-	define Lemma2-step7_2 := 
+	define Lemma1b-step7_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2365,10 +2573,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step7_2 [Lemma2-step7_1 N.Less=.transitive])	
+	(!prove Lemma1b-step7_2 [Lemma1b-step7_1 N.Less=.transitive])	
 
 
-	define Lemma2-step7_3 := 
+	define Lemma1b-step7_3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2413,10 +2621,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step7_3 [Lemma2-step7_2])
+	(!prove Lemma1b-step7_3 [Lemma1b-step7_2])
 
 
-	define Lemma2-step7_4 := 
+	define Lemma1b-step7_4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2446,10 +2654,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step7_4 [Lemma2-step7_3])
+	(!prove Lemma1b-step7_4 [Lemma1b-step7_3])
 
 
-	define Lemma2-step8_4 := 
+	define Lemma1b-step8_4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2475,11 +2683,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step8_4 [Lemma2-step7_4])	
+	(!prove Lemma1b-step8_4 [Lemma1b-step7_4])	
 
 
 
-	define Lemma2-step10 := 
+	define Lemma1b-step10 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2505,11 +2713,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step10 [Lemma2-step8_4])	
+	(!prove Lemma1b-step10 [Lemma1b-step8_4])	
 
 
 
-	define Lemma2-step13 := 
+	define Lemma1b-step13 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2542,11 +2750,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step13 [Lemma2-step10 proposer-nonfaulty1])	
+	(!prove Lemma1b-step13 [Lemma1b-step10 proposer-nonfaulty1])	
 
 
 
-	define Lemma2-step14 := 
+	define Lemma1b-step14 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2585,10 +2793,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step14 [Lemma2-step13 N.Less=.Implied-by-<])
+	(!prove Lemma1b-step14 [Lemma1b-step13 N.Less=.Implied-by-<])
 
 
-	define Lemma2-step15 := 
+	define Lemma1b-step15 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2634,10 +2842,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step15 [Lemma2-step14 1b-model-msg-persists-until-read-axiom-lemma])
+	(!prove Lemma1b-step15 [Lemma1b-step14 1b-model-msg-persists-until-read-axiom-lemma])
 
 
-	define Lemma2-step18 := 
+	define Lemma1b-step18 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2689,11 +2897,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step18 [Lemma2-step15 proposer-nonfaulty1])	
+	(!prove Lemma1b-step18 [Lemma1b-step15 proposer-nonfaulty1])	
 
 
 
-	define Lemma2-step19 := 
+	define Lemma1b-step19 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2746,10 +2954,10 @@ extend-module Synod{
 				) 
 	)
 
-	(!prove Lemma2-step19 [Lemma2-step18 synod-ready-to-receive-lemmas synod-quorum-axioms])
+	(!prove Lemma1b-step19 [Lemma1b-step18 synod-ready-to-receive-lemmas synod-quorum-axioms])
 
 
-	define Lemma2-step20 := 
+	define Lemma1b-step20 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2806,11 +3014,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step20 [Lemma2-step19 Fair-Rcv-Causes-Theorem])	
+	(!prove Lemma1b-step20 [Lemma1b-step19 Fair-Rcv-Causes-Theorem])	
 
 
 		
-	define Lemma2-step21 := 
+	define Lemma1b-step21 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2858,10 +3066,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step21 [Lemma2-step20 model-step-axioms])			
+	(!prove Lemma1b-step21 [Lemma1b-step20 model-step-axioms])			
 
 
-	define Lemma2-step22_helper1 := 
+	define Lemma1b-step22_helper1 := 
 			(forall v k y .
         	   		  (    (i N.<= k)
 						 & (k N.<= y)
@@ -2869,10 +3077,10 @@ extend-module Synod{
         	   		  ==> (i N.<= y) 
 
         	 )  		  		
-	(!prove Lemma2-step22_helper1 [Lemma2-step20 N.Less=.transitive])			
+	(!prove Lemma1b-step22_helper1 [Lemma1b-step20 N.Less=.transitive])			
 
 
-	define Lemma2-step22 := 
+	define Lemma1b-step22 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2920,10 +3128,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22 [Lemma2-step21 Lemma2-step22_helper1])
+	(!prove Lemma1b-step22 [Lemma1b-step21 Lemma1b-step22_helper1])
 
 
-	define Lemma2-step22_1 := 
+	define Lemma1b-step22_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -2972,10 +3180,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22_1 [Lemma2-step22])
+	(!prove Lemma1b-step22_1 [Lemma1b-step22])
 
 
-	define Lemma2-step22_helper2 :=
+	define Lemma1b-step22_helper2 :=
 	(forall p T b i Q .
 				(forall a .
 					((inQ a Q) 
@@ -3046,10 +3254,10 @@ extend-module Synod{
 					)	
 				)
 		)		
-	(!prove Lemma2-step22_helper2 [N.Less=.transitive])
+	(!prove Lemma1b-step22_helper2 [N.Less=.transitive])
 
 
-	define Lemma2-step22_2:= 
+	define Lemma1b-step22_2:= 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3099,12 +3307,11 @@ extend-module Synod{
 	)
 
 
-#-- TAKES AGES, give it time (comment out this and assert this step to skip while developing later proofs)
-	(!prove Lemma2-step22_2 [Lemma2-step22_1 Lemma2-step22_helper2])
+#-- TAKES AGES, give it time (comment out this and assert this step to save time while developing later proofs)
+	(!prove Lemma1b-step22_2 [Lemma1b-step22_1 Lemma1b-step22_helper2])
 
 
-
-	define Lemma2-step22_3:= 
+	define Lemma1b-step22_3:= 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3152,10 +3359,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22_3 [Lemma2-step22_2])
+	(!prove Lemma1b-step22_3 [Lemma1b-step22_2])
 
 
-	define Lemma2-step22_4 := 
+	define Lemma1b-step22_4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3198,10 +3405,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22_4 [Lemma2-step22_3])
+	(!prove Lemma1b-step22_4 [Lemma1b-step22_3])
 
 
-	define Lemma2-step22_5 := 
+	define Lemma1b-step22_5 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3244,10 +3451,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22_5 [Lemma2-step22_4])
+	(!prove Lemma1b-step22_5 [Lemma1b-step22_4])
 
 
-	define Lemma2-step22_6 := 
+	define Lemma1b-step22_6 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3280,10 +3487,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22_6 [Lemma2-step22_5 N.Less=.transitive])
+	(!prove Lemma1b-step22_6 [Lemma1b-step22_5 N.Less=.transitive])
 
 
-	define Lemma2-step22_7 := 
+	define Lemma1b-step22_7 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3309,10 +3516,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step22_7 [Lemma2-step22_6])
+	(!prove Lemma1b-step22_7 [Lemma1b-step22_6])
 
 
-	define Lemma2-step24 := 
+	define Lemma1b-step24 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3337,9 +3544,9 @@ extend-module Synod{
 				) 
 	)
 
-	(!prove Lemma2-step24 [Lemma2-step22_7])	
+	(!prove Lemma1b-step24 [Lemma1b-step22_7])	
 
-	define Lemma2-step24_1 := 
+	define Lemma1b-step24_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3358,18 +3565,41 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma2-step24_1 [Lemma2-step24 collect-1b-from-quorum])	
+	(!prove Lemma1b-step24_1 [Lemma1b-step24 collect-1b-from-quorum])	
 
 
-	(!prove Lemma2 [Lemma2-step24_1 synod-has-promises-def-axiom])
+	(!prove Lemma1b [Lemma1b-step24_1 synod-has-promises-def-axiom])
 
 
-	#-- Lemma3	
+	#-- Lemma1c 
+	#-- Connecting 1b to the syntactic sugar for readibility
+	#------------------------------------------------------------------------	 
+		
+
+	define Lemma1c := 
+	(forall p T b i Q .
+		( 
+			  (prp p) 
+			& (P1+P2-True b)
+			& (nonfaulty p) 
+			& ((all-inQ-NF Q) & (rdy2snd-1a-all-inQ p Q (rho T i) b))
+		)
+			==> 
+  							(exists j .
+  									  (i N.<= j)	
+						  			& (has-promises (als (config (rho T j)) p) b  Q) 
+  							)
+	)
+
+	(!prove Lemma1c [Lemma1b CND-def])
+
+
+	#-- Lemma2a
 	#-- In a fair transition path, if eventually a nonfaulty proposer P receives promises for a ballot b that satisfies P1+P2-True,
 	#-- from a quorum Q of nonfaulty acceptors, then 2a messages from P will be eventually received by all members of Q for b 
 	#------------------------------------------------------------------------
 
-	define Lemma3 := 
+	define Lemma2a := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3395,7 +3625,7 @@ extend-module Synod{
 
 
 
-	define Lemma3-step1 := 
+	define Lemma2a-step1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3411,11 +3641,11 @@ extend-module Synod{
 				(forall a . (inQ a Q) ==> (exists v . (inMSet (consM a p 1b b v) (amu (als (config (rho T i)) p))) ))
 	)		
 
-	(!prove Lemma3-step1 [synod-has-promises-def-axiom])
+	(!prove Lemma2a-step1 [synod-has-promises-def-axiom])
 
 
 
-	define Lemma3-step2 := 
+	define Lemma2a-step2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3445,13 +3675,13 @@ extend-module Synod{
 				) 
 	)		
 
-	(!prove Lemma3-step2 [Lemma3-step1 synod-ready-to-send-axioms])
+	(!prove Lemma2a-step2 [Lemma2a-step1 Snd-Ruls])
 
 
 
 
 
-	define Lemma3-step4 := 
+	define Lemma2a-step4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3485,10 +3715,10 @@ extend-module Synod{
 	    	  	   )				
 	)		
 
-	(!prove Lemma3-step4 [Lemma3-step2 proposer-nonfaulty2])
+	(!prove Lemma2a-step4 [Lemma2a-step2 proposer-nonfaulty2])
 
 
-	define Lemma3-step4_1 := 
+	define Lemma2a-step4_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3525,10 +3755,10 @@ extend-module Synod{
 	    	  	   )				
 	)		
 
-	(!prove Lemma3-step4_1 [Lemma3-step4 N.Less=.Implied-by-<  N.Less=.transitive])
+	(!prove Lemma2a-step4_1 [Lemma2a-step4 N.Less=.Implied-by-<  N.Less=.transitive])
 
 
-	define Lemma3-step4_2 := 
+	define Lemma2a-step4_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3571,10 +3801,10 @@ extend-module Synod{
 	    	  	   )				
 	)		
 
-	(!prove Lemma3-step4_2 [Lemma3-step4_1])
+	(!prove Lemma2a-step4_2 [Lemma2a-step4_1])
 
 
-	define Lemma3-step4_2_2 := 
+	define Lemma2a-step4_2_2 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3601,7 +3831,7 @@ extend-module Synod{
 	    	  	   )				
 	)		
 
-	(!prove Lemma3-step4_2_2 [Lemma3-step4_2 synod-has-promises-def-axiom])
+	(!prove Lemma2a-step4_2_2 [Lemma2a-step4_2 synod-has-promises-def-axiom])
 
 
 	define persistent-unresponded-local-promises-subaxiom := 
@@ -3624,7 +3854,7 @@ extend-module Synod{
 
     (!prove persistent-unresponded-local-promises-subaxiom [persistent-unresponded-local-promises])
 
-	define Lemma3-step4_3 := 
+	define Lemma2a-step4_3 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3662,10 +3892,10 @@ extend-module Synod{
 	    	  	   )				
 	)		
 
-	(!prove Lemma3-step4_3 [Lemma3-step4_2_2 persistent-unresponded-local-promises-subaxiom])
+	(!prove Lemma2a-step4_3 [Lemma2a-step4_2_2 persistent-unresponded-local-promises-subaxiom])
 
 
-	define Lemma3-step4_4 := 
+	define Lemma2a-step4_4 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3712,12 +3942,12 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_4 [Lemma3-step4_3 synod-ready-to-send-axioms])	
+	(!prove Lemma2a-step4_4 [Lemma2a-step4_3 Snd-Ruls])	
 
 
 
 
-	define Lemma3-step4_6 := 
+	define Lemma2a-step4_6 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3764,7 +3994,7 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_6 [Lemma3-step4_4 Fair-Snd-Causes-Theorem])	
+	(!prove Lemma2a-step4_6 [Lemma2a-step4_4 Fair-Snd-Causes-Theorem])	
 
 
     define helper :=
@@ -3785,10 +4015,10 @@ extend-module Synod{
 	                  )
 	 )
 	 
-	 (!prove helper [sent2A-def])                           
+	 (!prove helper [symbol-defs])                           
 
 
-	define Lemma3-step4_7 := 
+	define Lemma2a-step4_7 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3843,11 +4073,11 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_7 [Lemma3-step4_6 helper])	
+	(!prove Lemma2a-step4_7 [Lemma2a-step4_6 helper])	
 
 
 
-	define Lemma3-step4_8 := 
+	define Lemma2a-step4_8 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3898,10 +4128,10 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step4_8 [Lemma3-step4_7 N.Less=.transitive N.Less=.Implied-by-<])
+	(!prove Lemma2a-step4_8 [Lemma2a-step4_7 N.Less=.transitive N.Less=.Implied-by-<])
 
 
-	define Lemma3-step5 := 
+	define Lemma2a-step5 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -3949,10 +4179,10 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step5 [Lemma3-step4_8 Fair-Snd-Causes-Theorem])
+	(!prove Lemma2a-step5 [Lemma2a-step4_8 Fair-Snd-Causes-Theorem])
 
 
-	define Lemma3-step6 := 
+	define Lemma2a-step6 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4000,11 +4230,11 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step6 [Lemma3-step5 N.Less=.transitive])
+	(!prove Lemma2a-step6 [Lemma2a-step5 N.Less=.transitive])
 
 
 
-	define Lemma3-step6_1 := 
+	define Lemma2a-step6_1 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4047,9 +4277,9 @@ extend-module Synod{
 	    	  	   )				
 	)	
 
-	(!prove Lemma3-step6_1 [Lemma3-step6])
+	(!prove Lemma2a-step6_1 [Lemma2a-step6])
 
-	define Lemma3-step7 :=
+	define Lemma2a-step7 :=
 	 (forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4073,9 +4303,9 @@ extend-module Synod{
 
 	)
 
-	(!prove Lemma3-step7 [Lemma3-step6_1])
+	(!prove Lemma2a-step7 [Lemma2a-step6_1])
 
-	define Lemma3-step8 := 
+	define Lemma2a-step8 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4107,11 +4337,11 @@ extend-module Synod{
 
 	)	
 
-	(!prove Lemma3-step8 [Lemma3-step7 nonfaulty-def-axioms acceptor-nonfaulty1 synod-quorum-axioms])
+	(!prove Lemma2a-step8 [Lemma2a-step7 acceptor-nonfaulty1 synod-quorum-axioms])
 
 
 
-	define Lemma3-step10 := 
+	define Lemma2a-step10 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4150,12 +4380,12 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step10 [Lemma3-step8 N.Less=.Implied-by-<])	
+	(!prove Lemma2a-step10 [Lemma2a-step8 N.Less=.Implied-by-<])	
 
 
 	
 
-	define Lemma3-step11 := 
+	define Lemma2a-step11 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4204,13 +4434,13 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step11 [Lemma3-step10 synod-msg-persistance-axioms])
+	(!prove Lemma2a-step11 [Lemma2a-step10 synod-msg-persistance-axioms])
 
 
 
 
 
-	define Lemma3-step13 := 
+	define Lemma2a-step13 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4265,11 +4495,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step13 [Lemma3-step11 synod-ready-to-receive-lemmas synod-quorum-axioms])	
+	(!prove Lemma2a-step13 [Lemma2a-step11 synod-ready-to-receive-lemmas synod-quorum-axioms])	
 
 
 
-	define Lemma3-step14 := 
+	define Lemma2a-step14 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4320,10 +4550,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step14 [Lemma3-step13 Fair-Rcv-Causes-Theorem])
+	(!prove Lemma2a-step14 [Lemma2a-step13 Fair-Rcv-Causes-Theorem])
 
 
-	define Lemma3-step15 := 
+	define Lemma2a-step15 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4382,11 +4612,11 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step15 [Lemma3-step14 N.Less=.transitive])
+	(!prove Lemma2a-step15 [Lemma2a-step14 N.Less=.transitive])
 
 
 
-	define Lemma3-step16 := 
+	define Lemma2a-step16 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4435,10 +4665,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step16 [Lemma3-step15 N.Less=.transitive])
+	(!prove Lemma2a-step16 [Lemma2a-step15 N.Less=.transitive])
 
 
-	define Lemma3-step17 := 
+	define Lemma2a-step17 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4487,9 +4717,9 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step17 [Lemma3-step16 model-step-axioms])
+	(!prove Lemma2a-step17 [Lemma2a-step16 model-step-axioms])
 
-	define Lemma3-step18 := 
+	define Lemma2a-step18 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4529,10 +4759,10 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step18 [Lemma3-step17 model-step-axioms])
+	(!prove Lemma2a-step18 [Lemma2a-step17 model-step-axioms])
 
 
-	define Lemma3-step19 := 
+	define Lemma2a-step19 := 
 	(forall p T b i Q .
 		( 
 			  (prp p) 
@@ -4558,20 +4788,20 @@ extend-module Synod{
 	)
 
 
-	(!prove Lemma3-step19 [Lemma3-step18])
+	(!prove Lemma2a-step19 [Lemma2a-step18])
 
-	(!prove Lemma3 [Lemma3-step19])
-
-
+	(!prove Lemma2a [Lemma2a-step19])
 
 
-	#-- Lemma4 (corresponds to Lemma 2 in NFM21 paper)
+
+
+	#-- Lemma2b
 	#-- In a fair transition path, if eventually a nonfaulty proposer P receives promises for a ballot b that satisfies P1+P2-True,
 	#-- from a quorum Q of nonfaulty acceptors, then P will eventually receive 2b messages from all members of Q for b 
 	#------------------------------------------------------------------------
 
 
-	define Lemma4 := 
+	define Lemma2b := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4594,7 +4824,7 @@ extend-module Synod{
 
 
 
-	define Lemma4-step1 := 
+	define Lemma2b-step1 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4621,10 +4851,10 @@ extend-module Synod{
 	)			
 
 
-	(!prove Lemma4-step1 [Lemma3 synod-quorum-axioms])
+	(!prove Lemma2b-step1 [Lemma2a synod-quorum-axioms])
 
 
-	define Lemma4-step2 := 
+	define Lemma2b-step2 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4652,12 +4882,12 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step2 [Lemma4-step1 P1+P2-True-beta-def-axioms])	
+	(!prove Lemma2b-step2 [Lemma2b-step1 P1+P2-True-2a-beta])	
 
 
 
 
-	define Lemma4-step4 := 		
+	define Lemma2b-step4 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4692,12 +4922,12 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step4 [Lemma4-step2 acceptor-nonfaulty2])	
+	(!prove Lemma2b-step4 [Lemma2b-step2 acceptor-nonfaulty2])	
 
 
 
 
-	define Lemma4-step4_1 := 		
+	define Lemma2b-step4_1 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4739,9 +4969,9 @@ extend-module Synod{
 				  )
 		)		  		
 
-	(!prove Lemma4-step4_1 [Lemma4-step4 N.Less=.Implied-by-<])
+	(!prove Lemma2b-step4_1 [Lemma2b-step4 N.Less=.Implied-by-<])
 
-	define Lemma4-step5 := 
+	define Lemma2b-step5 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4795,11 +5025,11 @@ extend-module Synod{
 
 
 
-	(!prove Lemma4-step5 [Lemma4-step4_1 persistent-unresponded-local-2a-msgs-causes P1+P2-True-beta-def-axioms])
+	(!prove Lemma2b-step5 [Lemma2b-step4_1 persistent-unresponded-local-2a-msgs-causes P1+P2-True-2a-beta])
 
 
 
-	define Lemma4-step6 := 		
+	define Lemma2b-step6 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4854,10 +5084,10 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6 [Lemma4-step5 synod-ready-to-send-axioms P1+P2-True-beta-def-axioms])	
+	(!prove Lemma2b-step6 [Lemma2b-step5 Snd-Ruls P1+P2-True-2a-beta])	
 
 
-	define Lemma4-step6_1 := 		
+	define Lemma2b-step6_1 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4909,10 +5139,10 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6_1 [Lemma4-step6 Fair-Snd-Causes-Theorem model-step-axioms N.Less=.Implied-by-<])	
+	(!prove Lemma2b-step6_1 [Lemma2b-step6 Fair-Snd-Causes-Theorem model-step-axioms N.Less=.Implied-by-<])	
 
 
-	define Lemma4-step6_2 := 		
+	define Lemma2b-step6_2 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -4960,11 +5190,11 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6_2 [Lemma4-step6_1 N.Less=.transitive])
+	(!prove Lemma2b-step6_2 [Lemma2b-step6_1 N.Less=.transitive])
 
 
 
-	define Lemma4-step6_3 := 		
+	define Lemma2b-step6_3 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5010,9 +5240,9 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step6_3 [Lemma4-step6_2 N.Less=.transitive])
+	(!prove Lemma2b-step6_3 [Lemma2b-step6_2 N.Less=.transitive])
 
-	define Lemma4-step7 := 		
+	define Lemma2b-step7 := 		
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5037,12 +5267,12 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step7 [Lemma4-step6_3])		
+	(!prove Lemma2b-step7 [Lemma2b-step6_3])		
 
 
 
 
-	define Lemma4-step8 := 
+	define Lemma2b-step8 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5076,10 +5306,10 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step8 [Lemma4-step7 proposer-nonfaulty1])	
+	(!prove Lemma2b-step8 [Lemma2b-step7 proposer-nonfaulty1])	
 
 
-	define Lemma4-step9 := 
+	define Lemma2b-step9 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5117,11 +5347,11 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step9 [Lemma4-step8 N.Less=.Implied-by-<])
+	(!prove Lemma2b-step9 [Lemma2b-step8 N.Less=.Implied-by-<])
 
 
 
-	define Lemma4-step12 := 
+	define Lemma2b-step12 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5165,11 +5395,11 @@ extend-module Synod{
 				  )		
 	)
 
-	(!prove Lemma4-step12 [Lemma4-step9 2b-model-msg-persists-until-read-axiom-lemma])				
+	(!prove Lemma2b-step12 [Lemma2b-step9 2b-model-msg-persists-until-read-axiom-lemma])				
 
 
 
-	define Lemma4-step14 := 
+	define Lemma2b-step14 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5220,10 +5450,10 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step14 [Lemma4-step12 proposer-nonfaulty1])	
+	(!prove Lemma2b-step14 [Lemma2b-step12 proposer-nonfaulty1])	
 
 
-	define Lemma4-step15 := 
+	define Lemma2b-step15 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5277,10 +5507,10 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step15 [Lemma4-step14 synod-ready-to-receive-lemmas synod-quorum-axioms])	
+	(!prove Lemma2b-step15 [Lemma2b-step14 synod-ready-to-receive-lemmas synod-quorum-axioms])	
 
 
-	define Lemma4-step16 := 
+	define Lemma2b-step16 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5332,10 +5562,10 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step16 [Lemma4-step15 Fair-Rcv-Causes-Theorem model-step-axioms])	
+	(!prove Lemma2b-step16 [Lemma2b-step15 Fair-Rcv-Causes-Theorem model-step-axioms])	
 
 	
-	define Lemma4-step17 := 
+	define Lemma2b-step17 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5390,10 +5620,10 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step17 [Lemma4-step16 N.Less=.transitive])	
+	(!prove Lemma2b-step17 [Lemma2b-step16 N.Less=.transitive])	
 
 
-	define Lemma4-step18 := 
+	define Lemma2b-step18 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5439,10 +5669,10 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step18 [Lemma4-step17 N.Less=.transitive])	
+	(!prove Lemma2b-step18 [Lemma2b-step17 N.Less=.transitive])	
 
 
-	define Lemma4-step19 := 
+	define Lemma2b-step19 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5470,11 +5700,11 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step19 [Lemma4-step18])
+	(!prove Lemma2b-step19 [Lemma2b-step18])
 
 
 
-	define Lemma4-step20 := 
+	define Lemma2b-step20 := 
 	(forall p T b i Q . 
 		( 
 			  (prp p) 
@@ -5509,9 +5739,9 @@ extend-module Synod{
 	)		
 
 
-	(!prove Lemma4-step20 [Lemma4-step19 collect-2b-from-quorum])
+	(!prove Lemma2b-step20 [Lemma2b-step19 collect-2b-from-quorum])
 
-	(!prove Lemma4 [Lemma4-step20 synod-has-votes-def-axiom])
+	(!prove Lemma2b [Lemma2b-step20 synod-has-votes-def-axiom])
 
 
 
@@ -5519,17 +5749,13 @@ extend-module Synod{
 #-- PROVING THE MAIN PROGRESS THEOREM
 #----------------------------------------------------------------------------
 
-	define Main-Lemma1 := 
+	define Lemma1 := 
 	(forall p T b i Q .
 		( 
-			  (prp p) 
+			  (prp p)
+			& (nonfaulty p)   
 			& (P1+P2-True b)
-			& (nonfaulty p) 
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-				                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-			  )
+			& ((all-inQ-NF Q) & (rdy2snd-1a-all-inQ p Q (rho T i) b))
 		)	
 			==> 
   							(exists j .
@@ -5538,20 +5764,17 @@ extend-module Synod{
   							)
 	)
 
-	(!prove Main-Lemma1 [Lemma2])
+	(!prove Lemma1 [Lemma1c])
 
 
 
-	define Main-Lemma2 := 
+	define Lemma2 := 
 	(forall p T b i Q . 
 		( 
-			  (prp p) 
+			  (prp p)
+			& (nonfaulty p)   
 			& (P1+P2-True b)
-			& (nonfaulty p)
-			& (forall a . (inQ a Q) 
-				                ==> 
-                                      (nonfaulty a) 
-			  )			 
+			& (all-inQ-NF Q)			 
 			& (has-promises (als (config (rho T i)) p) b Q) 
 		)
 			==> 
@@ -5562,23 +5785,34 @@ extend-module Synod{
 
 	)
 
+	(!prove Lemma2 [Lemma2b all-inQ-NF-def])
 
-	(!prove Main-Lemma2 [Lemma4])
+
+
+#-- DEFINING THE MAIN PROGRESS THEOREM
+#----------------------------------------------------------------------------
+	#-- Our main progress theorem states that for all transaction paths, there is an indexed position such that
+	#-- a proposer has learnt of a ballot's success at that position 
+	define Progress-Theorem :=
+	(CND
+		==>
+			(forall T . 
+				(exists p i b .
+					 (learn p (config (rho T i)) b)	
+				)
+			)
+	)
 
 	define Progress-Theorem-step1 :=
-	( progress_conditions
+	( CND
 		==>
 		(forall T .
 			(exists i p b Q . 
 				( 
-					  (prp p) 
-					& (P1+P2-True b)
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-		                                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-					  )
+					  (prp p)
+					& (nonfaulty p)   
+					& (P1+P2-True b) 
+					& ((all-inQ-NF Q) & (rdy2snd-1a-all-inQ p Q (rho T i) b))
 				)
 					 
 			& 
@@ -5592,24 +5826,21 @@ extend-module Synod{
 	)	 
 
 
-	(!prove Progress-Theorem-step1 [Main-Lemma1])	
+	(!prove Progress-Theorem-step1 [Lemma1])	
 
 
 
 	define Progress-Theorem-step2 := 
-	( progress_conditions
+	( CND
 		==>
 		(forall T .
 			(exists i p b Q . 
 				( 
 					  (prp p) 
-					& (P1+P2-True b)
-					& (nonfaulty p) 
+					& (nonfaulty p)  
+					& (P1+P2-True b) 
 					& (has-promises (als (config (rho T i)) p) b Q)
-					& (forall a . (inQ a Q) 
-						                ==> 
-		                                      (nonfaulty a) 
-			  		  )						 
+					& (all-inQ-NF Q)						 
 				)					 
 
 			&	(exists j .
@@ -5622,7 +5853,7 @@ extend-module Synod{
 	)	
 
 
-	(!prove Progress-Theorem-step2 [Progress-Theorem-step1 Main-Lemma2])
+	(!prove Progress-Theorem-step2 [Progress-Theorem-step1 Lemma2])
 
 
 	(!prove Progress-Theorem [Progress-Theorem-step1 Progress-Theorem-step2 synod-learn-def-axiom])

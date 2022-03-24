@@ -64,7 +64,7 @@ extend-module Synod{
 #-- Actor Fairness theory 
 
 	#-- The fair receive and fair send assumptions of the actor model
-	define fair-rcv :=
+	define F-Rcv-Axm :=
 			(forall x m T i .
 			        ((inMSet m (mu (config (rho T i)))) 
 			        & (ready-to (rho T i) x (receive x m)))  
@@ -87,7 +87,7 @@ extend-module Synod{
              )
 
 
-	define fair-snd :=
+	define F-Snd-Axm :=
 			(forall x m T i .
 			        (ready-to (rho T i) x (send x m))  
 		            	==>
@@ -106,8 +106,8 @@ extend-module Synod{
              )
 
 
-	define model-fair-axioms := [ fair-rcv 
-							      fair-snd
+	define model-fair-axioms := [ F-Rcv-Axm 
+							      F-Snd-Axm
 							    ]				
 
 
@@ -117,6 +117,7 @@ extend-module Synod{
 #-- Message Persistance Property
 
 	# Messages in the multiset persist until received (can be proven, but currently taking as an axiom)
+	# States that messages are not lost
 	define msg-persists-until-read :=
 			(forall T i a p typ b v .
 					(inMSet (consM p a typ b v) (mu (config (rho T i))))			

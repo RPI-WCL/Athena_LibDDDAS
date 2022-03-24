@@ -118,14 +118,22 @@ module Synod{
 	declare learn: (Actor, Configuration, Ballot) [Actor Configuration Ballot] -> Boolean
 
 
+	#-- Some syntactic sugar predicates
+	#-- all acceptors in queue are nonfaulty
+	declare all-inQ-NF: (Quorum) [Quorum] -> Boolean
+	#-- proposer ready to send 1a messages to all members of Q "(ready-to (rho T i) p (send p (consM p a 1a b nilV)))"
+	declare rdy2snd-1a-all-inQ: (Actor, Quorum, TP, Ballot) [Actor Quorum TP Ballot] -> Boolean
+	
+
 	#-- Declaring all constants and variables used in the rest of the proofs 
 	#-- There are four types of messages
 	declare 1a, 1b, 2a, 2b, failT : Type     
 
 	# -- Set of variables used throughout module Synod
-	define [p a x Q b bH b2 b3 v v2 v3 m m2 ms1 ms2 c s T i j k l y z w e f t u p2 a2 typ sender' recipient'] :=
+	define [p a a2 x Q b bH b2 b3 v v2 v3 m m2 ms1 ms2 c s T i j k l y z w e f t u p2 a2 typ sender' recipient'] :=
 																					 	        [   ?p:Actor 
 																					 	        	?a:Actor 
+																					 	        	?a2:Actor
 																					 	        	?x:Actor 
 																					 	        	?Q:Quorum 
 																					 	        	?b:Ballot 

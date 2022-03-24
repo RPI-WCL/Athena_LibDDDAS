@@ -48,7 +48,7 @@ extend-module Synod {
 	#-- Enabled definition
 	#-- True if \E Seq and config2 such that if Config1 Seq-> Config2 happens isTrue Predicate config2
 
-	define enabled-def :=
+	define Enabled-Def :=
 	(forall T i prd .
 		(
 			(enabled (config (rho T i)) prd) 
@@ -62,7 +62,7 @@ extend-module Synod {
 
 	#-- Predicate fairness
 
-	define fair-predicate :=
+	define F-Predicate-Axm :=
 	(forall T i prd .
 		( (enabled (config (rho T i)) prd) 
 				==> 
@@ -81,6 +81,29 @@ extend-module Synod {
 		)
 	)
 
+
+	#-- CNDPred definition with respect to CND
+	#-- True iff \E nonfaulty proposer ready to propose a nin-interrupting proposal to a nonfaulty quorum 
+
+	define Synod-Pred :=
+	(forall T i .
+		(
+			(isTrue CNDPred (config (rho T i))) 
+				<==> 
+					(exists p b Q .
+								  (prp p) 
+								& (P1+P2-True b)
+								& (nonfaulty p) 
+								& (forall a . (inQ a Q) 
+									                ==> 
+									                      (nonfaulty a) 
+									                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
+								  )
+					)
+		)
+	)
+
+
 	#-- A function that extracts the highest proposal number yet proposed until a configuration
 
 	declare highest : [Configuration] -> Ballot
@@ -91,7 +114,7 @@ extend-module Synod {
 	#-- either the predicate is true at j >= i 
 	# -- OR some proposer always becomes ready to propose the highest
 
-	define proposer-ready-IOE :=
+	define Prop-Retry :=
 	(forall T i .
 	   (exists p .
 				( 
@@ -130,9 +153,10 @@ extend-module Synod {
 	)
 
 
-	#-- CNDSeq satisfies the enabling condition if a highest proposer becomes ready at any time
+	#-- CNDSeq is the special witness sequence that satisfies the enabling condition 
+	#   every time a proposer becomes ready to propose the highest number yet
 
-	define highest-implies-enabled-CNDPred :=
+	define Wit-Seq :=
 	(forall T i . 
 		(
 			(exists p .
@@ -154,13 +178,16 @@ extend-module Synod {
 
 
 #---------------------------------------------------------------------------------------------------------------------------
-	assert enabled-def 
-	assert fair-predicate 
-	assert proposer-ready-IOE 
-	assert highest-implies-enabled-CNDPred
+# The assertions
+	assert Enabled-Def 
+	assert F-Predicate-Axm 
+	assert Prop-Retry 
+	assert Wit-Seq
+	assert Synod-Pred
 
 
 #---------------------------------------------------------------------------------------------------------------------------
+# The proofs 
 
 	define CNDSeq-CNDPred-rel :=
 	(forall T i . 
@@ -182,9 +209,9 @@ extend-module Synod {
 		)
 	)
 
-	(!prove CNDSeq-CNDPred-rel-step1 [enabled-def]) 
+	(!prove CNDSeq-CNDPred-rel-step1 [Enabled-Def]) 
 
-	(!prove CNDSeq-CNDPred-rel [CNDSeq-CNDPred-rel-step1 enabled-def])
+	(!prove CNDSeq-CNDPred-rel [CNDSeq-CNDPred-rel-step1 Enabled-Def])
 
 #---------------------------------------------------------------------------------------------------------------------------
 
@@ -249,7 +276,7 @@ define CNDPred-enabled-IOE :=
             
 	)
 
-	(!prove CNDPred-enabled-IOE-step1 [proposer-ready-IOE highest-implies-enabled-CNDPred])
+	(!prove CNDPred-enabled-IOE-step1 [Prop-Retry Wit-Seq])
 
 
 
@@ -282,7 +309,7 @@ define CNDPred-enabled-IOE :=
             
 	)
 
-	(!prove CNDPred-enabled-IOE-step2 [CNDPred-enabled-IOE-step1 enabled-def])
+	(!prove CNDPred-enabled-IOE-step2 [CNDPred-enabled-IOE-step1 Enabled-Def])
 
 
 	define CNDPred-enabled-IOE-step3 :=
@@ -321,7 +348,7 @@ define CNDPred-enabled-IOE :=
 	(!prove CNDPred-enabled-IOE [CNDPred-enabled-IOE-step3])	
 
 #---------------------------------------------------------------------------------------------------------------------------
-	define fair-predicate-CNDPred :=
+	define F-Predicate-Axm-CNDPred :=
 	(forall T i .
 		( (enabled (config (rho T i)) CNDPred) 
 				==> 
@@ -340,7 +367,7 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove fair-predicate-CNDPred [fair-predicate])
+	(!prove F-Predicate-Axm-CNDPred [F-Predicate-Axm])
 
 #---------------------------------------------------------------------------------------------------------------------------
 
@@ -400,7 +427,7 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-enabled-IOE-implies-true-step1 [fair-predicate-CNDPred])
+	(!prove CNDPred-enabled-IOE-implies-true-step1 [F-Predicate-Axm-CNDPred])
 
 	(!prove CNDPred-enabled-IOE-implies-true [CNDPred-enabled-IOE-implies-true-step1 CNDPred-enabled-IOE])
 
@@ -410,7 +437,7 @@ define CNDPred-enabled-IOE :=
 	
 	#-- In all paths, eventually some proposer becomes ready to propose the highest proposal number
 
-	define condition-for-CNDPred :=
+	define Some-Prp-Ready :=
 	(forall T .
 			   (exists i p .
 						( 
@@ -426,7 +453,7 @@ define CNDPred-enabled-IOE :=
 	)
 
 
-	assert condition-for-CNDPred
+	assert Some-Prp-Ready
 
 
 #---------------------------------------------------------------------------------------------------------------------------
@@ -437,9 +464,7 @@ define CNDPred-enabled-IOE :=
 	(forall T . 
 	   		( 
 				   (exists j . (isTrue CNDPred (config (rho T j))) )		   		 		    
-	    	) 	
-
-            
+	    	) 	       
 	)
 
 
@@ -463,7 +488,7 @@ define CNDPred-enabled-IOE :=
 		)									
 	)
 
-	(!prove CNDPred-happens-step1 [highest-implies-enabled-CNDPred])	
+	(!prove CNDPred-happens-step1 [Wit-Seq])	
 
 
 	define CNDPred-happens-step2 :=
@@ -485,7 +510,7 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-happens-step2 [CNDPred-happens-step1 condition-for-CNDPred])
+	(!prove CNDPred-happens-step2 [CNDPred-happens-step1 Some-Prp-Ready])
 
 
 	define CNDPred-happens-step3 :=
@@ -508,36 +533,10 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-happens-step3 [CNDPred-happens-step2 condition-for-CNDPred CNDSeq-CNDPred-rel])	
+	(!prove CNDPred-happens-step3 [CNDPred-happens-step2 Some-Prp-Ready CNDSeq-CNDPred-rel])	
 
 	(!prove CNDPred-happens [CNDPred-happens-step3 CNDPred-enabled-IOE-implies-true])	
 
-
-
-#---------------------------------------------------------------------------------------------------------------------------
-
-	#-- CNDPred definition
-	#-- True iff \E nonfaulty proposer ready to propose a nin-interrupting proposal to a nonfaulty quorum 
-
-	define CNDPred-def :=
-	(forall T i .
-		(
-			(isTrue CNDPred (config (rho T i))) 
-				<==> 
-					(exists p b Q .
-								  (prp p) 
-								& (P1+P2-True b)
-								& (nonfaulty p) 
-								& (forall a . (inQ a Q) 
-									                ==> 
-									                      (nonfaulty a) 
-									                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-								  )
-					)
-		)
-	)
-
-	assert CNDPred-def
 
 
 	#-- CND will be true
@@ -556,7 +555,7 @@ define CNDPred-enabled-IOE :=
 		)
 	)	
 
-	(!prove CND-True [CNDPred-def CNDPred-happens])	
+	(!prove CND-True [Synod-Pred CNDPred-happens])	
 
 
 }
