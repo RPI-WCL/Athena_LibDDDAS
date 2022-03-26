@@ -83,7 +83,7 @@ extend-module Synod {
 
 
 	#-- CNDPred definition with respect to CND
-	#-- True iff \E nonfaulty proposer ready to propose a nin-interrupting proposal to a nonfaulty quorum 
+	#-- True iff \E nonfaulty proposer ready to propose a non-interrupting proposal to a nonfaulty quorum 
 
 	define Synod-Pred :=
 	(forall T i .
@@ -91,14 +91,11 @@ extend-module Synod {
 			(isTrue CNDPred (config (rho T i))) 
 				<==> 
 					(exists p b Q .
-								  (prp p) 
-								& (P1+P2-True b)
-								& (nonfaulty p) 
-								& (forall a . (inQ a Q) 
-									                ==> 
-									                      (nonfaulty a) 
-									                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-								  )
+							  (prp p) # p is a proposer
+							& (nonfaulty p) # p is non-faulty					  
+							& (P1+P2-True b) # the proposal number b satisfies the non-interruption condition
+							& (   (all-inQ-NF Q) # all acceptors in Q are non-faulty
+								& (rdy2snd-1a-all-inQ p Q (rho T i) b)) # p is ready to send a 1a msg with number b to all acceptors in Q
 					)
 		)
 	)
@@ -175,6 +172,22 @@ extend-module Synod {
 		)
 	) 
 
+	
+	#-- In all paths, eventually some proposer becomes ready to propose the highest proposal number
+	define Some-Prp-Ready :=
+	(forall T .
+			   (exists i p .
+						( 
+							  (prp p) 
+							& (nonfaulty p) 
+							& (forall a . (inQ a Q) 
+								                ==> 
+								                      (nonfaulty a) 
+								                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
+							  )					
+						)
+				)	
+	)
 
 
 #---------------------------------------------------------------------------------------------------------------------------
@@ -183,6 +196,7 @@ extend-module Synod {
 	assert F-Predicate-Axm 
 	assert Prop-Retry 
 	assert Wit-Seq
+	assert Some-Prp-Ready
 	assert Synod-Pred
 
 
@@ -435,32 +449,9 @@ define CNDPred-enabled-IOE :=
 #---------------------------------------------------------------------------------------------------------------------------
 
 	
-	#-- In all paths, eventually some proposer becomes ready to propose the highest proposal number
-
-	define Some-Prp-Ready :=
-	(forall T .
-			   (exists i p .
-						( 
-							  (prp p) 
-							& (nonfaulty p) 
-							& (forall a . (inQ a Q) 
-								                ==> 
-								                      (nonfaulty a) 
-								                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-							  )					
-						)
-				)	
-	)
-
-
-	assert Some-Prp-Ready
-
-
-#---------------------------------------------------------------------------------------------------------------------------
-
-
-
-	define CNDPred-happens :=
+	#-- This theorem states that the predicate corresponding 
+	#-- to the conditions CND is eventually satisfied
+	define CNDPred-Theorem :=
 	(forall T . 
 	   		( 
 				   (exists j . (isTrue CNDPred (config (rho T j))) )		   		 		    
@@ -468,7 +459,7 @@ define CNDPred-enabled-IOE :=
 	)
 
 
-	define CNDPred-happens-step1 :=
+	define CNDPred-Theorem-step1 :=
 	(forall T i .
 		(
 		   (exists p .
@@ -488,10 +479,10 @@ define CNDPred-enabled-IOE :=
 		)									
 	)
 
-	(!prove CNDPred-happens-step1 [Wit-Seq])	
+	(!prove CNDPred-Theorem-step1 [Wit-Seq])	
 
 
-	define CNDPred-happens-step2 :=
+	define CNDPred-Theorem-step2 :=
 	(forall T .
 		(exists i .
 		   (exists p .
@@ -510,10 +501,10 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-happens-step2 [CNDPred-happens-step1 Some-Prp-Ready])
+	(!prove CNDPred-Theorem-step2 [CNDPred-Theorem-step1 Some-Prp-Ready])
 
 
-	define CNDPred-happens-step3 :=
+	define CNDPred-Theorem-step3 :=
 	(forall T .
 		(exists i .
 		   (exists p .
@@ -533,29 +524,26 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-happens-step3 [CNDPred-happens-step2 Some-Prp-Ready CNDSeq-CNDPred-rel])	
+	(!prove CNDPred-Theorem-step3 [CNDPred-Theorem-step2 Some-Prp-Ready CNDSeq-CNDPred-rel])	
 
-	(!prove CNDPred-happens [CNDPred-happens-step3 CNDPred-enabled-IOE-implies-true])	
+	(!prove CNDPred-Theorem [CNDPred-Theorem-step3 CNDPred-enabled-IOE-implies-true])	
 
 
 
 	#-- CND will be true
-
-	define CND-True :=
+	#-- (this step is just to expand CNDPred into CND)
+	define CND-eventually-true :=
 	(forall T .
 		(exists i p b Q .
-					  (prp p) 
-					& (P1+P2-True b)
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a b nilV)))
-					  )
+					  (prp p) # p is a proposer
+					& (nonfaulty p) # p is non-faulty					  
+					& (P1+P2-True b) # the proposal number b satisfies the non-interruption condition
+					& (   (all-inQ-NF Q) # all acceptors in Q are non-faulty
+						& (rdy2snd-1a-all-inQ p Q (rho T i) b)) # p is ready to send a 1a msg with number b to all acceptors in Q
 		)
 	)	
 
-	(!prove CND-True [Synod-Pred CNDPred-happens])	
+	(!prove CND-eventually-true [Synod-Pred CNDPred-Theorem])	
 
 
 }
