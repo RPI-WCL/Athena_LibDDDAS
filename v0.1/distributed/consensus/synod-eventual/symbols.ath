@@ -90,12 +90,22 @@ module Synod{
 	declare alpha_bar: (Configuration) [Configuration] -> ActorSet # gets the mapping of failed actors
 
 
+	#-- Domain of all predicate over configurations
+	domain Predicate  
+
+	#-- Function to check if a predicate is true at a configuration
+	declare isTrue : [Predicate Configuration] -> Boolean	
+
 	#-- Datatype of transition steps (create not needed for Synod proof)
 	datatype Step := (receive a:Actor m:Message) 
 	               | (send a:Actor m:Message) 
 	               | (create old:Actor new:Actor)
 	               | (stop a:Actor )
 	               | (start a:Actor ) # "begin" keyword taken in Athena
+
+	# datatype sequence (defined by a finite set of steps)
+	datatype Sequence :=   nilSeq
+						| (consSeq Sequence Step)
 
 
 	#-- Datatype of transition paths borrowed from Musser
@@ -121,16 +131,37 @@ module Synod{
 	#-- Some syntactic sugar predicates
 	#-- all acceptors in queue are nonfaulty
 	declare all-inQ-NF: (Quorum) [Quorum] -> Boolean
+
 	#-- proposer ready to send 1a messages to all members of Q "(ready-to (rho T i) p (send p (consM p a 1a b nilV)))"
 	declare rdy2snd-1a-all-inQ: (Actor, Quorum, TP, Ballot) [Actor Quorum TP Ballot] -> Boolean
-	
+
+	# function to signify that the sequence has happened
+	declare happensSeq : [Configuration Sequence] -> Boolean
+
+	# function to go from config --> config via a sequence
+	declare postSeq : [Configuration Sequence] -> Configuration
+
+	# function to check if predicate is enabled at a configuration
+	declare enabled : [Configuration Predicate] -> Boolean	
+
+	#-- A function that extracts the highest proposal number yet proposed until a configuration
+	declare highest : [Configuration] -> Ballot	
+
+	# function to check if predicate is enabled at a configuration
+	declare NF-p-rdy2snd-1a-highest-NF-Q : [Configuration Actor Quorum] -> Boolean	
 
 	#-- Declaring all constants and variables used in the rest of the proofs 
 	#-- There are four types of messages
 	declare 1a, 1b, 2a, 2b, failT : Type     
 
+	#-- a Synod specific predicate which implies that CND is true
+	declare CNDPred : Predicate # 
+
+	# the sequence which causes all higher numbered proposals to fail permanently
+	declare CNDSeq : Sequence
+
 	# -- Set of variables used throughout module Synod
-	define [p a a2 x Q b bH b2 b3 v v2 v3 m m2 ms1 ms2 c s T i j k l y z w e f t u p2 a2 typ sender' recipient'] :=
+	define [p a a2 x Q b bH b2 b3 v v2 v3 m m2 ms1 ms2 c s T i j k l y z w e f t u p2 a2 typ sender' recipient' cfg1 cfg2 prd sq] :=
 																					 	        [   ?p:Actor 
 																					 	        	?a:Actor 
 																					 	        	?a2:Actor
@@ -165,6 +196,10 @@ module Synod{
 																					   	        	?a2:Actor
 																					   	        	?typ:Type
 																					   	        	?sender':Actor
-																					   	        	?recipient':Actor  ]
+																					   	        	?recipient':Actor  
+																					   	        	?cfg1:Configuration 
+																					   	        	?cfg2:Configuration 
+																					   	        	?prd:Predicate 
+																					   	        	?sq:Sequence]
 
 }#close module Synod	

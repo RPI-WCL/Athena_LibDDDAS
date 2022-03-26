@@ -71,17 +71,13 @@ extend-module Synod{
 
 	define Snd-1b-Rul := 
 		(forall p T b i a . 
-			(acc a) ==>
-				( 
-					( (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
-					& ((beta (als (config (rho T i)) a)) < b) )
-						==> 
-							(
-								(available (rho T i) a)
-									==>
-										 (ready-to (rho T i) a (send a (consM a p 1b b (value (als (config (rho T i)) a))) ) )
-							)
-				) 
+			(   (acc a)	
+			  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+			  & ((beta (als (config (rho T i)) a)) < b) 
+			  & (available (rho T i) a))
+				==> 
+					 (ready-to (rho T i) a (send a (consM a p 1b b (value (als (config (rho T i)) a))) ) )
+
 		) 
 
 
@@ -90,19 +86,14 @@ extend-module Synod{
 
 	define Snd-2a-Rul := 
         (forall p T b i Q . 
-        	(prp p) ==>
-	            ( 
-					(has-promises (als (config (rho T i)) p) b  Q)
-	                    ==> 
-	                        (
-	                            (available (rho T i) p)
-	                                ==>
-	                                     ( (forall a .
-	                                            (inQ a Q) 
-	                                                ==> 
-	                                                   (ready-to (rho T i) p (send p (consM p a 2a b (decide-value (als (config (rho T i)) p)) ))) ) )
-	                        )
-	            ) 
+            	( (prp p)
+				& (has-promises (als (config (rho T i)) p) b  Q)
+				& (available (rho T i) p))
+                    ==> 
+                     ( (forall a .
+                            (inQ a Q) 
+                                ==> 
+                                   (ready-to (rho T i) p (send p (consM p a 2a b (decide-value (als (config (rho T i)) p)) ))) ) )
         )
 
 
@@ -114,18 +105,12 @@ extend-module Synod{
 
 	define Snd-2b-Rul := 
 		(forall p T b i a v . 
-			(acc a) ==>
-				( 
-					( (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
-					& ((beta (als (config (rho T i)) a)) =< b) )
+					( (acc a)
+					& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+					& ((beta (als (config (rho T i)) a)) =< b) 
+					& (available (rho T i) a))
 						==> 
-							(
-								(available (rho T i) a)
-									==>
-										 (ready-to (rho T i) a (send a (consM a p 2b b v) ) ) 
-							)
-
-				) 
+							 (ready-to (rho T i) a (send a (consM a p 2b b v) ) ) 
 		) 									  
 
 
@@ -140,9 +125,8 @@ extend-module Synod{
 
 	define Rcv-Rul :=
 		(forall T i sender' recipient' b typ v .
-				  (	
-					    (available (rho T i) recipient')
-					  & (inMSet (consM sender' recipient' typ b v) (mu (config (rho T i))))
+				  (	  (inMSet (consM sender' recipient' typ b v) (mu (config (rho T i))))
+					& (available (rho T i) recipient')  
 				  )
 					==>
 						(ready-to (rho T i) recipient' (receive recipient' (consM sender' recipient' typ b v)))

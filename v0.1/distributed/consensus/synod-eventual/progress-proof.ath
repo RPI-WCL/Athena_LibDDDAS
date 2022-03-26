@@ -87,10 +87,13 @@ extend-module Synod{
 		  )
 				==>
 					(forall p T b i v typ .
-					  	(  (inMSet (consM p a typ b v) (amu (als (config (rho T i)) a)))  
-					  	 & (   ((beta (als (config (rho T i)) a)) < b)
-                             | ((beta (als (config (rho T i)) a)) =< b)
-					  	   )	
+					  	(  
+							   (  (inMSet (consM p a 1a b v) (amu (als (config (rho T i)) a))) 
+							   	& ((beta (als (config (rho T i)) a)) < b)
+							   )    	
+							|  (  (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+							   	& ((beta (als (config (rho T i)) a)) =< b)
+							   )    	
                         )
 	        	  		  ==> (
 	        	  		  		  (available (rho T i) a)
@@ -138,18 +141,14 @@ extend-module Synod{
 				==>
 					(forall T i typ b v Q .
 						(
-							(forall a .
-								(inQ a Q) 
-									==> 
-										(exists j v . (inMSet (consM a p 1b b v) (amu (als (config (rho T j)) p))) )	       
-							)
-	        	  		  ==> (
-	        	  		  		  (available (rho T i) p)
+							(has-promises (als (config (rho T i)) p) b  Q)
+		        	  		  ==> (
+		        	  		  		  (available (rho T i) p)
 
-	    		    	  		| (exists j .
-                                             (i N.< j)
-	    		    	  				   & (available (rho T j) p))
-	    		    	  	  )			    
+		    		    	  		| (exists j .
+	                                             (i N.< j)
+		    		    	  				   & (available (rho T j) p))
+		    		    	  	  )			    
 	        	  		)  
 					)
 		) 
@@ -5758,10 +5757,10 @@ extend-module Synod{
 			& ((all-inQ-NF Q) & (rdy2snd-1a-all-inQ p Q (rho T i) b))
 		)	
 			==> 
-  							(exists j .
-  									  (i N.<= j)	
-						  			& (has-promises (als (config (rho T j)) p) b Q) 
-  							)
+				(exists j .
+						  (i N.<= j)	
+			  			& (has-promises (als (config (rho T j)) p) b Q) 
+				)
 	)
 
 	(!prove Lemma1 [Lemma1c])
@@ -5773,9 +5772,9 @@ extend-module Synod{
 		( 
 			  (prp p)
 			& (nonfaulty p)   
-			& (P1+P2-True b)
-			& (all-inQ-NF Q)			 
-			& (has-promises (als (config (rho T i)) p) b Q) 
+			& (P1+P2-True b)			 
+			& (has-promises (als (config (rho T i)) p) b Q)
+			& (all-inQ-NF Q) 
 		)
 			==> 
 				(exists j .

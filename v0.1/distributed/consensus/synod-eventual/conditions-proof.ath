@@ -12,38 +12,6 @@ load "Athena_LibDDDAS/distributed/consensus/synod-eventual/methods.ath"
 
 extend-module Synod { 
 
-	#-- Domain of all predicate over configurations
-
-	domain Predicate  
-
-	declare CNDPred : Predicate # a Synod specific predicate  
-
-	#-- Function to check if a predicate is true at a configuration
-
-	declare isTrue : [Predicate Configuration] -> Boolean
-
-	# datatype sequence (defined by a finite set of steps)
-
-	datatype Sequence :=   nilSeq
-						| (consSeq Sequence Step)
-
-	# the sequence which causes all higher numbered proposals to fail permanently
-
-	declare CNDSeq : Sequence
-
-	# function to signify that the sequence has happened
-
-	declare happensSeq : [Configuration Sequence] -> Boolean
-
-	# function to go from config --> config via a sequence
-
-	declare postSeq : [Configuration Sequence] -> Configuration
-
-	# function to check if predicate is enabled at a configuration
-
-	declare enabled : [Configuration Predicate] -> Boolean	
-
-	define [cfg1 cfg2 prd sq] := [?cfg1:Configuration ?cfg2:Configuration ?prd:Predicate ?sq:Sequence]
 
 	#-- Enabled definition
 	#-- True if \E Seq and config2 such that if Config1 Seq-> Config2 happens isTrue Predicate config2
@@ -54,7 +22,11 @@ extend-module Synod {
 			(enabled (config (rho T i)) prd) 
 				<==> 
 					(exists sq . 
-								((happensSeq (config (rho T i)) sq) ==> (exists j . (((postSeq (config (rho T i)) sq) = (config (rho T j))) & (isTrue prd (config (rho T j))))))
+						((happensSeq (config (rho T i)) sq) 
+							==> 
+							(exists j . 
+								(  ((postSeq (config (rho T i)) sq) = (config (rho T j))) 
+								 & (isTrue prd (config (rho T j))))))
 					)
 		)
 	)  
@@ -65,19 +37,19 @@ extend-module Synod {
 	define F-Predicate-Axm :=
 	(forall T i prd .
 		( (enabled (config (rho T i)) prd) 
-				==> 
-					(
-	            		  (exists j . (i N.<= j) 
-	            		   			& (isTrue prd (config (rho T j))) )
-	            	    | (exists k . (i N.< k)
-	            	    			& (forall j .
-	            	    			   (k N.<= j)
-	            	    			     ==>
-	            	    			     	(~(enabled (config (rho T j)) prd))
-	            	    			  )
+			==> 
+				(
+        		  (exists j . (i N.<= j) 
+        		   			& (isTrue prd (config (rho T j))) )
+        	    | (exists k . (i N.< k)
+        	    			& (forall j .
+        	    			   (k N.<= j)
+        	    			     ==>
+        	    			     	(~(enabled (config (rho T j)) prd))
+        	    			  )
 
-	            	       )		
-					)
+        	       )		
+				)
 		)
 	)
 
@@ -87,23 +59,38 @@ extend-module Synod {
 
 	define Synod-Pred :=
 	(forall T i .
-		(
-			(isTrue CNDPred (config (rho T i))) 
-				<==> 
-					(exists p b Q .
-							  (prp p) # p is a proposer
-							& (nonfaulty p) # p is non-faulty					  
-							& (P1+P2-True b) # the proposal number b satisfies the non-interruption condition
-							& (   (all-inQ-NF Q) # all acceptors in Q are non-faulty
-								& (rdy2snd-1a-all-inQ p Q (rho T i) b)) # p is ready to send a 1a msg with number b to all acceptors in Q
-					)
-		)
+	(
+		(isTrue CNDPred (config (rho T i))) 
+			<==> 
+				(exists p b Q .
+						  (prp p) # p is a proposer
+						& (nonfaulty p) # p is non-faulty					  
+						& (P1+P2-True b) # the proposal number b satisfies the non-interruption condition
+						& (   (all-inQ-NF Q) # all acceptors in Q are non-faulty
+							& (rdy2snd-1a-all-inQ p Q (rho T i) b)) # p is ready to send a 1a msg with number b to all acceptors in Q
+				)
+	)
 	)
 
 
-	#-- A function that extracts the highest proposal number yet proposed until a configuration
+	#-- definition of the Syntactic sugar predicate states that
+	#-- the proposer p is nonfaulty,
+	#-- the quorum Q is nonfaulty
+	#--  p is ready to send the highest to Q at i
+	define NF-p-rdy2snd-1a-highest-NF-Q-def := 
+	(forall T i p Q .
+	   (
+	   	(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
+	   		<==>
+				( 
+					  (prp p) 
+					& (nonfaulty p) 
+					& (all-inQ-NF Q) 
+					& (rdy2snd-1a-all-inQ p Q (rho T i) (highest (config (rho T i)))) 
+				)
+		)
+    )
 
-	declare highest : [Configuration] -> Ballot
 
 	#-- Enabled IOE. Needs to be defined in terms of CNDPred. Need to conect CNDPred to CND and CND to proposer ready to propose highest
 
@@ -113,16 +100,8 @@ extend-module Synod {
 
 	define Prop-Retry :=
 	(forall T i .
-	   (exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   (exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 			==>		
 				(
@@ -132,16 +111,8 @@ extend-module Synod {
 			    				==>
 			    				(exists j .
 		    	    				    (k N.<= j) 
-									&	(exists p .
-												( 
-													  (prp p) 
-													& (nonfaulty p) 
-													& (forall a . (inQ a Q) 
-														                ==> 
-														                      (nonfaulty a) 
-														                    & (ready-to (rho T j) p (send p (consM p a 1a (highest (config (rho T j))) nilV)))
-													  )					
-												)
+									&	(exists p Q .
+												(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T j)) p Q)
 										)
 		    	    			)
 			    	) 	
@@ -156,19 +127,15 @@ extend-module Synod {
 	define Wit-Seq :=
 	(forall T i . 
 		(
-			(exists p .
-					( 
-						  (prp p) 
-						& (nonfaulty p) 
-						& (forall a . (inQ a Q) 
-							                ==> 
-							                      (nonfaulty a) 
-							                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-						  )					
-					)
+			(exists p Q .
+					(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 			)
 				==>
-					((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
+					((happensSeq (config (rho T i)) CNDSeq) 
+						==> 
+						(exists j .  
+							(   ((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) 
+							  & (isTrue CNDPred (config (rho T j))))))
 		)
 	) 
 
@@ -176,16 +143,8 @@ extend-module Synod {
 	#-- In all paths, eventually some proposer becomes ready to propose the highest proposal number
 	define Some-Prp-Ready :=
 	(forall T .
-			   (exists i p .
-						( 
-							  (prp p) 
-							& (nonfaulty p) 
-							& (forall a . (inQ a Q) 
-								                ==> 
-								                      (nonfaulty a) 
-								                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-							  )					
-						)
+			   (exists i p Q .
+						(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 				)	
 	)
 
@@ -198,7 +157,7 @@ extend-module Synod {
 	assert Wit-Seq
 	assert Some-Prp-Ready
 	assert Synod-Pred
-
+	assert NF-p-rdy2snd-1a-highest-NF-Q-def
 
 #---------------------------------------------------------------------------------------------------------------------------
 # The proofs 
@@ -223,7 +182,7 @@ extend-module Synod {
 		)
 	)
 
-	(!prove CNDSeq-CNDPred-rel-step1 [Enabled-Def]) 
+	(!prove CNDSeq-CNDPred-rel-step1 [Enabled-Def NF-p-rdy2snd-1a-highest-NF-Q-def]) 
 
 	(!prove CNDSeq-CNDPred-rel [CNDSeq-CNDPred-rel-step1 Enabled-Def])
 
@@ -231,16 +190,8 @@ extend-module Synod {
 
 define CNDPred-enabled-IOE :=
 	(forall T i . 
-	   ((exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   ((exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 	   	& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
 	   	& (enabled (config (rho T i)) CNDPred) )
@@ -263,16 +214,8 @@ define CNDPred-enabled-IOE :=
 
 	define CNDPred-enabled-IOE-step1 :=
 	(forall T i .
-	   ((exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   ((exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 	   	& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j)))))))
 			==>		
@@ -290,22 +233,14 @@ define CNDPred-enabled-IOE :=
             
 	)
 
-	(!prove CNDPred-enabled-IOE-step1 [Prop-Retry Wit-Seq])
+	(!prove CNDPred-enabled-IOE-step1 [Prop-Retry Wit-Seq NF-p-rdy2snd-1a-highest-NF-Q-def])
 
 
 
 	define CNDPred-enabled-IOE-step2 :=
 	(forall T i .
-	   ((exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   ((exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 	   	& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j)))))))
 			==>		
@@ -323,21 +258,13 @@ define CNDPred-enabled-IOE :=
             
 	)
 
-	(!prove CNDPred-enabled-IOE-step2 [CNDPred-enabled-IOE-step1 Enabled-Def])
+	(!prove CNDPred-enabled-IOE-step2 [CNDPred-enabled-IOE-step1 Enabled-Def NF-p-rdy2snd-1a-highest-NF-Q-def])
 
 
 	define CNDPred-enabled-IOE-step3 :=
 	(forall T i .
-	   ((exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   ((exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 	   	& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
 	   	& (enabled (config (rho T i)) CNDPred) )
@@ -356,10 +283,10 @@ define CNDPred-enabled-IOE :=
             
 	)
 
-	(!prove CNDPred-enabled-IOE-step3 [CNDPred-enabled-IOE-step2 CNDSeq-CNDPred-rel])
+	(!prove CNDPred-enabled-IOE-step3 [CNDPred-enabled-IOE-step2 CNDSeq-CNDPred-rel NF-p-rdy2snd-1a-highest-NF-Q-def])
 
 
-	(!prove CNDPred-enabled-IOE [CNDPred-enabled-IOE-step3])	
+	(!prove CNDPred-enabled-IOE [CNDPred-enabled-IOE-step3 NF-p-rdy2snd-1a-highest-NF-Q-def])	
 
 #---------------------------------------------------------------------------------------------------------------------------
 	define F-Predicate-Axm-CNDPred :=
@@ -387,16 +314,8 @@ define CNDPred-enabled-IOE :=
 
 	define CNDPred-enabled-IOE-implies-true :=
 	(forall T i .
-	   ((exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   ((exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 	   	& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
 	   	& (enabled (config (rho T i)) CNDPred) )
@@ -412,16 +331,8 @@ define CNDPred-enabled-IOE :=
 	define CNDPred-enabled-IOE-implies-true-step1 :=
 	(forall T i .
 	(
-	   ((exists p .
-				( 
-					  (prp p) 
-					& (nonfaulty p) 
-					& (forall a . (inQ a Q) 
-						                ==> 
-						                      (nonfaulty a) 
-						                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-					  )					
-				)
+	   ((exists p Q .
+				(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 		)
 	   	& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j .  (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
 	   	& (enabled (config (rho T i)) CNDPred) )			
@@ -441,9 +352,9 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-enabled-IOE-implies-true-step1 [F-Predicate-Axm-CNDPred])
+	(!prove CNDPred-enabled-IOE-implies-true-step1 [F-Predicate-Axm-CNDPred NF-p-rdy2snd-1a-highest-NF-Q-def])
 
-	(!prove CNDPred-enabled-IOE-implies-true [CNDPred-enabled-IOE-implies-true-step1 CNDPred-enabled-IOE])
+	(!prove CNDPred-enabled-IOE-implies-true [CNDPred-enabled-IOE-implies-true-step1 CNDPred-enabled-IOE NF-p-rdy2snd-1a-highest-NF-Q-def])
 
 
 #---------------------------------------------------------------------------------------------------------------------------
@@ -462,16 +373,8 @@ define CNDPred-enabled-IOE :=
 	define CNDPred-Theorem-step1 :=
 	(forall T i .
 		(
-		   (exists p .
-					( 
-						  (prp p) 
-						& (nonfaulty p) 
-						& (forall a . (inQ a Q) 
-							                ==> 
-							                      (nonfaulty a) 
-							                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-						  )					
-					)
+		   (exists p Q .
+					(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 			)
 				
 		==> 
@@ -479,44 +382,28 @@ define CNDPred-enabled-IOE :=
 		)									
 	)
 
-	(!prove CNDPred-Theorem-step1 [Wit-Seq])	
+	(!prove CNDPred-Theorem-step1 [Wit-Seq NF-p-rdy2snd-1a-highest-NF-Q-def])	
 
 
 	define CNDPred-Theorem-step2 :=
 	(forall T .
 		(exists i .
-		   (exists p .
-					( 
-						  (prp p) 
-						& (nonfaulty p) 
-						& (forall a . (inQ a Q) 
-							                ==> 
-							                      (nonfaulty a) 
-							                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-						  )					
-					)
+		   (exists p Q .
+					(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 			)
 
 			& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j . (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
 		)
 	)
 
-	(!prove CNDPred-Theorem-step2 [CNDPred-Theorem-step1 Some-Prp-Ready])
+	(!prove CNDPred-Theorem-step2 [CNDPred-Theorem-step1 Some-Prp-Ready NF-p-rdy2snd-1a-highest-NF-Q-def])
 
 
 	define CNDPred-Theorem-step3 :=
 	(forall T .
 		(exists i .
-		   (exists p .
-					( 
-						  (prp p) 
-						& (nonfaulty p) 
-						& (forall a . (inQ a Q) 
-							                ==> 
-							                      (nonfaulty a) 
-							                    & (ready-to (rho T i) p (send p (consM p a 1a (highest (config (rho T i))) nilV)))
-						  )					
-					)
+		   (exists p Q .
+					(NF-p-rdy2snd-1a-highest-NF-Q (config (rho T i)) p Q)
 			)
 
 			& ((happensSeq (config (rho T i)) CNDSeq) ==> (exists j . (((postSeq (config (rho T i)) CNDSeq) = (config (rho T j))) & (isTrue CNDPred (config (rho T j))))))
@@ -524,9 +411,9 @@ define CNDPred-enabled-IOE :=
 		)
 	)
 
-	(!prove CNDPred-Theorem-step3 [CNDPred-Theorem-step2 Some-Prp-Ready CNDSeq-CNDPred-rel])	
+	(!prove CNDPred-Theorem-step3 [CNDPred-Theorem-step2 Some-Prp-Ready CNDSeq-CNDPred-rel NF-p-rdy2snd-1a-highest-NF-Q-def])	
 
-	(!prove CNDPred-Theorem [CNDPred-Theorem-step3 CNDPred-enabled-IOE-implies-true])	
+	(!prove CNDPred-Theorem [CNDPred-Theorem-step3 CNDPred-enabled-IOE-implies-true NF-p-rdy2snd-1a-highest-NF-Q-def])	
 
 
 
