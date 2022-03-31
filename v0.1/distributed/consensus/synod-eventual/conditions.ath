@@ -34,10 +34,10 @@ extend-module Synod{
 						 | (inMSet (consM a p typ b v) (mu (config (rho T i))) ) 	        	   		  	  
 						)		
 	        	  		  ==> (
-	        	  		  		  (available (rho T i) p)
+	        	  		  		  (available (config (rho T i)) p)
 	    		    	  		| (exists j .
                                              (i N.< j)
-	    		    	  				   & (available (rho T j) p))
+	    		    	  				   & (available (config (rho T j)) p))
 	    		    	  	  )			    
 					)
 		) 
@@ -63,11 +63,11 @@ extend-module Synod{
 
                         )	  		  	       
 	        	  		  ==> (
-	        	  		  		  (available (rho T i) a)
+	        	  		  		  (available (config (rho T i)) a)
 
 	    		    	  		| (exists j .
                                              (i N.< j)
-	    		    	  				   & (available (rho T j) a))
+	    		    	  				   & (available (config (rho T j)) a))
 	    		    	  	  )		
 					)
 		) 

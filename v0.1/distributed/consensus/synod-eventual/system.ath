@@ -16,7 +16,7 @@ extend-module Synod{
 	#-- An actor is available iff it it in the alpha set of the configuration
 	define availability-axiom :=
 		(forall T i x .
-			(available (rho T i) x)
+			(available (config (rho T i)) x)
 				<==> 
 					(inASet x (alpha (config (rho T i))))
 		)
@@ -30,7 +30,7 @@ extend-module Synod{
 		(forall T i x s .
 			(ready-to (rho T i) x s)
 				==> 
-					(available (rho T i) x)
+					(available (config (rho T i)) x)
 		)
 
 #----------------------------------------------------------------------------

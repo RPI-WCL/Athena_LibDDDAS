@@ -115,7 +115,7 @@ module Synod{
 
 	declare config :  [TP ] -> Configuration # last configuration in a given path
 	declare ready-to : [TP  Actor Step] -> Boolean # if actor is ready to perform some step in the last configuration in a given path
-	declare available :  [TP  Actor] -> Boolean # if actor is available in last configuration in a given path 
+	declare available :  [Configuration  Actor] -> Boolean # if actor is available in a configuration 
 
 
 	#-- The following creates a sub-transition path upto the given index

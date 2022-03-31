@@ -38,8 +38,9 @@ extend-module Synod{
 	assert symbol-defs
 
 
-	#SANITY CHECK: With high probability, there is no contradiction in the assertions! -- FAILS
-	#(!prove false [model-fair-axioms model-step-axioms msg-persists-until-read synod-quorum-axioms Snd-Ruls Rcv-Rul synod-state-axioms synod-has-promises-def-axiom synod-has-votes-def-axiom synod-learn-def-axiom nonfaulty-def-axioms P1-P2-Def])
+
+
+
 
 
 #---------------------------------------------------------------------------- 
@@ -66,11 +67,11 @@ extend-module Synod{
 
 	  		  	       (inMSet (consM p a typ b v) (mu (config (rho T i))))
 	        	  		  ==> (
-	        	  		  		  (available (rho T i) a)
+	        	  		  		  (available (config (rho T i)) a)
 
 	    		    	  		| (exists j .
                                              (i N.< j)
-	    		    	  				   & (available (rho T j) a))
+	    		    	  				   & (available (config (rho T j)) a))
 	    		    	  	  )		
 					)
 		) 
@@ -96,11 +97,11 @@ extend-module Synod{
 							   )    	
                         )
 	        	  		  ==> (
-	        	  		  		  (available (rho T i) a)
+	        	  		  		  (available (config (rho T i)) a)
 
 	    		    	  		| (exists j .
                                              (i N.< j)
-	    		    	  				   & (available (rho T j) a))
+	    		    	  				   & (available (config (rho T j)) a))
 	    		    	  	  )			    
 					)
 		) 
@@ -119,11 +120,11 @@ extend-module Synod{
         	   		  	  (inMSet (consM a p typ b v) (mu (config (rho T i))) )
 		
 	        	  		  ==> (
-	        	  		  		  (available (rho T i) p)
+	        	  		  		  (available (config (rho T i)) p)
 
 	    		    	  		| (exists j .
                                              (i N.< j)
-	    		    	  				   & (available (rho T j) p))
+	    		    	  				   & (available (config (rho T j)) p))
 	    		    	  	  )			    
 					)
 		) 
@@ -143,11 +144,11 @@ extend-module Synod{
 						(
 							(has-promises (als (config (rho T i)) p) b  Q)
 		        	  		  ==> (
-		        	  		  		  (available (rho T i) p)
+		        	  		  		  (available (config (rho T i)) p)
 
 		    		    	  		| (exists j .
 	                                             (i N.< j)
-		    		    	  				   & (available (rho T j) p))
+		    		    	  				   & (available (config (rho T j)) p))
 		    		    	  	  )			    
 	        	  		)  
 					)
@@ -953,7 +954,7 @@ extend-module Synod{
 	define synod-ready-to-receive-lemma1a :=
 		(forall T i b p a .
 				  (	
-					   (available (rho T i) a)
+					   (available (config (rho T i)) a)
 					  & (inMSet (consM p a 1a b nilV) (mu (config (rho T i))))
 				  )
 					==>
@@ -966,7 +967,7 @@ extend-module Synod{
 	define synod-ready-to-receive-lemma1b :=
 		(forall T i b v p a .
 				  (	
-					    (available (rho T i) p)
+					    (available (config (rho  T i)) p)
 					  & (inMSet (consM a p 1b b v) (mu (config (rho T i))))
 				  )
 					==>
@@ -980,7 +981,7 @@ extend-module Synod{
 	define synod-ready-to-receive-lemma2a :=
 		(forall T i b v p a .
 				  (	
-					    (available (rho T i) a)
+					    (available (config (rho T i )) a)
 					  & (inMSet (consM p a 2a b v) (mu (config (rho T i))))
 				  )
 					==>
@@ -994,7 +995,7 @@ extend-module Synod{
 	define synod-ready-to-receive-lemma2b :=
 		(forall T i b p a v .
 				  (	
-					    (available (rho T i) p)
+					    (available (config (rho T i )) p)
 					  & (inMSet (consM a p 2b b v) (mu (config (rho T i))))
 				  )
 					==>
@@ -1305,11 +1306,11 @@ extend-module Synod{
 							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 				        	  		      & (
-				        	  		  		  (available (rho T j) a)
+				        	  		  		  (available (config (rho T j )) a)
 
 				    		    	  		| (exists k .
 			                                             (j N.< k)
-				    		    	  				   & (available (rho T k) a))
+				    		    	  				   & (available (config (rho T k )) a))
 				    		    	  	    )	 
 							    )	       
 					)	
@@ -1342,12 +1343,12 @@ extend-module Synod{
 							        	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 				        	  		      & (
 				        	  		      	  (
-					        	  		      	  	(available (rho T j) a)
+					        	  		      	  	(available (config (rho T j )) a)
 					        	  		      	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))	
 				        	  		      	  )
 				    		    	  		| (exists k .
 			                                             (j N.<= k)
-				    		    	  				   & (available (rho T k) a)
+				    		    	  				   & (available (config (rho T k )) a)
 				    		    	  		  )
 				    		    	  	    )							        	  	 
 							    )	       
@@ -1380,12 +1381,12 @@ extend-module Synod{
 							        	  #& (= (rho T j) (then (rho T i) (send p (consM p a 1a b nilV))))
 				        	  		      & (
 				        	  		      	  (
-					        	  		      	  	(available (rho T j) a)
+					        	  		      	  	(available (config (rho T j )) a)
 					        	  		      	  & (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))	
 				        	  		      	  )
 				    		    	  		| (exists k .
 			                                             (j N.<= k)
-				    		    	  				   & (available (rho T k) a)
+				    		    	  				   & (available (config (rho T k )) a)
    													   & (
 					            	    		  		  (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 														| (exists l . (   (j N.<= l) 
@@ -1428,7 +1429,7 @@ extend-module Synod{
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 							        	  		  	& (nonfaulty a)
 							        	  		  	& (acc a)
-							        	  		  	& (available (rho T j) a)
+							        	  		  	& (available (config (rho T j )) a)
 							        	  		  )	
 
 							        	  		| (exists k . (j N.<= k)
@@ -1440,7 +1441,7 @@ extend-module Synod{
 							            	    		  		 #& (~(lock (als (config (rho T k)) a)))
 							            	    		  		 & (nonfaulty a)
 							            	    		  		 & (acc a)
-							            	    		  		 & (available (rho T k) a)  
+							            	    		  		 & (available (config (rho T k )) a)  
 							            	    		  		 )
 
 																| (exists l . (   (j N.<= l) 
@@ -1484,7 +1485,7 @@ extend-module Synod{
 							        	  		  (   #(~(lock (als (config (rho T j)) a)))
 							        	  		  	  (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 							        	  		  	& (nonfaulty a)
-							        	  		  	& (available (rho T j) a)
+							        	  		  	& (available (config (rho T j )) a)
 							        	  		  )	
 
 							        	  		| (exists k . (j N.<= k)
@@ -1495,7 +1496,7 @@ extend-module Synod{
 							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 							            	    		  		 #& (~(lock (als (config (rho T k)) a)))
 							            	    		  		 & (nonfaulty a)
-							            	    		  		 & (available (rho T k) a)  
+							            	    		  		 & (available (config (rho T k )) a)  
 							            	    		  		 )
 
 																| (exists l . (   (j N.<= l) 
@@ -1538,7 +1539,7 @@ extend-module Synod{
 							        	  		  (  # (~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 							        	  		  	& (nonfaulty a)
-							        	  		  	& (available (rho T j) a)
+							        	  		  	& (available (config (rho T j )) a)
 							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
 							        	  		  )	
 
@@ -1550,7 +1551,7 @@ extend-module Synod{
 							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 							            	    		  		# & (~(lock (als (config (rho T k)) a)))
 							            	    		  		 & (nonfaulty a)
-							            	    		  		 & (available (rho T k) a)
+							            	    		  		 & (available (config (rho T k )) a)
 							            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV)))  
 							            	    		  		 )
 
@@ -1595,7 +1596,7 @@ extend-module Synod{
 							        	  		  (  # (~(lock (als (config (rho T j)) a)))
 							        	  		  	 (inMSet (consM p a 1a b nilV) (mu (config (rho T j))))
 							        	  		  	& (nonfaulty a)
-							        	  		  	& (available (rho T j) a)
+							        	  		  	& (available (config (rho T j )) a)
 							        	  		  	& (ready-to (rho T j) a (receive a (consM p a 1a b nilV)))
 						            	    		& (exists z .
 		            	    		  	      			  (j N.<= z) 
@@ -1611,7 +1612,7 @@ extend-module Synod{
 							            	    		  		   (inMSet (consM p a 1a b nilV) (mu (config (rho T k))))
 							            	    		  		# & (~(lock (als (config (rho T k)) a)))
 							            	    		  		 & (nonfaulty a)
-							            	    		  		 & (available (rho T k) a)
+							            	    		  		 & (available (config (rho T k )) a)
 							            	    		  		 & (ready-to (rho T k) a (receive a (consM p a 1a b nilV)))
 										            	    		 & (
 							            	    		  	      			  (k N.<= y) 
@@ -1992,7 +1993,7 @@ extend-module Synod{
 									       & (acc a)
 									       & ((beta (als (config (rho T j)) a)) < b)
 									       & (
-												(available (rho T j) a)
+												(available (config (rho T j )) a)
 													==>
 														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 									       	 )
@@ -2029,9 +2030,9 @@ extend-module Synod{
 									       & (acc a)
 									       & ((beta (als (config (rho T j)) a)) < b)
 									       & (nonfaulty a)
-									       #& (available (rho T j) a)
+									       #& (available (config (rho T j )) a)
 									       & (
-												(available (rho T j) a)
+												(available (config (rho T j )) a)
 													==>
 														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 									       	 )
@@ -2067,14 +2068,14 @@ extend-module Synod{
 									       & (acc a)
 									       & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       & (
-					        	  		  		  (available (rho T j) a)
+					        	  		  		  (available (config (rho T j )) a)
 
 					    		    	  		| (exists k .
 				                                             (j N.< k)
-					    		    	  				   & (available (rho T k) a))
+					    		    	  				   & (available (config (rho T k )) a))
 				    		    	  	     )
 									       & (
-												(available (rho T j) a)
+												(available (config (rho T j )) a)
 													==>
 														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 									       	 )
@@ -2110,16 +2111,16 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       & (
 										         (
-													(available (rho T j) a)
+													(available (config (rho T j )) a)
 												  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 										       	 )
 
 					    		    	  		| (exists k .
 				                                             (j N.< k)
-					    		    	  				   & (available (rho T k) a))
+					    		    	  				   & (available (config (rho T k )) a))
 				    		    	  	     )
 									       & (
-												(available (rho T j) a)
+												(available (config (rho T j )) a)
 													==>
 														 (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 									       	 )
@@ -2154,14 +2155,14 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       & (
 				        	  		       		(
-				        	  		       			(available (rho T j) a)
+				        	  		       			(available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )	
 
 				        	  		       	    )
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
 				                                           & (i N.<= k)  
-					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (available (config (rho T k )) a)
 					    		    	  		  )
 				    		    	  	     )			        	  		       
 									       	 
@@ -2196,14 +2197,14 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       & (
 				        	  		       		(
-				        	  		       			(available (rho T j) a)
+				        	  		       			(available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )	
 
 				        	  		       	    )
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
 				                                           & (i N.<= k)  
-					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (available (config (rho T k )) a)
 					    		    	  				   & (
 					    		    	  				   	      (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 
@@ -2251,7 +2252,7 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       & (
 				        	  		       		(
-				        	  		       			(available (rho T j) a)
+				        	  		       			(available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )	
 
 				        	  		       	    )
@@ -2260,7 +2261,7 @@ extend-module Synod{
 				                                           & (i N.<= k)  
 					    		    	  				   & (
 					    		    	  				   	      (
-								    		    	  				     (available (rho T k) a)
+								    		    	  				     (available (config (rho T k )) a)
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 					    		    	  				   	      )
@@ -2305,7 +2306,7 @@ extend-module Synod{
 							  & (exists j . 
 				        	  		         (
 				        	  		       		(   (i N.<= j)
-				        	  		       		  & (available (rho T j) a)
+				        	  		       		  & (available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
@@ -2316,7 +2317,7 @@ extend-module Synod{
 				                                           & (i N.<= k)  
 					    		    	  				   & (
 					    		    	  				   	      (
-								    		    	  				     (available (rho T k) a)
+								    		    	  				     (available (config (rho T k )) a)
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
@@ -2362,7 +2363,7 @@ extend-module Synod{
 							  & ( 
 				        	  		         (exists j .
 				        	  		       		(   (i N.<= j)
-				        	  		       		  & (available (rho T j) a)
+				        	  		       		  & (available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
@@ -2373,7 +2374,7 @@ extend-module Synod{
 				                                           & (i N.<= k)  
 					    		    	  				   & (
 					    		    	  				   	      (
-								    		    	  				     (available (rho T k) a)
+								    		    	  				     (available (config (rho T k )) a)
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
@@ -2420,7 +2421,7 @@ extend-module Synod{
 							  & ( 
 				        	  		         (exists j y .
 				        	  		       		(   (i N.<= j)
-				        	  		       		  & (available (rho T j) a)
+				        	  		       		  & (available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
@@ -2432,7 +2433,7 @@ extend-module Synod{
 				                                           & (i N.<= k)  
 					    		    	  				   & (
 					    		    	  				   	      (
-								    		    	  				     (available (rho T k) a)
+								    		    	  				     (available (config (rho T k )) a)
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
@@ -2482,7 +2483,7 @@ extend-module Synod{
 							  & ( 
 				        	  		         (exists j y .
 				        	  		       		(   (i N.<= j)
-				        	  		       		  & (available (rho T j) a)
+				        	  		       		  & (available (config (rho T j )) a)
 				        	  		       		  & (ready-to (rho T j) a (send a (consM a p 1b b (value (als (config (rho T j)) a))) ) )
 				        	  		       		  & ((beta (als (config (rho T j)) a)) < b)
 				        	  		       		  & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T j)) a)))	
@@ -2494,7 +2495,7 @@ extend-module Synod{
 				                                           & (i N.<= k)  
 					    		    	  				   & (
 					    		    	  				   	      (
-								    		    	  				     (available (rho T k) a)
+								    		    	  				     (available (config (rho T k )) a)
 								    		    	  				   & (inMSet (consM p a 1a b nilV) (amu (als (config (rho T k)) a)))
 								    		    	  				   & ((beta (als (config (rho T k)) a)) < b)
 								    		    	  				   & (ready-to (rho T k) a (send a (consM a p 1b b (value (als (config (rho T k)) a))) ) )
@@ -2737,11 +2738,11 @@ extend-module Synod{
 											 (i N.<= k) 
 				            	    	   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
 				        	  		       & (
-					        	  		  		  (available (rho T k) p)
+					        	  		  		  (available (config (rho T k )) p)
 
 					    		    	  		| (exists j .
 				                                             (k N.< j)
-					    		    	  				   & (available (rho T j) p))
+					    		    	  				   & (available (config (rho T j )) p))
 				    		    	  	     )				            	    		     									             	 
 								  )         
 					)	
@@ -2775,14 +2776,14 @@ extend-module Synod{
 				            	    	   & (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
 				        	  		       & (
 				        	  		       		  (
-				        	  		       		  	  (available (rho T k) p)	
+				        	  		       		  	  (available (config (rho T k )) p)	
 				        	  		       		  	& (inMSet (consM a p 1b b v) (mu (config (rho T k))) )	
 				        	  		       		  )
 					        	  		  		  
 
 					    		    	  		| (exists j .
 				                                             (k N.<= j)
-					    		    	  				   & (available (rho T j) p)
+					    		    	  				   & (available (config (rho T j )) p)
 					    		    	  		  )
 				    		    	  	     )
 
@@ -2817,13 +2818,13 @@ extend-module Synod{
 										   & (inMSet (consM a p 1b b v) (mu (config (rho T k))))	  
 				        	  		       & (
 				        	  		       		  (
-				        	  		       		  	  (available (rho T k) p)	
+				        	  		       		  	  (available (config (rho T k )) p)	
 				        	  		       		  	& (inMSet (consM a p 1b b v) (mu (config (rho T k))) )	
 				        	  		       		  )
 					        	  		  		  
 				    		    	  		| (exists j .
 			                                             (k N.<= j)
-				    		    	  				   & (available (rho T j) p)
+				    		    	  				   & (available (config (rho T j )) p)
 				    		    	  				   & (inMSet (consM a p 1b b v) (mu (config (rho T k))))
    													   & (
 					            	    		  		  (inMSet (consM a p 1b b v) (mu (config (rho T j))))
@@ -2867,7 +2868,7 @@ extend-module Synod{
 							        	   		  (
 							        	  		       #(~(lock (als (config (rho T k)) p)))
 							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-							        	   		  	 & (available (rho T k) p)
+							        	   		  	 & (available (config (rho T k )) p)
 							        	   		  )
 							        	  		| (exists j . 
 							        	  			   (k N.<= j)
@@ -2877,7 +2878,7 @@ extend-module Synod{
 												     		   (
 												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
 							        	  		     				#& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
+							        	  		     				& (available (config (rho T j )) p)
 												     		   )
 						            	    		  		 
 																| (exists l . (   (k N.<= l) 
@@ -2923,7 +2924,7 @@ extend-module Synod{
 							        	   		  (
 							        	  		       #(~(lock (als (config (rho T k)) p)))
 							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-							        	   		  	 & (available (rho T k) p)
+							        	   		  	 & (available (config (rho T k )) p)
 							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
 							        	   		  )
 							        	  		| (exists j . 
@@ -2934,7 +2935,7 @@ extend-module Synod{
 												     		   (
 												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
 							        	  		     				#& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
+							        	  		     				& (available (config (rho T j )) p)
 							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
 												     		   )
 						            	    		  		 
@@ -2978,7 +2979,7 @@ extend-module Synod{
 							        	   & (
 							        	   		  (
 							        	   		  	  (inMSet (consM a p 1b b v) (mu (config (rho T k))) )
-							        	   		  	 & (available (rho T k) p)
+							        	   		  	 & (available (config (rho T k )) p)
 							        	   		  	 & (ready-to (rho T k) p (receive p (consM a p 1b b v)))
 													 & (k N.<= y) 
 		            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T y)) p)))
@@ -2990,7 +2991,7 @@ extend-module Synod{
 												     & (
 												     		   (
 												     		   	      (inMSet (consM a p 1b b v) (mu (config (rho T j))))
-							        	  		     				& (available (rho T j) p)
+							        	  		     				& (available (config (rho T j )) p)
 							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 1b b v)))
 																	 & (j N.<= z) 
 						            	    				         & (inMSet (consM a p 1b b v) (amu (als (config (rho T z)) p)))							        	   		  	 
@@ -3664,7 +3665,7 @@ extend-module Synod{
                     )
 					
 				  & (
-							(available (rho T i) p)
+							(available (config (rho T i )) p)
 								==>
 									 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
 					)					
@@ -3700,17 +3701,17 @@ extend-module Synod{
 	                    )
 						
 					  & (
-								(available (rho T i) p)
+								(available (config (rho T i )) p)
 									==>
 										 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
 						)						
 					) 
 	  		     & (
-	  		  		  (available (rho T i) p)
+	  		  		  (available (config (rho T i )) p)
 
 	    	  		| (exists j .
 	                             (i N.< j)
-	    	  				   & (available (rho T j) p))
+	    	  				   & (available (config (rho T j )) p))
 	    	  	   )				
 	)		
 
@@ -3737,7 +3738,7 @@ extend-module Synod{
 	                    )
 						
 					  & (
-								(available (rho T i) p)
+								(available (config (rho T i )) p)
 									==>
 										 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
 						)
@@ -3745,12 +3746,12 @@ extend-module Synod{
 				  & (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p))
+	    	  				   & (available (config (rho T j )) p))
 	    	  	   )				
 	)		
 
@@ -3777,7 +3778,7 @@ extend-module Synod{
 	                    )
 						
 					  & (
-								(available (rho T i) p)
+								(available (config (rho T i )) p)
 									==>
 										 (exists v2 . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v2))) ) )
 						)
@@ -3785,12 +3786,12 @@ extend-module Synod{
 				  & (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p)
+	    	  				   & (available (config (rho T j )) p)
 			                   & (forall a .
 			                   	  	(inQ a Q) 
 			                    		 ==> 
@@ -3819,12 +3820,12 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p)
+	    	  				   & (available (config (rho T j )) p)
 			                   & (has-promises (als (config (rho T i)) p) b  Q)
 			           )          	    	  		
 	    	  	   )				
@@ -3869,12 +3870,12 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . exists v . ((inQ a Q) ==> (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p)
+	    	  				   & (available (config (rho T j )) p)
 			                   & (has-promises (als (config (rho T i)) p) b  Q)
 						 	& (
 						 		      (has-promises (als (config (rho T j)) p) b Q)
@@ -3910,17 +3911,17 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p)
+	    	  				   & (available (config (rho T j )) p)
 			                   & (has-promises (als (config (rho T i)) p) b  Q)
 						 	& (
 						 			 (	
 						 		       (has-promises (als (config (rho T j)) p) b Q)
-						 		      & (available (rho T j) p) 
+						 		      & (available (config (rho T j )) p) 
 									   & (forall a .
 						                    (inQ a Q) 
 						                    	==> 
@@ -3962,17 +3963,17 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p)
+	    	  				   & (available (config (rho T j )) p)
 			                   & (has-promises (als (config (rho T i)) p) b  Q)
 						 	& (
 						 			 (	
 						 		       (has-promises (als (config (rho T j)) p) b Q)
-						 		      & (available (rho T j) p) 
+						 		      & (available (config (rho T j )) p) 
 									   & (forall a .
 						                    (inQ a Q) 
 						                    	==> 
@@ -4033,17 +4034,17 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
                                  (i N.<= j)  
-	    	  				   & (available (rho T j) p)
+	    	  				   & (available (config (rho T j )) p)
 			                   & (has-promises (als (config (rho T i)) p) b  Q)
 						 	& (
 						 			 (	
 						 		       (has-promises (als (config (rho T j)) p) b Q)
-						 		      & (available (rho T j) p) 
+						 		      & (available (config (rho T j )) p) 
 									   & (forall a .
 						                    (inQ a Q) 
 						                    	==> 
@@ -4092,7 +4093,7 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . (inQ a Q) ==> (exists v . (ready-to (rho T i) p (send p (consM p a 2a b v))) ) )
                       )
 	    	  		| (exists j .
@@ -4146,7 +4147,7 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . (inQ a Q) ==> (exists v j . (i N.<= j) &  (inMSet (consM p a 2a b v) (mu (config (rho T j))) )       ) )
                       )
 	    	  		| (exists j .
@@ -4197,7 +4198,7 @@ extend-module Synod{
 				   (
 	  		     	  (
 
-		  		  		  (available (rho T i) p)
+		  		  		  (available (config (rho T i )) p)
 		  		  		  & (forall a . (inQ a Q) ==> (exists v j . (i N.<= j) &  (inMSet (consM p a 2a b v) (mu (config (rho T j))) )       ) )
                       )
 	    	  		| (exists j .
@@ -4325,11 +4326,11 @@ extend-module Synod{
                     			   & (inMSet (consM p a 2a b v) (mu (config (rho T j))) )
 
 			        	  		  & (
-			        	  		  		  (available (rho T j) a)
+			        	  		  		  (available (config (rho T j )) a)
 
 			    		    	  		| (exists k .
 		                                             (j N.< k)
-			    		    	  				   & (available (rho T k) a))
+			    		    	  				   & (available (config (rho T k )) a))
 			    		    	  	  )	
                     	    )
                  )						   
@@ -4363,14 +4364,14 @@ extend-module Synod{
 							        	  		  ( 
 							        	  		  	   #(~(lock (als (config (rho T j)) a)))
 							        	  		  	  (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-							        	  		  	 & (available (rho T j) a)
+							        	  		  	 & (available (config (rho T j )) a)
 
 							        	  		  )
 							        	  		  	 
 							        	  		| (exists k . (j N.<= k)
 										  				  # & ~(lock (als (config (rho T k)) a))
 										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
-										  		           & (available (rho T k) a)
+										  		           & (available (config (rho T k )) a)
 										  		  )	   
 							        	  	) 
 							    )	       
@@ -4405,13 +4406,13 @@ extend-module Synod{
 							        	  & (
 							        	  		  
 							        	  		  ( 
-							        	  		  	   (available (rho T j) a)
+							        	  		  	   (available (config (rho T j )) a)
 							        	  		  	 & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
 
 							        	  		  )
 							        	  		  	 
 							        	  		| (exists k . (j N.<= k)
-										  				   & (available (rho T k) a)
+										  				   & (available (config (rho T k )) a)
 										  		           & (inMSet (consM p a 2a b v) (mu (config (rho T j))))
   	   													   & (
 							            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
@@ -4462,7 +4463,7 @@ extend-module Synod{
 							        	  		  ( 
 							        	  		  	   (inMSet (consM p a 2a b v) (mu (config (rho T j))))
 							        	  		  	 & (nonfaulty a)
-							        	  		  	 & (available (rho T j) a)
+							        	  		  	 & (available (config (rho T j )) a)
 							        	  		  	 & (ready-to (rho T j) a (receive a (consM p a 2a b v)))	
 							        	  		  )
 							        	  		  	 
@@ -4472,7 +4473,7 @@ extend-module Synod{
   	   													   		  (
 								            	    		  		   (inMSet (consM p a 2a b v) (mu (config (rho T k))))
 								            	    		  		   & (nonfaulty a)
-								            	    		  		   & (available (rho T k) a)
+								            	    		  		   & (available (config (rho T k )) a)
 								            	    		  		   & (ready-to (rho T k) a (receive a (consM p a 2a b v)))
 
   	   													   		  )	
@@ -4909,11 +4910,11 @@ extend-module Synod{
 									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
-					        	  		  		  (available (rho T j) a)
+					        	  		  		  (available (config (rho T j )) a)
 
 					    		    	  		| (exists k .
 				                                             (j N.< k)
-					    		    	  				   & (available (rho T k) a))
+					    		    	  				   & (available (config (rho T k )) a))
 					    		    	  	 )									       
 
 								)	       
@@ -4950,14 +4951,14 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
 					        	  		   		  (
-							        	  		  		 (available (rho T j) a)					        	  		   		  	
+							        	  		  		 (available (config (rho T j )) a)					        	  		   		  	
 												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 												       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   		  )	
 
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
-					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (available (config (rho T k )) a)
   				   									       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a)))
   				   								   )	       
 
@@ -4994,17 +4995,17 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
 					        	  		   		  (
-							        	  		  		 (available (rho T j) a)					        	  		   		  	
+							        	  		  		 (available (config (rho T j )) a)					        	  		   		  	
 												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 												       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   		  )	
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
-					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (available (config (rho T k )) a)
 					    		    	  				   & (	
 					    		    	  				   	      (
 					    		    	  				   	         (inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a)))
-					    		    	  				   	         & (available (rho T k) a) 
+					    		    	  				   	         & (available (config (rho T k )) a) 
                                                                    )
 																| (exists t . 
 																		(j N.<= t)
@@ -5052,18 +5053,18 @@ extend-module Synod{
 									       & ((beta (als (config (rho T j)) a)) =< b)
 					        	  		   & (
 					        	  		   		  (
-							        	  		  		 (available (rho T j) a)					        	  		   		  	
+							        	  		  		 (available (config (rho T j )) a)					        	  		   		  	
 												       & (inMSet (consM p a 2a b v) (amu (als (config (rho T j)) a))) 
 												       & ((beta (als (config (rho T j)) a)) =< b)
 												       & (ready-to (rho T j) a (send a (consM a p 2b b v) ) )
 					        	  		   		  )	
 					    		    	  		| (exists k .
 				                                             (j N.<= k)
-					    		    	  				   & (available (rho T k) a)
+					    		    	  				   & (available (config (rho T k )) a)
 					    		    	  				   & (    
 					    		    	  				   	      (
 					    		    	  				   	      		(inMSet (consM p a 2a b v) (amu (als (config (rho T k)) a)))
-					    		    	  				   	      		& (available (rho T k) a) 
+					    		    	  				   	      		& (available (config (rho T k )) a) 
 					    		    	  				   	      		 & ((beta (als (config (rho T k)) a)) =< b)
 					    		    	  		   		   	      		& (ready-to (rho T k) a (send a (consM a p 2b b v) ) )
                                                                   )
@@ -5291,11 +5292,11 @@ extend-module Synod{
 				 	       			     (i N.<= k) 
 		            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				        	  		   & (
-				        	  		  		  (available (rho T k) p)
+				        	  		  		  (available (config (rho T k )) p)
 
 				    		    	  		| (exists j .
 			                                             (k N.< j)
-				    		    	  				   & (available (rho T j) p))
+				    		    	  				   & (available (config (rho T j )) p))
 				    		    	  	  )			            	    		   
 
 								       	 
@@ -5328,13 +5329,13 @@ extend-module Synod{
 				 	       			     (i N.<= k) 
 				        	  		   & (
 				        	  		   		(
-				        	  		  		     (available (rho T k) p)
+				        	  		  		     (available (config (rho T k )) p)
 				            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				        	  		   		)
 
 				    		    	  		| (exists j .
 			                                             (k N.<= j)
-				    		    	  				   & (available (rho T j) p)
+				    		    	  				   & (available (config (rho T j )) p)
 						            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				    		    	  		  )
 				    		    	  	  )			            	    		   
@@ -5370,13 +5371,13 @@ extend-module Synod{
 				 	       			     (i N.<= k) 
 				        	  		   & (
 				        	  		   		(
-				        	  		  		     (available (rho T k) p)
+				        	  		  		     (available (config (rho T k )) p)
 				            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 				        	  		   		)
 
 				    		    	  		| (exists j .
 			                                             (k N.<= j)
-				    		    	  				   & (available (rho T j) p)
+				    		    	  				   & (available (config (rho T j )) p)
 						            	    		   & (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
 												       & (
 						            	    		  		   (inMSet (consM a p 2b b v) (mu (config (rho T j))))
@@ -5420,7 +5421,7 @@ extend-module Synod{
 							        	   	      (
 							        	   	      	      #(~(lock (als (config (rho T k)) p)))
 							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
-							        	   	      		& (available (rho T k) p)
+							        	   	      		& (available (config (rho T k )) p)
 							        	   	      )
 						        	  		  
 							        	  		| (exists j . 
@@ -5430,7 +5431,7 @@ extend-module Synod{
 												     		   (
 												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 							        	  		     				#& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
+							        	  		     				& (available (config (rho T j )) p)
 												     		   )
 						            	    		  		 
 															| (exists l .    
@@ -5474,7 +5475,7 @@ extend-module Synod{
 							        	   	      (
 							        	   	      	     # (~(lock (als (config (rho T k)) p)))
 							        	   	      		  (inMSet (consM a p 2b b v) (mu (config (rho T k))) )
-							        	   	      		& (available (rho T k) p)
+							        	   	      		& (available (config (rho T k )) p)
 							        	   	      		& (ready-to (rho T k) p (receive p (consM a p 2b b v)))
 							        	   	      )
 						        	  		  
@@ -5486,7 +5487,7 @@ extend-module Synod{
 												     		   (
 												     		   	      (inMSet (consM a p 2b b v) (mu (config (rho T j))))
 							        	  		     			#	& (~(lock (als (config (rho T j)) p)))
-							        	  		     				& (available (rho T j) p)
+							        	  		     				& (available (config (rho T j )) p)
 							        	  		     				& (ready-to (rho T j) p (receive p (consM a p 2b b v)))
 												     		   )
 						            	    		  		 
