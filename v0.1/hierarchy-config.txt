@@ -16,6 +16,7 @@
 - progress-proof.ath
 - symbols.ath
 - system.ath
+- conditions-proof.ath
 
 # In consensus/synod-timely
 - TimSyn.ath

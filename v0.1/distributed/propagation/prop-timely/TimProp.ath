@@ -178,39 +178,42 @@ extend-module Distributed {
 
 	define THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars :=
 	(forall r1 r2 .
-		(
-			(Prob.probE 
-				(Prob.cons2E 
-					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
-					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+		((not (= r1 0.0)) and (not (= r2 0.0)))		
+			==>
+			(
+				(Prob.probE 
+					(Prob.cons2E 
+						(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
+						(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+					)
 				)
-			)
-			=
-				(   
-					(Dist.erlangCDF 
-						(4.0 * (KPNumReplicas KP)) 
-		 		  	 	(*
-		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
-		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
-		 		  	 	)
-						r1)
+				=
+					(   
+						(Dist.erlangCDF 
+							(4.0 * (KPNumReplicas KP)) 
+			 		  	 	(*
+			 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+			 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+			 		  	 	)
+							r1)
 
 
-				  * (Dist.erlangCDF 
-				  		(4.0 * (KPNumReplicas KP)) 
-						 (- 
-						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
-						 )
-				  		r2)	 
-				)
-		)		
+					  * (Dist.erlangCDF 
+					  		(4.0 * (KPNumReplicas KP)) 
+							 (- 
+							   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+							   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+							 )
+					  		r2)	 
+					)
+			)		
 	)
 
 
 	conclude THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars
 	pick-any r1
 	pick-any r2
+	assume 	((not (= r1 0.0)) and (not (= r2 0.0)))
 	let{
 		NETWORK := (dpNet KP);
 		Q := (dpQ KP);
@@ -245,12 +248,16 @@ extend-module Distributed {
 					(Dist.erlangCDF (Random.lenRVS (msGetTd (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP))))) r1)	 
 				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
 				);				
+		r1-not-zero := (not (= r1 0.0));
+		r2-not-zero := (not (= r2 0.0));
 		usesMTR := (!left-and KP-MTR+MM1);
 		usesMM1 := (!right-and KP-MTR+MM1);
 		conn2-Prob-AIMCT-Td<=R-expo := (!uspec (!uspec MTR-AIMCT.Prob-AIMCT-Td<=R-expo NETWORK) r1);
 		MTR-lamda := (!right-and (!mp conn2-Prob-AIMCT-Td<=R-expo usesMTR));  # ratpar of TD =
-		conn2-usesMM1 := (!uspec usesMM1 t);
-		conn2-THEOREM-cstDly-ratepar=Mu-Lambda := (!mp (!uspec (!uspec (!uspec Queue.THEOREM-cstDly-ratepar=Mu-Lambda t) Q) r2) conn2-usesMM1); #ratepar of TP = 
+		conn2-usesMM1 := (!uspec usesMM1 r2);
+		conn2-THEOREM-cstDly-ratepar=Mu-Lambda := (!uspec (!uspec (!uspec Queue.THEOREM-cstDly-ratepar=Mu-Lambda r2) Q) r2);   
+		conn2-THEOREM-cstDly-ratepar=Mu-Lambda-conclusion := (!mp conn2-THEOREM-cstDly-ratepar=Mu-Lambda r2-not-zero);
+		conn2-THEOREM-cstDly-ratepar=Mu-Lambda-ratepar := (!mp conn2-THEOREM-cstDly-ratepar=Mu-Lambda-conclusion conn2-usesMM1); #ratepar of TP  		
 		lhs=intermediate := (!uspec (!uspec THEOREM-P-T_D-&-P-T_P-erlangCDF r1) r2);
 		conn2-disProt-network-rel := (!uspec disProt-network-rel KP);
 		conn2-disProt-Queue-rel := (!uspec disProt-Queue-rel KP);
@@ -289,7 +296,7 @@ extend-module Distributed {
 									= (- 
 									   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
 									   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
-									  ) [conn2-THEOREM-cstDly-ratepar=Mu-Lambda]
+									  ) [conn2-THEOREM-cstDly-ratepar=Mu-Lambda-ratepar]
 									])
 
 	}
@@ -333,34 +340,37 @@ extend-module Distributed {
 
 	define THEOREM-KP-time-bound :=
 	(forall r1 r2 .
-		(
-			(Prob.probE	(Prob.consE Prob.<= (dpTotTim KP) (r1 + r2)))
-			>=
-				(   
-					(Dist.erlangCDF 
-						(4.0 * (KPNumReplicas KP)) 
-		 		  	 	(*
-		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
-		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
-		 		  	 	)
-						r1)
+		((not (= r1 0.0)) and (not (= r2 0.0)))		
+			==>		
+			(
+				(Prob.probE	(Prob.consE Prob.<= (dpTotTim KP) (r1 + r2)))
+				>=
+					(   
+						(Dist.erlangCDF 
+							(4.0 * (KPNumReplicas KP)) 
+			 		  	 	(*
+			 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+			 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+			 		  	 	)
+							r1)
 
 
-				  * (Dist.erlangCDF 
-				  		(4.0 * (KPNumReplicas KP))
-						 (- 
-						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
-						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
-						 )
-				  		r2)	 
-				)
-		)		
+					  * (Dist.erlangCDF 
+					  		(4.0 * (KPNumReplicas KP))
+							 (- 
+							   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+							   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+							 )
+					  		r2)	 
+					)
+			)		
 	)
 
 
 	conclude THEOREM-KP-time-bound 
 	pick-any r1
 	pick-any r2
+	assume 	((not (= r1 0.0)) and (not (= r2 0.0)))	
 	let{
 		A := (Prob.probE (Prob.consE Prob.<= (dpTotTim KP) (r1 + r2)));
 		B := 
@@ -389,10 +399,12 @@ extend-module Distributed {
 						 )
 				  		r2)	 
 				);
+		r1-r2-not-zero := ((not (= r1 0.0)) and (not (= r2 0.0)));			
 		A>=B := (!uspec (!uspec (!uspec THEOREM-P-TS>=P-TD&TP KP) r1) r2);
 		B=C :=	(!uspec (!uspec THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars r1) r2);
+		B=C_conclusion := (!mp B=C r1-r2-not-zero);
 		conn2->=-transitive2-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive2-axiom A) B) C);
-		A>=B&B=C := (!both A>=B B=C)	
+		A>=B&B=C := (!both A>=B B=C_conclusion)	 
 	}
 	(!mp conn2->=-transitive2-axiom A>=B&B=C)
 

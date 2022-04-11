@@ -178,27 +178,38 @@ module Queue {
 	
 	define THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM :=
 	(forall t .
-		(( (Function.output (Function.consUF A t)) / t ) * 
-			( (Function.SUM
-	 		   1.0
-			   (Function.output (Function.consUF A t) )
-			   (Function.createFunExp T)     	 
-			  ) 					
-			  / 
-			  (Function.output (Function.consUF A t))  ))
-			=
-				( (1.0 / t) * 
-					(Function.SUM
-					 1.0
-					 (Function.output (Function.consUF A t) )
-					 (Function.createFunExp T)     	 
-					 ) 					
-				)
+		(not (= t 0.0))
+			==>
+			(
+				(( (Function.output (Function.consUF A t)) / t ) * 
+					( (Function.SUM
+			 		   1.0
+					   (Function.output (Function.consUF A t) )
+					   (Function.createFunExp T)     	 
+					  ) 					
+					  / 
+					  (Function.output (Function.consUF A t))  ))
+					=
+						( (1.0 / t) * 
+							(Function.SUM
+							 1.0
+							 (Function.output (Function.consUF A t) )
+							 (Function.createFunExp T)     	 
+							 ) 					
+						)		
+			)	
 	)
 
+	#-- some extra assumptions required for the proofs
+	#-- the number of customers who arrived in the interval [0, tau] != 0
+	assert numcust-not-zero :=
+	(forall t .
+		(not (= (Function.output (Function.consUF A t)) 0.0))
+	)	
 
 	conclude THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM
 	pick-any t
+	assume (not (= t 0.0))
 	let{
 		lhs := 	(( (Function.output (Function.consUF A t)) / t ) * 
 					( (Function.SUM
@@ -209,17 +220,21 @@ module Queue {
 					  / 
 					  (Function.output (Function.consUF A t))  ));
 		a := (Function.output (Function.consUF A t));
+		t-not-zero := (not (= t 0.0));
 		sum := 		(Function.SUM
 					 1.0
 					 (Function.output (Function.consUF A t) )
 					 (Function.createFunExp T)     	 
-					 );			  					
+					 );
+		t-and-a-not-zero := (!both (!uspec numcust-not-zero t) t-not-zero); 			  					
 		conn-2-a-by-d-x-b-by-a-axiom := (!uspec (!uspec (!uspec RealExt.a-by-d-x-b-by-a-axiom a) t) sum);
-		conn-2-a-by-b-axiom := (!uspec (!uspec RealExt.a-by-b-axiom sum) t)
+		conn-2-a-by-d-x-b-by-a-axiom-conclusion := (!mp conn-2-a-by-d-x-b-by-a-axiom t-and-a-not-zero);
+		conn-2-a-by-b-axiom := (!uspec (!uspec RealExt.a-by-b-axiom sum) t);
+		conn-2-a-by-b-axiom-conclusion := (!mp conn-2-a-by-b-axiom t-not-zero)
 	}
 	(!chain [ lhs
-			= (sum / t) [conn-2-a-by-d-x-b-by-a-axiom]
-			= ((1.0 / t) * sum) [conn-2-a-by-b-axiom]
+			= (sum / t) [conn-2-a-by-d-x-b-by-a-axiom-conclusion]
+			= ((1.0 / t) * sum) [conn-2-a-by-b-axiom-conclusion]
 			])
 
 
@@ -229,18 +244,22 @@ module Queue {
 	
 	define THEOREM-lambda_t-x-T_t=SUM-by-t :=
 	(forall t .
-			((Function.output (Function.consUF L_ t)) 
-			 *
-			 (Function.output (Function.consUF T_ t))	
-			)
-			=
-				( (1.0 / t) * 
-					(Function.SUM
-					 1.0
-					 (Function.output (Function.consUF A t) )
-					 (Function.createFunExp T)     	 
-					 ) 					
+		(not (= t 0.0))
+			==>
+			(		
+				((Function.output (Function.consUF L_ t)) 
+				 *
+				 (Function.output (Function.consUF T_ t))	
 				)
+				=
+					( (1.0 / t) * 
+						(Function.SUM
+						 1.0
+						 (Function.output (Function.consUF A t) )
+						 (Function.createFunExp T)     	 
+						 ) 					
+					)
+			)
 	)
 
 
@@ -248,6 +267,7 @@ module Queue {
 
 	conclude THEOREM-lambda_t-x-T_t=SUM-by-t
 	pick-any t
+	assume (not (= t 0.0))
 	let{
 		lhs := 	((Function.output (Function.consUF L_ t)) 
 			     *
@@ -259,18 +279,20 @@ module Queue {
 					 (Function.output (Function.consUF A t) )
 					 (Function.createFunExp T)     	 
 					 );
+		t-not-zero := (not (= t 0.0));
 		T_i := (Function.createFunExp T);
 		T_i-by-a := ((Function.createFunExp T) Function./ a );
 		conn-2-L_t-is-A_t-by-t := (!uspec L_t-is-A_t-by-t t);
 		conn-2-T_t-is-SUM-T_i := (!uspec T_t-is-SUM-T_i t);
 		conn-2-SUM-subsumes-denominator := (!uspec (!uspec (!uspec (!uspec Function.SUM-subsumes-denominator 1.0) a) a) T_i);
-		conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM := (!uspec THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM t)		
+		conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM := (!uspec THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM t);
+		conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM-conclusion := (!mp conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM t-not-zero)		
 	}
 	(!chain [ lhs
 			= ((a / t) * (Function.output (Function.consUF T_ t))) [conn-2-L_t-is-A_t-by-t]
 			= ((a / t) * (Function.SUM 1.0 a (T_i Function./ a))) [conn-2-T_t-is-SUM-T_i]
 			= ((a / t) * ((Function.SUM 1.0 a T_i) Function./ a)) [conn-2-SUM-subsumes-denominator]
-			= ((1.0 / t) * sum) [conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM]
+			= ((1.0 / t) * sum) [conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM-conclusion]
 			])
 
 
@@ -278,16 +300,21 @@ module Queue {
 
 	define THEOREM-lambda_t-x-T_t=N_t :=
 	(forall t .
-			((Function.output (Function.consUF L_ t)) 
-			 *
-			 (Function.output (Function.consUF T_ t))	
+		(not (= t 0.0))
+			==>
+			(			
+				((Function.output (Function.consUF L_ t)) 
+				 *
+				 (Function.output (Function.consUF T_ t))	
+				)
+				=
+					(Function.output (Function.consUF N_ t))
 			)
-			=
-				(Function.output (Function.consUF N_ t))
 	)
 
 	conclude THEOREM-lambda_t-x-T_t=N_t
 	pick-any t
+	assume (not (= t 0.0))	
 	let{
 		lhs := 	((Function.output (Function.consUF L_ t)) 
 			     *
@@ -298,13 +325,15 @@ module Queue {
 					 (Function.output (Function.consUF A t) )
 					 (Function.createFunExp T)     	 
 					 );
+		t-not-zero := (not (= t 0.0));
 		intgrl := (Function.integral 0.0 t (Function.createFunExp N) );			 		
 		conn-2-lambda_t-x-T_t=SUM-by-t := (!uspec THEOREM-lambda_t-x-T_t=SUM-by-t t);
+		conn-2-lambda_t-x-T_t=SUM-by-t-conclusion := (!mp conn-2-lambda_t-x-T_t=SUM-by-t t-not-zero);
 		conn-2-N_t-is-integral-by-t := (!uspec N_t-is-integral-by-t t);
 		conn-2-Integral=SUM := (!uspec Integral=SUM t) 		
 	}
 	(!chain [ lhs
-			= ((1.0 / t) * sum) [conn-2-lambda_t-x-T_t=SUM-by-t]
+			= ((1.0 / t) * sum) [conn-2-lambda_t-x-T_t=SUM-by-t-conclusion]
 			= ((1.0 / t) * intgrl) [conn-2-Integral=SUM]
 			= (Function.output (Function.consUF N_ t)) [conn-2-N_t-is-integral-by-t]
 			])
@@ -315,25 +344,28 @@ module Queue {
 
 	define LITTLES-THEOREM :=
 	(forall t Q .
-		(
+		(not (= t 0.0))
+			==>		
 			(
-				((Dist.mean (Random.pdf (numCst Q))) 
-					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-			  & ((Dist.mean (Random.pdf (cstDly Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-			)
-			==>
-				((Dist.mean (Random.pdf (numCst Q))) 
-					= ((Dist.mean (Random.pdf (cstArRat Q))) * (Dist.mean (Random.pdf (cstDly Q)))))
-		)	
+				(
+					((Dist.mean (Random.pdf (numCst Q))) 
+						= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+				  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+				  & ((Dist.mean (Random.pdf (cstDly Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+				)
+				==>
+					((Dist.mean (Random.pdf (numCst Q))) 
+						= ((Dist.mean (Random.pdf (cstArRat Q))) * (Dist.mean (Random.pdf (cstDly Q)))))
+			)	
 	)
 
 
 	conclude LITTLES-THEOREM
 	pick-any t
 	pick-any Q
+	assume (not (= t 0.0))	
 	assume  
 			(
 				((Dist.mean (Random.pdf (numCst Q))) = (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
@@ -353,9 +385,11 @@ module Queue {
 		N-Exists := (!left-and assum);		
 		L-Exists := (!left-and (!right-and assum));
 		T-Exists := (!right-and (!right-and assum));
+		t-not-zero := (not (= t 0.0));		
 		LF-x-TF=NF := (!uspec THEOREM-lambda_t-x-T_t=N_t t);
+		LF-x-TF=NF-conclusion := (!mp LF-x-TF=NF t-not-zero);
 		NF=LF-x-TF :=   (!chain [ (Function.output NF)
-					  			= ((Function.output LF) * (Function.output TF)) [LF-x-TF=NF]
+					  			= ((Function.output LF) * (Function.output TF)) [LF-x-TF=NF-conclusion]
 					  		]);
 		conn-2-limit-of-prod := (!uspec (!uspec (!uspec (!uspec (!uspec Function.limit-of-prod t) RealExt.INFY) NF) LF) TF);
 		lmt-NF=lmt-LF-x-lmt-TF := (!mp conn-2-limit-of-prod NF=LF-x-TF);
@@ -367,67 +401,6 @@ module Queue {
 		   = (Function.limit t RealExt.INFY (Function.consUF N_ t)) [N-Exists]
 		   = ((Dist.mean (Random.pdf (cstArRat Q))) * (Dist.mean (Random.pdf (cstDly Q)))) [Ne=Le-x-Te L-Exists T-Exists] 
 		])
-
-	
-	# THIS IS AN OLDER DEPRECATED VERSION
-	define DEPRECATED-THEOREM-Littles-OLD :=
-	(forall t Ne Le Te .
-		(
-			(
-				(Ne = (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-			  & (Le = (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-			  & (Te = (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-			)
-			==>
-				(Ne = (Le * Te))
-		)	
-	)
-
-
-	conclude DEPRECATED-THEOREM-Littles-OLD
-	pick-any t
-	pick-any Ne
-	pick-any Le
-	pick-any Te
-	assume  
-		(
-			(Ne = (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-		  & (Le = (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-		  & (Te = (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-		)	
-	let{
-		assum :=
-				(
-					(Ne = (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-				  & (Le = (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-				  & (Te = (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-				);
-		NF := (Function.consUF N_ t);
-		LF := (Function.consUF L_ t);
-		TF := (Function.consUF T_ t);		
-		N-Exists := (!left-and assum);		
-		L-Exists := (!left-and (!right-and assum));
-		T-Exists := (!right-and (!right-and assum));
-		LF-x-TF=NF := (!uspec THEOREM-lambda_t-x-T_t=N_t t);
-		NF=LF-x-TF :=   (!chain [ (Function.output NF)
-					  			= ((Function.output LF) * (Function.output TF)) [LF-x-TF=NF]
-					  		]);
-		conn-2-limit-of-prod := (!uspec (!uspec (!uspec (!uspec (!uspec Function.limit-of-prod t) RealExt.INFY) NF) LF) TF);
-		lmt-NF=lmt-LF-x-lmt-TF := (!mp conn-2-limit-of-prod NF=LF-x-TF);
-		Ne=Le-x-Te := 	(!chain [ (Function.limit t RealExt.INFY (Function.consUF N_ t))
-								= ((Function.limit t RealExt.INFY (Function.consUF L_ t)) * (Function.limit t RealExt.INFY (Function.consUF T_ t))) [lmt-NF=lmt-LF-x-lmt-TF]
-								]) 
-	}
-	(!chain [ Ne
-		   = (Function.limit t RealExt.INFY (Function.consUF N_ t)) [N-Exists]
-		   = (Le * Te) [Ne=Le-x-Te L-Exists T-Exists] 
-		])
-
-	#***************** END LITTLE THEOREM ********************
-	#*********************************************************
-
-
-
 
 
 }# end module

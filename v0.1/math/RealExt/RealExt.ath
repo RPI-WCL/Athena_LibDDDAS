@@ -132,20 +132,6 @@ module RealExt {
 	)
 
 
-	#-- prod-with-greater-axiom states that 
-	#   if c <= b, then a * b >= a * c
-
-	assert prod-with-lower-axiom :=
-	(forall r1 r2 r3 .
-		(
-			(r3 <= r2)
-			==>
-			(
-				(r1 * r2) >= (r1 * r3)
-			)			
-		)
-	)
-
 
 	# =-implies->=-axiom
 
@@ -158,19 +144,14 @@ module RealExt {
 
 
 
-	#-- inverse-axiom states the relationship betweek inverses
 
-	assert inverse-axiom :=
-	(forall r r1 .
-		 ((r2 = (1.0 / r1)) <==> (r1 = (1.0 / r2)))
-	)
-
-
-	#-- inverse-axiom states the relationship betweek inverses
+	#-- inverse-axiom states the relationship betweek inverses 
 
 	assert by-1-axiom :=
 	(forall r .
-		 ( (1.0 / (1.0 / r) ) = r )
+		(not (= r 0.0))
+			==>		
+			 ( (1.0 / (1.0 / r) ) = r )
 	)
 
 
@@ -205,29 +186,19 @@ module RealExt {
 	)
 
 
-	#-- ab-by-cd-axiom states that 
-	# a/c * b/d = ab/cd
 
-	assert ab-by-cd-axiom :=
-	(forall r1 r2 r3 r4 .
-		(
-			((r1 / r2) * (r3 / r4))
-			= 
-				((r1 * r3) / (r2 * r4))
-		)
-	)
-
-
-	#-- ab-by-da-axiom states that 
+	#-- ab-by-da-axiom states that  
 	# a/d * b/a = b/d
 
 	assert a-by-d-x-b-by-a-axiom :=
 	(forall r1 r2 r3 .
-		(
-			((r1 / r2) * (r3 / r1))
-			= 
-				((r3 / r2))
-		)
+		((not (= r1 0.0)) and (not (= r2 0.0)))
+			==>
+				(
+					((r1 / r2) * (r3 / r1))
+					= 
+						((r3 / r2))
+				)
 	)
 
 
@@ -236,11 +207,13 @@ module RealExt {
 
 	assert a-by-b-axiom :=
 	(forall r1 r2 .
-		(
-			(r1 / r2)
-			= 
-				((1.0 / r2) * r1 )
-		)
+		(not (= r2 0.0))
+			==>		
+			(
+				(r1 / r2)
+				= 
+					((1.0 / r2) * r1 )
+			)
 	)
 
 
@@ -249,17 +222,21 @@ module RealExt {
 
 	assert a-x-b=c-axiom :=
 	(forall r1 r2 r3 .
-		(
-			((r1 * r2) = r3)
-				<==> 
-					(r1 = (r3 * (1.0 / r2)))
-		)
-		&
-		(
-			((r1 * r2) = r3)
-				<==> 
-					(r2 = (r3 * (1.0 / r1)))
-		)		
+		((not (= r1 0.0)) and (not (= r2 0.0)))	
+			==> 
+				(
+					(
+						((r1 * r2) = r3)
+							<==> 
+								(r1 = (r3 * (1.0 / r2)))
+					)
+					&
+					(
+						((r1 * r2) = r3)
+							<==> 
+								(r2 = (r3 * (1.0 / r1)))
+					)
+				)		
 	)	
 
 

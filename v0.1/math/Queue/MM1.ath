@@ -89,32 +89,62 @@ extend-module Queue {
 
 	define THEOREM-mean-T-value :=
 	(forall t Q .
+		(not (= t 0.0))
+			==>		
+			(
+				(	((qTyp Q) = MM1)
+				  & ((Dist.mean (Random.pdf (numCst Q))) 
+						= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+				  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+				  & ((Dist.mean (Random.pdf (cstDly Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+				)
+				==>
+						(
+							(Dist.mean (Random.pdf (cstDly Q)))   # T 
+							= ( 1.0   
+								/  
+								( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
+								  -
+								  (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
+								)
+							  )
+						)
+			)	
+	)
+
+	#-- some extra assumptions required for the proofs
+	#-- Denominators of the equations cannot be zero
+	assert MM1-denominators-not-zero :=
+	(forall Q .
 		(
-			(	((qTyp Q) = MM1)
-			  & ((Dist.mean (Random.pdf (numCst Q))) 
-					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-			  & ((Dist.mean (Random.pdf (cstDly Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-			)
-			==>
+			((qTyp Q) = MM1)
+				==>
 					(
-						(Dist.mean (Random.pdf (cstDly Q)))   # T 
-						= ( 1.0   
-							/  
-							( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
-							  -
-							  (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
-							)
-						  )
+						  (not (= (Dist.mean (Random.pdf (cstArRat Q))) 0.0))
+						& (not (= ((Dist.ratePar (Random.pdf (srvcTm Q))) - (Dist.ratePar (Random.pdf (cstArRat Q)))) 0.0))	# mu - lambda						
 					)
-		)	
+		)
+	)	
+
+	#-- The values that appear as denominators in intermediate steps are not zero
+	assert MM1-intermediate-denominators-not-zero :=
+	(forall Q .
+		(
+			((qTyp Q) = MM1)
+				==>
+					(
+						  (not (= (Dist.mean (Random.pdf (cstDly Q))) 0.0)) # T
+						& (not (= (Dist.mean (Random.pdf (cstArRat Q))) 0.0)) # L
+					)
+		)
 	)
 
 	conclude THEOREM-mean-T-value
 	pick-any t
-	pick-any Q 
+	pick-any Q
+	assume (not (= t 0.0))	 
 	assume	
 			(	((qTyp Q) = MM1)
 			  & ((Dist.mean (Random.pdf (numCst Q))) 
@@ -154,8 +184,14 @@ extend-module Queue {
 		N := (Dist.mean (Random.pdf (numCst Q)));
 		L := (Dist.mean (Random.pdf (cstArRat Q)));
 		T := (Dist.mean (Random.pdf (cstDly Q)));
+		t-not-zero := (not (= t 0.0));
+		T-L-not-zero := (!mp (!uspec MM1-intermediate-denominators-not-zero Q)  Q-is-mm1);
+		L-Not-0 := (!left-and (!mp (!uspec MM1-denominators-not-zero Q) Q-is-mm1));
+		N_d-Not-0 := (!right-and (!mp (!uspec MM1-denominators-not-zero Q) Q-is-mm1));
+		L-Not-0+N_d-Not-0 := (!both L-Not-0 N_d-Not-0);
 		conn-2-Little := (!uspec (!uspec LITTLES-THEOREM t) Q);
-		N=LT := (!mp conn-2-Little (!right-and assum)) ;
+		conn-2-Little-conclusion := (!mp conn-2-Little t-not-zero);
+		N=LT := (!mp conn-2-Little-conclusion (!right-and assum)) ;
 		conn-2-commu := (!uspec (!uspec RealExt.prod-commutative-axiom T) L);
 		N=TL := (!chain [ N
 						= (L * T) [N=LT]
@@ -165,10 +201,11 @@ extend-module Queue {
 						=  N [N=TL]
 						]);
 		conn-2-a-x-b=c-axiom := (!uspec (!uspec (!uspec RealExt.a-x-b=c-axiom T) L) N);
-		T=N-x-inv-L := (!mp (!left-iff (!left-and conn-2-a-x-b=c-axiom)) TL=N);
+		conn-2-a-x-b=c-axiom-conclusion := (!mp conn-2-a-x-b=c-axiom T-L-not-zero);
+		T=N-x-inv-L := (!mp (!left-iff (!left-and conn-2-a-x-b=c-axiom-conclusion)) TL=N);
 		conn-2-mean-numCst-axiom := (!uspec mean-numCst-axiom Q);
 		N=L-by-N_d := (!mp conn-2-mean-numCst-axiom Q-is-mm1);
-		conn-2-a-by-d-x-b-by-a-axiom := (!uspec (!uspec (!uspec RealExt.a-by-d-x-b-by-a-axiom L) N_d) 1.0)
+		conn-2-a-by-d-x-b-by-a-axiom := (!mp (!uspec (!uspec (!uspec RealExt.a-by-d-x-b-by-a-axiom L) N_d) 1.0) L-Not-0+N_d-Not-0)
 	}		  
 	(!chain [ T
 			= (N * (1.0 / L)) [T=N-x-inv-L]
@@ -178,38 +215,42 @@ extend-module Queue {
 
 
 
+
 	#-- THEOREM : Given that the means of the parameters exist as the limits
 	#   this theorem gives the closed for solution of the
 	#   rate parameter for the customer delay's distribution
 
 	define THEOREM-cstDly-ratepar=Mu-Lambda :=
 	(forall t Q r .
-		(
-			(	((qTyp Q) = MM1)
-			  & ((Dist.mean (Random.pdf (numCst Q))) 
-					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-			  & ((Dist.mean (Random.pdf (cstDly Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-			)
-			==>
-					(
-						(Dist.ratePar (Random.pdf (cstDly Q))) 
-						= 
-						 ( 
-						   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
-						   -
-						   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
-						 )		
-					)
-		)	
+		(not (= t 0.0))
+			==>		
+			(
+				(	((qTyp Q) = MM1)
+				  & ((Dist.mean (Random.pdf (numCst Q))) 
+						= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+				  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+				  & ((Dist.mean (Random.pdf (cstDly Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+				)
+				==>
+						(
+							(Dist.ratePar (Random.pdf (cstDly Q))) 
+							= 
+							 ( 
+							   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
+							   -
+							   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
+							 )		
+						)
+			)	
 	)
 
 	conclude THEOREM-cstDly-ratepar=Mu-Lambda
 	pick-any t
 	pick-any Q
 	pick-any r:Real  # Wasn't working without the ':Real'. Why ? ? ?
+	assume	(not (= t 0.0))	
 	assume  
 			(	((qTyp Q) = MM1)
 			  & ((Dist.mean (Random.pdf (numCst Q))) 
@@ -230,8 +271,10 @@ extend-module Queue {
 			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
 			);			
 		Q-is-mm1 := (!left-and assum);
+		t-not-zero :=	(not (= t 0.0));		
 		conn-2-THEOREM-mean-T-value := (!uspec (!uspec THEOREM-mean-T-value t) Q);
-		T=1-by-mu-L := (!mp conn-2-THEOREM-mean-T-value assum);
+		conn-2-THEOREM-mean-T-value-conclusion := (!mp conn-2-THEOREM-mean-T-value t-not-zero);
+		T=1-by-mu-L := (!mp conn-2-THEOREM-mean-T-value-conclusion assum);
 		T-dist-mean := (Dist.mean (Random.pdf (cstDly Q)));
 		T-dist := (Random.pdf (cstDly Q));
 		T-dist-is-expo := (!mp (!uspec MM1-cstDly-expo Q) Q-is-mm1);
@@ -241,12 +284,14 @@ extend-module Queue {
 					   -
 					   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 					 );
+		mu-minus-L-Not-0 := (!right-and (!mp (!uspec MM1-denominators-not-zero Q) Q-is-mm1));			 
 		conn-2-by-1-axiom := (!uspec RealExt.by-1-axiom mu-minus-L);
+		conn-2-by-1-axiom-conclusion := (!mp conn-2-by-1-axiom mu-minus-L-Not-0);
 		conn-2-expo-mean-ratePar := (!mp (!uspec Dist.expo-mean-ratePar T-dist) T-dist-is-expo)
 	}
 	(!chain [  (Dist.ratePar T-dist)
 		    = (1.0 / T-dist-mean) [conn-2-expo-mean-ratePar]
-		    =  mu-minus-L [conn-2-by-1-axiom T=1-by-mu-L]
+		    =  mu-minus-L [conn-2-by-1-axiom-conclusion T=1-by-mu-L]
 		  ])
 
 
@@ -257,34 +302,36 @@ extend-module Queue {
 
 	define THEOREM-cstDly-prob :=
 	(forall t Q r .
-		(
-			(	((qTyp Q) = MM1)
-			  & ((Dist.mean (Random.pdf (numCst Q))) 
-					= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
-			  & ((Dist.mean (Random.pdf (cstArRat Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
-			  & ((Dist.mean (Random.pdf (cstDly Q))) 
-			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
-			)
-			==>
-					(
-						(Prob.probE (Prob.consE Prob.<= (cstDly Q) r))   # T 
-						= 
-						 (1.0 - 
-							(RealExt.pow 
-								RealExt.EULER  
-								(0.0 - (
-										 ( 
-										   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
-										   -
-										   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
-										 )								 
+		(not (= t 0.0))
+			==>			
+			(
+				(	((qTyp Q) = MM1)
+				  & ((Dist.mean (Random.pdf (numCst Q))) 
+						= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+				  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+				  & ((Dist.mean (Random.pdf (cstDly Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+				)
+				==>
+						(
+							(Prob.probE (Prob.consE Prob.<= (cstDly Q) r))   # T 
+							= 
+							 (1.0 - 
+								(RealExt.pow 
+									RealExt.EULER  
+									(0.0 - (
+											 ( 
+											   (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
+											   -
+											   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
+											 )								 
 
-										 * r ) )
-							)
-						  )	
-					)
-		)	
+											 * r ) )
+								)
+							  )	
+						)
+			)	
 	)
 
 
@@ -292,6 +339,7 @@ extend-module Queue {
 	pick-any t
 	pick-any Q
 	pick-any r
+	assume	(not (= t 0.0))		
 	assume  
 			(	((qTyp Q) = MM1)
 			  & ((Dist.mean (Random.pdf (numCst Q))) 
@@ -325,9 +373,11 @@ extend-module Queue {
 							 * r ) )
 				)
 			  );			
+		t-not-zero :=	(not (= t 0.0));			 
 		Q-is-mm1 := (!left-and assum);
 		conn-2-THEOREM-mean-T-value := (!uspec (!uspec THEOREM-mean-T-value t) Q);
-		T=1-by-mu-L := (!mp conn-2-THEOREM-mean-T-value assum);
+		conn-2-THEOREM-mean-T-value-conclusion := (!mp conn-2-THEOREM-mean-T-value t-not-zero);
+		T=1-by-mu-L := (!mp conn-2-THEOREM-mean-T-value-conclusion assum);
 		T-dist-mean := (Dist.mean (Random.pdf (cstDly Q)));
 		T-dist := (Random.pdf (cstDly Q));
 		T-dist-is-expo := (!mp (!uspec MM1-cstDly-expo Q) Q-is-mm1);
@@ -337,11 +387,13 @@ extend-module Queue {
 					   -
 					   (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
 					 );
+		mu-minus-L-Not-0 := (!right-and (!mp (!uspec MM1-denominators-not-zero Q) Q-is-mm1));			 
 		conn-2-by-1-axiom := (!uspec RealExt.by-1-axiom mu-minus-L);
+		conn-2-by-1-axiom-conclusion := (!mp conn-2-by-1-axiom mu-minus-L-Not-0);
 		conn-2-expo-mean-ratePar := (!mp (!uspec Dist.expo-mean-ratePar T-dist) T-dist-is-expo);
 		T-dist-ratePar := (!chain [  (Dist.ratePar T-dist)
 								   = (1.0 / T-dist-mean) [conn-2-expo-mean-ratePar]
-								   =  mu-minus-L [conn-2-by-1-axiom T=1-by-mu-L]
+								   =  mu-minus-L [conn-2-by-1-axiom-conclusion T=1-by-mu-L]
 								  ]);
 		conn-2-expo-cdf := (!uspec (!uspec Dist.expo-cdf (cstDly Q)) r);
 		cdf=1-pow-e-ratePar-x := (!mp conn-2-expo-cdf T-dist-is-expo);
