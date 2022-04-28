@@ -60,10 +60,11 @@ def get_manual_desc(filename):
 		for line in f:
 			if line.startswith("+"):
 				line_data = strip_string(line, "+ ")
-				line_contents = (line_data.split(' '))
+				line_contents = line_data.split(' ')
 				if line_contents[0] == filename:
 					found = True
-					return (' '.join(line_contents[1:]))
+					description = ' '.join(line_contents[1:]) 
+					return (description.strip())
 	if found == False:
 		print("Did not find description for ", filename)
 		return ("Details Missing")
