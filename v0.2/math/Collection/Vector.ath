@@ -1,0 +1,35 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Vectors
+
+load "Athena_LibDDDAS/math/Random/Random.ath"
+
+module Vector { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Domain of Vector of Random variables 
+	#-- For now, it is equivalent to a set of random variables
+
+	datatype VectRandom := RandVarSet	
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#-- Joint density of a vector of random variables
+	#-- f(X,\theta) where \theta \in \Theta \subset Real
+
+	declare jointDen : [VectRandom Real] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+}# end module

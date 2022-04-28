@@ -1,35 +1,18 @@
-# Athena_LibDDDAS
+# NMAC 
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
-
-
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+##### This repository contains the ATHENA specifications and proofs from the paper [Conflict Aware Flight Planning for Avoiding Near Mid-Air Collisions](http://wcl.cs.rpi.edu/papers/DASC_19.pdf "Research Paper")
 
 
-##### Version Notes:
+##### Instructions:
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+* Once ATHENA has been installed and set up, load `proofs.ath` to verify the proofs using ATHENA
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
-
-* `v0.0` - Initial attempt at creating a reusable library 
-
-
-##### ATHENA Resources:
-
-* [ATHENA Website](http://proofcentral.org/)
-
-* [Athena Library](http://proofcentral.org/athena/lib/)
-
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
+* The `OUTPUT_proofs` file contains preverified output of `proofs.ath` in ATHENA
 
 
 ###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
-
 Copyright &copy; 2020 WCL
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

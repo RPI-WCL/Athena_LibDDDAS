@@ -1,30 +1,25 @@
-# Athena_LibDDDAS
+# SYNOD-EVENTUAL
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
-
-
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+##### This repository contains theory and proofs about the Synod consensus algorithm
 
 
-##### Version Notes:
+##### Instructions:
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+* The `progress-proof.ath` file contains the proof of eventual progress for the Synod consensus protocol using the failure-aware actor model under soem specific asynchronous conditions
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
+* The `conditions-proof.ath` file contains the proof of our conditions under predicate fairness for FAM
 
-* `v0.0` - Initial attempt at creating a reusable library 
+* The proofs make use of the SPASS Automatic Theorem Prover for proving the proof obligation at each step
 
+* Refer to the ATHENA [Download Instructions](https://proofcentral.org/athena/1.4/) to properly set up SPASS in your operating system
 
-##### ATHENA Resources:
+* Refer to [this PDF](https://proofcentral.org/book/Appendix_D.pdf) to learn more about using ATPs with ATHENA
 
-* [ATHENA Website](http://proofcentral.org/)
+* Once ATHENA and SPASS have been installed and set up, load `progress-proof.ath` to verify the proofs using ATHENA
 
-* [Athena Library](http://proofcentral.org/athena/lib/)
+* The `OUTPUT_progress-proof` file contains preverified output of `progress-proof.ath` in ATHENA
 
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
-
+* The `OUTPUT_conditions-proof` file contains preverified output of `conditions-proof.ath` in ATHENA
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

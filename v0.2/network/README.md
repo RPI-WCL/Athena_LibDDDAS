@@ -1,35 +1,22 @@
-# Athena_LibDDDAS
+# NETWORK
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
-
-
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+##### This repository contains ATHENA theory and proofs about Network theory  
 
 
-##### Version Notes:
+##### Description:
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+* `MTR-AIMCT` - Module, Multicopy Two-Hop Relay with Arbitrary Inter-meeting and Constant TTLs
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
+* `Netwrk.ath` - Module, Network fundamentals
 
-* `v0.0` - Initial attempt at creating a reusable library 
-
-
-##### ATHENA Resources:
-
-* [ATHENA Website](http://proofcentral.org/)
-
-* [Athena Library](http://proofcentral.org/athena/lib/)
-
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
-
+* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
+<p align="center">
+  <img height="600" src="network_hierarchy.svg">
+</p>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
-
 Copyright &copy; 2020 WCL
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

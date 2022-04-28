@@ -1,0 +1,104 @@
+load "real"
+load "types"
+
+module Vector_2d{
+
+  declare 0_vec: Vector_2d
+
+  assert 0_vec_definition := (0_vec = (vec_2d 0.0 0.0)) 
+
+  define [ux uy vx vy r] := [?ux:Real ?uy:Real ?vx:Real ?vy:Real ?r:Real]
+
+  define [u v] := [?u:Vector_2d ?v:Vector_2d]
+
+#****************************************************************************
+ declare getx: [Vector_2d] -> Real
+
+ assert* getx-axiom := 
+  ((getx (vec_2d ux uy)) = ux)
+
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+ declare gety: [Vector_2d] -> Real
+ 
+  assert* gety-axiom := 
+  ((gety (vec_2d ux uy)) = uy)
+#----------------------------------------------------------------------------
+   
+#Required Operations :- vect_add, vect_norm, dot_product
+#****************************************************************************
+
+#---- ADDITION
+  declare ADD: [Vector_2d Vector_2d] -> Vector_2d [+]
+
+  module ADD{
+
+    assert* ADD_axiom := ((ADD (vec_2d ux uy) (vec_2d vx vy)) = (vec_2d (ux + vx) (uy + vy)))
+
+    assert* ADD_0 :=  ((ADD u 0_vec) = u)  
+
+  }#ADD
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+
+#-- vector subtraction
+  declare SUBTRACT: [Vector_2d Vector_2d] -> Vector_2d [-]
+
+  module SUBTRACT{
+
+    assert* SUBTRACT_axiom := ((SUBTRACT (vec_2d ux uy) (vec_2d vx vy)) = (vec_2d (ux - vx) (uy - vy)))
+
+    assert* SUBTRACT_0 :=  ((SUBTRACT u 0_vec) = u)  
+
+  }#SUBTRACT
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+
+#-- vector product with a scalar
+  declare SCALAR-MULT: [Vector_2d Real]-> Vector_2d [*]
+
+  module SCALAR-MULT{
+      
+      assert* SCALAR-MULT_axiom := ((SCALAR-MULT (vec_2d ux uy) r) = (vec_2d (* ux r) (* uy r)))
+
+      assert* SCALAR-MULT_0 :=  ((SCALAR-MULT u 0.0) = 0_vec)
+
+  
+}#scalar-mult
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+
+#---- SCALAR PRODUCT OR DOT PRODUCT
+  declare DOT: [Vector_2d Vector_2d] -> Real [dot]
+
+  module DOT{
+
+    assert* DOT_axiom := ((DOT (vec_2d ux uy) (vec_2d vx vy)) = (+ (* ux vx) (* uy vy)))
+
+    assert* DOT_0 :=  ((DOT u 0_vec) = 0.0)  
+
+  }#DOT
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+
+#---- EUCLIDEAN NORM
+
+  declare NORM: [Vector_2d] -> Real [norm]
+
+  module NORM{
+
+    assert* NORM_axiom := ((NORM (vec_2d ux uy)) = (Real.sqrt (+ (* ux ux) (* uy uy))))
+
+  }#NORM
+#----------------------------------------------------------------------------
+
+
+}#Vector_2d
+
+
+

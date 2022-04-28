@@ -1,35 +1,36 @@
-# Athena_LibDDDAS
+# MATH 
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
-
-
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+##### This repository contains ATHENA theory and proofs about mathematical concepts like random variables, probability, distributions, etc  
 
 
-##### Version Notes:
+##### Description: 
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+* `CharFun` - Theory of charecteristic functions    
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
+* `Collection` - Collections such as vectors, sets, etc
 
-* `v0.0` - Initial attempt at creating a reusable library 
+* `Dist` - Theory of distributions    
 
+* `Function` - Functions and mathematical operations
 
-##### ATHENA Resources:
+* `Prob` - Probability theory    
 
-* [ATHENA Website](http://proofcentral.org/)
+* `Queue` - Queuing theory
 
-* [Athena Library](http://proofcentral.org/athena/lib/)
+* `Random` - Theory of random variables    
 
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
+* `RealExt` - Real number theory
 
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
+* `Statistics` - Statistical theory
 
+* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
+<p align="center">
+  <img height="600" src="math_hierarchy.svg">
+</p>
 
 ###### Note: This library is under development and many modules may be currently just stubs
 
 ##### DISCLAIMER: 
-
 Copyright &copy; 2020 WCL
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

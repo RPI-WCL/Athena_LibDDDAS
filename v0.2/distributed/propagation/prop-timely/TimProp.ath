@@ -1,0 +1,412 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Timely Progress in TAP
+
+load "Athena_LibDDDAS/distributed/Distributed.ath"
+
+extend-module Distributed { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- returns number of Replicas in Knowledge propagation protocol
+
+	declare KPNumReplicas : [DisProt] -> Real
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	#-- KP (knowledge propagation) is a distributed protocol
+
+	declare KP : DisProt 
+
+	declare numMsgsInKP : Real #constant number of messages
+
+	define [t] := [?t:Real]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- number of messages in KP is 4 * number of replicas
+
+	assert KPNumMsgs :=
+	(
+		   ((Random.lenRVS (msGetTd (dpGetMsgs KP))) = (4.0 * (KPNumReplicas KP)))
+		 & ((Random.lenRVS (msGetTp (dpGetMsgs KP))) = (4.0 * (KPNumReplicas KP)))
+	)
+
+
+	#-- msGetTd[dpGetMsgs] iid
+	#  all transmission delays are iid
+	#  and exponentially distibuted
+
+	assert trnsmsnDlysIID :=
+	(
+		   (Random.rvsIID (msGetTd (dpGetMsgs KP)))
+		&  (Dist.isExpo (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP)))))
+	)
+
+	#-- msGetTp[dpGetMsgs] iid
+	#  all processing delays are iid
+	#  and exponentially distibuted
+
+	assert prcsngDlysIID :=
+	(
+		   (Random.rvsIID (msGetTp (dpGetMsgs KP)))
+		&  (Dist.isExpo (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP)))))
+	)
+
+
+	#-- KP uses MTR and MM1 queue
+
+	assert KP-MTR+MM1 :=
+	(
+		(= (Netwrk.netPrtInUse (dpNet KP)) Netwrk.MTR_AIMCT) 
+		& 
+		(forall t .
+			(	((Queue.qTyp (dpQ KP)) = Queue.MM1)
+			  & ((Dist.mean (Random.pdf (Queue.numCst (dpQ KP)))) 
+					= (Function.limit t RealExt.INFY (Function.consUF Queue.N_ t)) )
+			  & ((Dist.mean (Random.pdf (Queue.cstArRat (dpQ KP)))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF Queue.L_ t)) )
+			  & ((Dist.mean (Random.pdf (Queue.cstDly (dpQ KP)))) 
+			  	= (Function.limit t RealExt.INFY (Function.consUF Queue.T_ t)) )		  
+			)
+		)
+	)	
+
+
+
+	#-- THEOREM-P-T_D-&-P-T_P-erlangCDF
+	#  P((T_D <= x) & (T_P <= y)) = erlangCDF(T_D) * erlangCDF(T_P)
+	#  states that the probabilities can be obtained by erlangCDF function
+
+	define THEOREM-P-T_D-&-P-T_P-erlangCDF :=
+	(forall r1 r2 .
+		(
+			(Prob.probE 
+				(Prob.cons2E 
+					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+				)
+			)
+			=
+				(   
+					(Dist.erlangCDF (Random.lenRVS (msGetTd (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP))))) r1)	 
+				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
+				)
+		)		
+	)
+
+
+	conclude THEOREM-P-T_D-&-P-T_P-erlangCDF
+	pick-any r1
+	pick-any r2
+	let{
+		lhs := 
+			(Prob.probE 
+				(Prob.cons2E 
+					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+				)
+			);	
+		rhs := 
+				(   
+					(Dist.erlangCDF (Random.lenRVS (msGetTd (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP))))) r1)	 
+				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
+				);						
+		TD := (Random.SUM (msGetTd (dpGetMsgs KP)));
+		TP := (Random.SUM (msGetTp (dpGetMsgs KP)));
+		conn2-prob-TD-&-TP=P-TD-x-P-TP := (!uspec (!uspec (!uspec prob-TD-&-TP=P-TD-x-P-TP KP) r1) r2);
+		TD-prob := conclude (
+								  (Prob.probE (Prob.consE Prob.<= TD r1))
+								= (Dist.erlangCDF (Random.lenRVS (msGetTd (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP))))) r1)
+			                )
+					let{
+						rvsTD := (msGetTd (dpGetMsgs KP));
+						rvsTD-IID := (!left-and trnsmsnDlysIID);
+						rvsTD-expo := (!right-and trnsmsnDlysIID);
+						conn2-iid-expo-sum := (!mp (!uspec Dist.iid-expo-sum rvsTD) trnsmsnDlysIID);
+						TD-Erlang := (!left-and conn2-iid-expo-sum);
+						ratPar := (!right-and (!right-and conn2-iid-expo-sum));
+						shpPar := (!left-and (!right-and conn2-iid-expo-sum));
+						conn2-erlang-cdf := (!mp (!uspec (!uspec Dist.erlang-cdf TD) r1) TD-Erlang);
+						conn2-cdf-prob-conjecture := (!uspec (!uspec Prob.cdf-prob-conjecture TD) r1)
+					}
+					(!chain [ (Prob.probE (Prob.consE Prob.<= TD r1))
+							= (Random.cdf TD r1) [conn2-cdf-prob-conjecture]
+							= (Dist.erlangCDF (Dist.shapePar (Random.pdf TD)) (Dist.rateParEr (Random.pdf TD)) r1) [conn2-erlang-cdf]
+							= (Dist.erlangCDF (Random.lenRVS rvsTD) (Dist.rateParEr (Random.pdf TD)) r1) [shpPar]
+							= (Dist.erlangCDF (Random.lenRVS rvsTD) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt rvsTD))) r1) [ratPar]	
+							]);
+		TP-prob := conclude (
+								  (Prob.probE (Prob.consE Prob.<= TP r2))
+								= (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)
+			                )
+					let{
+						rvsTP := (msGetTp (dpGetMsgs KP));
+						rvsTP-IID := (!left-and prcsngDlysIID);
+						rvsTP-expo := (!right-and prcsngDlysIID);
+						conn2-iid-expo-sum := (!mp (!uspec Dist.iid-expo-sum rvsTP) prcsngDlysIID);
+						TP-Erlang := (!left-and conn2-iid-expo-sum);
+						ratPar := (!right-and (!right-and conn2-iid-expo-sum));
+						shpPar := (!left-and (!right-and conn2-iid-expo-sum));
+						conn2-erlang-cdf := (!mp (!uspec (!uspec Dist.erlang-cdf TP) r2) TP-Erlang);
+						conn2-cdf-prob-conjecture := (!uspec (!uspec Prob.cdf-prob-conjecture TP) r2)
+					}
+					(!chain [ (Prob.probE (Prob.consE Prob.<= TP r2))
+							= (Random.cdf TP r2) [conn2-cdf-prob-conjecture]
+							= (Dist.erlangCDF (Dist.shapePar (Random.pdf TP)) (Dist.rateParEr (Random.pdf TP)) r2) [conn2-erlang-cdf]
+							= (Dist.erlangCDF (Random.lenRVS rvsTP) (Dist.rateParEr (Random.pdf TP)) r2) [shpPar]
+							= (Dist.erlangCDF (Random.lenRVS rvsTP) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt rvsTP))) r2)[ratPar]	
+							])
+
+	}
+	(!chain [ lhs
+			= ((Prob.probE (Prob.consE Prob.<= TD r1)) * (Prob.probE (Prob.consE Prob.<= TP r2))) [conn2-prob-TD-&-TP=P-TD-x-P-TP]
+			= rhs [TD-prob TP-prob]
+			])
+
+
+
+
+
+
+	#-- THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars
+	#  connects the ratepars to the ratepars of MTR and MM1
+
+	define THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars :=
+	(forall r1 r2 .
+		((not (= r1 0.0)) and (not (= r2 0.0)))		
+			==>
+			(
+				(Prob.probE 
+					(Prob.cons2E 
+						(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
+						(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+					)
+				)
+				=
+					(   
+						(Dist.erlangCDF 
+							(4.0 * (KPNumReplicas KP)) 
+			 		  	 	(*
+			 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+			 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+			 		  	 	)
+							r1)
+
+
+					  * (Dist.erlangCDF 
+					  		(4.0 * (KPNumReplicas KP)) 
+							 (- 
+							   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+							   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+							 )
+					  		r2)	 
+					)
+			)		
+	)
+
+
+	conclude THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars
+	pick-any r1
+	pick-any r2
+	assume 	((not (= r1 0.0)) and (not (= r2 0.0)))
+	let{
+		NETWORK := (dpNet KP);
+		Q := (dpQ KP);
+		lhs :=
+			(Prob.probE 
+				(Prob.cons2E 
+					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+				)
+			);
+		rhs :=
+				(   
+					(Dist.erlangCDF 
+						(4.0 * (KPNumReplicas KP)) 
+		 		  	 	(*
+		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+		 		  	 	)
+						r1)
+
+
+				  * (Dist.erlangCDF 
+				  		(4.0 * (KPNumReplicas KP))
+						 (- 
+						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						 )
+				  		r2)	 
+				);
+		intermediate :=
+				(   
+					(Dist.erlangCDF (Random.lenRVS (msGetTd (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP))))) r1)	 
+				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
+				);				
+		r1-not-zero := (not (= r1 0.0));
+		r2-not-zero := (not (= r2 0.0));
+		usesMTR := (!left-and KP-MTR+MM1);
+		usesMM1 := (!right-and KP-MTR+MM1);
+		conn2-Prob-AIMCT-Td<=R-expo := (!uspec (!uspec MTR-AIMCT.Prob-AIMCT-Td<=R-expo NETWORK) r1);
+		MTR-lamda := (!right-and (!mp conn2-Prob-AIMCT-Td<=R-expo usesMTR));  # ratpar of TD =
+		conn2-usesMM1 := (!uspec usesMM1 r2);
+		conn2-THEOREM-cstDly-ratepar=Mu-Lambda := (!uspec (!uspec (!uspec Queue.THEOREM-cstDly-ratepar=Mu-Lambda r2) Q) r2);   
+		conn2-THEOREM-cstDly-ratepar=Mu-Lambda-conclusion := (!mp conn2-THEOREM-cstDly-ratepar=Mu-Lambda r2-not-zero);
+		conn2-THEOREM-cstDly-ratepar=Mu-Lambda-ratepar := (!mp conn2-THEOREM-cstDly-ratepar=Mu-Lambda-conclusion conn2-usesMM1); #ratepar of TP  		
+		lhs=intermediate := (!uspec (!uspec THEOREM-P-T_D-&-P-T_P-erlangCDF r1) r2);
+		conn2-disProt-network-rel := (!uspec disProt-network-rel KP);
+		conn2-disProt-Queue-rel := (!uspec disProt-Queue-rel KP);
+		conn2-trnsmsnDlysIID := (!left-and trnsmsnDlysIID);
+		conn2-prcsngDlysIID := (!left-and prcsngDlysIID);
+		rel-with-Net := (!mp conn2-disProt-network-rel conn2-trnsmsnDlysIID); 
+		rel-with-Q :=  (!mp conn2-disProt-Queue-rel conn2-prcsngDlysIID);
+		Net-lamda := conclude 
+							(
+								  (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP)))))
+								  =
+					 		  	 	(*
+					 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+					 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+					 		  	 	)
+
+							)
+							(!chain [ (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP)))))
+									= (Dist.ratePar (Random.pdf (Netwrk.netTd (dpNet KP)))) [rel-with-Net]
+					 		  	 	= (*
+					 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+					 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+					 		  	 	  ) [MTR-lamda]
+									]);
+		Q-lamda := conclude 
+							(
+								  (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP)))))
+								  =
+									 (- 
+									   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+									   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+									 )
+							)
+							(!chain [ (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP)))))
+									= (Dist.ratePar (Random.pdf (Queue.cstDly (dpQ KP)))) [rel-with-Q]
+									= (- 
+									   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+									   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+									  ) [conn2-THEOREM-cstDly-ratepar=Mu-Lambda-ratepar]
+									])
+
+	}
+	(!chain [ lhs
+			=	(   
+					(Dist.erlangCDF (Random.lenRVS (msGetTd (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTd (dpGetMsgs KP))))) r1)	 
+				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
+				) [lhs=intermediate]
+			=	(   
+					(Dist.erlangCDF 
+						(4.0 * (KPNumReplicas KP))
+		 		  	 	(*
+		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+		 		  	 	)
+						r1) 	 
+				  * (Dist.erlangCDF (Random.lenRVS (msGetTp (dpGetMsgs KP))) (Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (msGetTp (dpGetMsgs KP))))) r2)	 
+				) [Net-lamda KPNumMsgs]
+			=	(   
+					(Dist.erlangCDF 
+						(4.0 * (KPNumReplicas KP)) 
+		 		  	 	(*
+		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+		 		  	 	)
+						r1) 	 
+				  * (Dist.erlangCDF 
+				  		(4.0 * (KPNumReplicas KP))
+						 (- 
+						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						 )
+				  		r2)	 
+				) [Q-lamda KPNumMsgs]
+			])
+
+
+
+	#-- THEOREM-KP-time-bound
+	#  gives the final bound for time in KP
+
+	define THEOREM-KP-time-bound :=
+	(forall r1 r2 .
+		((not (= r1 0.0)) and (not (= r2 0.0)))		
+			==>		
+			(
+				(Prob.probE	(Prob.consE Prob.<= (dpTotTim KP) (r1 + r2)))
+				>=
+					(   
+						(Dist.erlangCDF 
+							(4.0 * (KPNumReplicas KP)) 
+			 		  	 	(*
+			 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+			 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+			 		  	 	)
+							r1)
+
+
+					  * (Dist.erlangCDF 
+					  		(4.0 * (KPNumReplicas KP))
+							 (- 
+							   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+							   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+							 )
+					  		r2)	 
+					)
+			)		
+	)
+
+
+	conclude THEOREM-KP-time-bound 
+	pick-any r1
+	pick-any r2
+	assume 	((not (= r1 0.0)) and (not (= r2 0.0)))	
+	let{
+		A := (Prob.probE (Prob.consE Prob.<= (dpTotTim KP) (r1 + r2)));
+		B := 
+			(Prob.probE 
+				(Prob.cons2E 
+					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs KP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs KP))) r2)
+				)
+			);
+		C := 			
+				(   
+					(Dist.erlangCDF 
+						(4.0 * (KPNumReplicas KP)) 
+		 		  	 	(*
+		 		  	 		(Dist.ratePar (Random.pdf (Random.rvSetIdElmnt (Netwrk.netNodeIMTmSet (dpNet KP)))))
+		 		  	 		(Netwrk.netNumSrcDst (dpNet KP)) 		
+		 		  	 	)
+						r1)
+
+
+				  * (Dist.erlangCDF 
+				  		(4.0 * (KPNumReplicas KP)) 
+						 (- 
+						   (Dist.ratePar (Random.pdf (Queue.srvcTm (dpQ KP)))) # mu	
+						   (Dist.ratePar (Random.pdf (Queue.cstArRat (dpQ KP)))) # lambda
+						 )
+				  		r2)	 
+				);
+		r1-r2-not-zero := ((not (= r1 0.0)) and (not (= r2 0.0)));			
+		A>=B := (!uspec (!uspec (!uspec THEOREM-P-TS>=P-TD&TP KP) r1) r2);
+		B=C :=	(!uspec (!uspec THEOREM-P-T_D-&-P-T_P-erlangCDF-ratepars r1) r2);
+		B=C_conclusion := (!mp B=C r1-r2-not-zero);
+		conn2->=-transitive2-axiom := (!uspec (!uspec (!uspec RealExt.>=-transitive2-axiom A) B) C);
+		A>=B&B=C := (!both A>=B B=C_conclusion)	 
+	}
+	(!mp conn2->=-transitive2-axiom A>=B&B=C)
+
+
+}# end module

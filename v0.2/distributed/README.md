@@ -1,18 +1,28 @@
 # Athena_LibDDDAS
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
+### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Applications Systems
 
 
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+#### Contents:
 
+* `consensus` -- theory and proofs about consensus protocols
 
-##### Version Notes:
+* `propagation` -- theory and proofs about a knowledge propagation protocol
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
+<p align="center">
+  <img height="600" src="distributed_hierarchy.svg">
+</p>
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
+##### Instructions:
 
-* `v0.0` - Initial attempt at creating a reusable library 
+1. [Download and install ATHENA](https://proofcentral.org/athena/1.4/) 
+
+2. Place this directory in the `ATHENA_HOME` directory created during installation
+
+3. Rename this directory to `Athena_LibDDDAS` (E.g., `vx.x` will be renamed to `Athena_LibDDDAS`) 
+
+3. Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory
 
 
 ##### ATHENA Resources:

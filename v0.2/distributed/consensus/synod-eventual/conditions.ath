@@ -1,0 +1,194 @@
+#****************************************************************************
+# Constraints/conditions required specifically for proving progress in Paxos
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Eventual Progress Conditions  
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+
+
+extend-module Synod{
+	
+
+#----------------------------------------------------------------------------
+#-- GUARANTEES IMPLIED BY THE "nonfaulty" PREDICATE  
+#----------------------------------------------------------------------------
+
+#-- The "nonfaulty" predicate basically implies that an actor will be available
+#-- when the system conditions require it to perform some action, i.e., a 
+#-- nonfaulty actor is available whenever it is supposed to send a message or receive
+#-- a message that had been sent to it 
+
+
+	#-- A nonfaulty proposer is available if there is a message for it in the multiset
+	#-- or if its local state satisfies conditions for it to send a 2a message 	
+	define Prp-NF-Axm :=
+	(forall p .
+		( (   (prp p) 
+			& (nonfaulty p) 
+		  )
+				==>
+					(forall T i a typ b v Q .   
+						( 
+						   (has-promises (als (config (rho T i)) p) b  Q)
+						 | (inMSet (consM a p typ b v) (mu (config (rho T i))) ) 	        	   		  	  
+						)		
+	        	  		  ==> (
+	        	  		  		  (available (config (rho T i)) p)
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (config (rho T j)) p))
+	    		    	  	  )			    
+					)
+		) 
+	)
+
+	#-- A nonfaulty acceptor is available if there is a message for it in the multiset
+	#-- or if its local state satisfies conditions for it to send a 1b or 2b message 	
+	define Acc-NF-Axm :=
+	(forall a .
+		( (   (acc a) 
+			& (nonfaulty a) 
+		  )
+				==>
+					(forall p T b i v typ .
+						(
+							   (  (inMSet (consM p a 1a b v) (amu (als (config (rho T i)) a))) 
+							   	& ((beta (als (config (rho T i)) a)) < b)
+							   )    	
+							|  (  (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+							   	& ((beta (als (config (rho T i)) a)) =< b)
+							   )    	
+		  		  	        |  (inMSet (consM p a typ b v) (mu (config (rho T i))))
+
+                        )	  		  	       
+	        	  		  ==> (
+	        	  		  		  (available (config (rho T i)) a)
+
+	    		    	  		| (exists j .
+                                             (i N.< j)
+	    		    	  				   & (available (config (rho T j)) a))
+	    		    	  	  )		
+					)
+		) 
+	)
+
+
+
+
+
+
+#----------------------------------------------------------------------------
+#-- Send and receive transitions for a nonfaulty actor are IOE
+
+	define NF-IOE-Axm :=
+		(forall x .
+			(nonfaulty x) ==>
+			(forall m T i .
+
+					(
+				        (  (inMSet m (mu (config (rho T i)))) 
+				         & (ready-to (rho T i) x (receive x m)))  
+			            	==>
+			            	(
+			            		  (exists j . (i N.<= j) 
+			            		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )                  
+			            	    |  (forall k .  (i N.< k)
+			            	    				==>
+			            	    				(exists j .
+				            	    				  (k N.<= j) 
+				            	    				& (inMSet m (mu (config (rho T j)))) 
+				            	    				& (ready-to (rho T j) x (receive x m))
+				            	    			)
+			            	    	)			              
+			            	) 
+					)
+
+				&	(
+			        (ready-to (rho T i) x (send x m))  
+		            	==>
+		            	(
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+		            	    |  (forall k .  (i N.< k)
+		            	    				==>
+		            	    				(exists j .
+			            	    				  (k N.<= j) 
+			            	    				& (ready-to (rho T j) x (send x m))
+			            	    			)
+		            	    	) 
+		            	) 
+					)
+    		)
+     	)	
+
+
+	define nonfaulty-def-axioms := [  Prp-NF-Axm
+									  Acc-NF-Axm	 
+									  NF-IOE-Axm
+	                            	]
+
+
+#----------------------------------------------------------------------------
+#-- PROPERTIES OF A BALLOT NECESSARY FOR IT TO SUCCESSFULLY GET VOTES 
+
+#-- This specifies the non-interruption condition
+
+	#-- We can call it the "P1-P2-Def" 
+ 	#-- If P1-P2-Def ballot, then two things: 
+ 	#--		1. if an acceptor receives 1a message at some indexed position with the ballot,
+ 	#--        the ballot should be > beta of every acceptor 
+ 	#-- 	2. if an acceptor receives 2a message at some indexed position with the ballot, 
+ 	#--        the ballot should be >= beta of every acceptor
+
+ 	define P1-P2-Def :=                                                                  
+ 		(forall b . 
+ 			 	(P1+P2-True b)                                                                    
+				 <==> 
+				 	(forall p T a i v .
+				 		( 
+					 	    (
+						 		(
+						 			  (acc a) 
+							 		& (inMSet (consM p a 1a b nilV) (amu (als (config (rho T i)) a))) 
+								)
+								==>	((beta (als (config (rho T i)) a)) < b) # In an actual implementation, the beta will be updated after responding to a message
+					 		)												# and if a message has been responded to, it will be removed from local state
+					 														# Therefore, this cannot lead to a fallacy when beta is updated
+
+						 	&	(
+							 		(
+							 			  (acc a) 
+								 		& (inMSet (consM p a 2a b v) (amu (als (config (rho T i)) a))) 
+									)
+									==>	((beta (als (config (rho T i)) a)) =< b)
+								)					 														
+				 		)
+
+					)
+		)		 	
+
+
+
+#----------------------------------------------------------------------------
+#-- CONDITIONS FOR PROVING PROGRESS
+#----------------------------------------------------------------------------
+ 	#-- The following conditions are necessary:
+ 	#-- In every transition path, some nonfaulty proposer will eventually be ready to propose a ballot 
+ 	#-- that satisfies P1+P2 to some quorum of nonfaulty acceptors
+
+ 	define CND :=
+	(forall T .
+		(exists i p b Q .
+					  (prp p) # p is a proposer
+					& (nonfaulty p) # p is non-faulty					  
+					& (P1+P2-True b) # the proposal number b satisfies the non-interruption condition
+					& (   (all-inQ-NF Q) # all acceptors in Q are non-faulty
+						& (rdy2snd-1a-all-inQ p Q (rho T i) b)) # p is ready to send a 1a msg with number b to all acceptors in Q
+		)
+	)
+
+
+
+
+}#close module

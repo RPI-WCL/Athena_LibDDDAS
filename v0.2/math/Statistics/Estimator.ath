@@ -1,0 +1,44 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Estimators
+
+load "Athena_LibDDDAS/math/Statistics/Model.ath"
+
+module Estimator { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Datatype of all Estimators 
+
+	#-- From wikipedia:
+	#-- Suppose a fixed parameter theta needs to be estimated. 
+	#-- Then an "estimator" is a function that maps the sample space to a set of sample estimates. 
+	#-- An estimator of theta  is usually denoted by the symbol theta_hat. 
+	#-- It is often convenient to express the theory using the algebra of random variables: 
+	#-- thus if X is used to denote a random variable corresponding to the observed data, 
+	#-- the estimator (itself treated as a random variable) is symbolised as a function of that random variable, 
+	#-- theta_hat(X).
+	# -- For now, we will only create estimators for real values of theta
+
+	datatype Estimator := (consEst Model.Model) #consEst(X ~ P_theta) -> theta_hat(X)
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- Estimator is a biased estimator of a given real variable
+
+	declare biasedEstimator : [Estimator Real] -> Boolean
+
+	#-- Output of an estimator (can be treated as a random variable)
+
+	declare estOut : [Estimator] -> Random.RandVar
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+}# end module

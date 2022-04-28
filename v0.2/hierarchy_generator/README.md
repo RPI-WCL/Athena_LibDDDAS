@@ -3,30 +3,21 @@
 ### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
 
 
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+#### Contents:
 
+* `create-hierarchy-gv-svg.py` -- a python code to generate the library hierarchy
 
-##### Version Notes:
+* `hierarchy-config.txt` -- a configuration file for the hierarchy generator code
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+##### Instructions:
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
+1. Install [Graphviz](https://graphviz.org/)
 
-* `v0.0` - Initial attempt at creating a reusable library 
+2. Edit `hierarchy-config.txt` to decide which files to exclude from the hierarchy
 
+3. Execute the `create-hierarchy-gv-svg.py` code in this directory
 
-##### ATHENA Resources:
-
-* [ATHENA Website](http://proofcentral.org/)
-
-* [Athena Library](http://proofcentral.org/athena/lib/)
-
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
-
-
-###### Note: This library is under development and many modules may be currently just stubs
+###### Note: This code has only been tested on Windows 10 using Powershell. It may also have other bugs.
 
 ##### DISCLAIMER: 
 

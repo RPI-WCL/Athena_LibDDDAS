@@ -1,0 +1,275 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Network Theory for VANETs
+#-- Inspiration - Al Hanbali, 2007, Simple model for the performance evaluation of a class of two-hop relay protocols
+
+load "Athena_LibDDDAS/math/Random/Random.ath"
+load "lib/main/nat-less.ath"
+
+module Netwrk { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	# The domain of all Packets
+
+	domain Packet	
+
+	# The domain of all mobile nodes
+
+	domain MobileNode
+
+	#-- set of all sets of MobileNodes
+
+	structure MobileNodeSet := MobileNode | (consMNS MobileNodeSet MobileNode)
+
+	# The domain of all networks
+
+	domain Network
+
+	# The domain of all network protocol types
+
+	domain PrtType
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	# Every duration has an associated random variable which maps it to its value
+
+	declare durRandVar: [Real] -> Random.RandVar
+
+	# Membership operator for MobileNodeSet
+
+	declare inMNS: [MobileNodeSet MobileNode] -> Boolean
+
+	# Intermeeting of all nodes in a set are independent (intermeeting is not a scalar or quantifiable concept, so a high level function captures)  
+
+	declare intrmtngOfNodsInd: [MobileNodeSet] -> Boolean
+
+	# Network property: all relays have same transmission capabilities
+
+	declare netAllRlySameTrnsCap: [Network] -> Boolean
+
+	# Network property: get the value f constant ttl
+
+	declare netGetCnstTTL: [Network] -> Real
+
+	# Network property: the intermeeting time of source and destination
+
+	declare netIMTSource-Dest: [Network] -> Random.RandVar	
+
+	# Network property: set of of Mobile nodes in the network
+
+	declare netNodeSet: [Network] -> MobileNodeSet
+
+	# Network property: set of of Mobile nodes in the network excluding the destination
+
+	declare netNodeSet-Dest: [Network] -> MobileNodeSet
+
+	# Network property: set of the random variables represnting the intermeeting times of each pair of Mobile nodes in the network
+
+	declare netNodeIMTmSet: [Network] -> Random.RandVarSet	
+
+	# Network property: restriction on the number of copies of packets in the network
+
+	declare netMaxPcktCopys: [Network] -> N	
+
+	# Network property: Total number of copies of a pcaket in the network (including original)
+
+	declare netNumCopies: [Network] -> N
+
+	# Function that returns protocol in use 
+
+	declare netPrtInUse: [Network] -> PrtType
+
+	# Network property: the time taken to deliver a packet to the destination
+
+	declare netTd: [Network] -> Random.RandVar
+
+	# Network property: the number of source and realy nodes (not including destination)
+
+	declare netNumSrcDst: [Network] -> Real	
+
+	# Network property: the set of times taken by relay nodes to transfer to destination
+
+	declare netTTRelays->Dest: [Network] -> Random.RandVarSet
+
+	# Network property: TTL is unrestricted
+
+	declare netUnrstTTL: [Network] -> Boolean		
+
+	# Node A can transmit to node B 
+
+	declare nodeCanTrnsmt: [MobileNode MobileNode] -> Boolean
+
+	# Node eligible to receive a message 
+
+	declare nodeElgbl2Rcv: [MobileNode Packet] -> Boolean
+
+	# Node has copy of a message 
+
+	declare nodeHasCpy: [MobileNode Packet] -> Boolean
+
+	# Node is a destination node 
+
+	declare nodeIsDst: [MobileNode] -> Boolean
+
+	# Node is a source node 
+
+	declare nodeIsSrc: [MobileNode] -> Boolean
+
+	# Node is a relay node 
+
+	declare nodeIsRly: [MobileNode] -> Boolean
+	
+	# Transmission time of a node
+
+	declare nodeTrnsTm: [MobileNode] -> Real
+
+	# number of nodes in a set of nodes
+
+	declare numNodes: [MobileNodeSet] -> N
+
+	# Function that returns time to live of a packet at a node
+
+	declare pcktTTL: [Packet MobileNode] -> Real	
+
+	# Protocol property: source can directly transmit to the destination
+
+	declare prtSrcCanTrnsmt2Dst: [PrtType MobileNode] -> Boolean
+
+	# Protocol property: source can directly transmit to any realy
+
+	declare prtSrcCanTrnsmt2Rlys: [PrtType MobileNode] -> Boolean
+
+	# Protocol property: source can directly transmit to only one realy
+
+	declare prtSrcCanTrnsmt2OneRly: [PrtType MobileNode] -> Boolean	
+
+	# Protocol property: source can transmit to relay with copy
+
+	declare prtSrcCanTrnsmt2RlyWthCpy: [PrtType MobileNode] -> Boolean	
+
+	# Protocol property: relay can only transmit to destination
+
+	declare prtRlyOnlyTrnsmt2Dst: [PrtType MobileNode] -> Boolean		
+
+	# Protocol property: relay can transmit to other realys
+
+	declare prtRlyCanTrnsmt2Rlys: [PrtType MobileNode] -> Boolean	
+
+
+
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [R] := [?R:Real]
+
+	# The network that is being talked about 
+	# (we will only need to reason about one network at a time
+	# but we needed to create a separate domain for networks
+	# in order to express some properties on that domain)
+
+	define [NETWORK] := [?NETWORK:Network]
+
+	# constant protocol names
+
+	declare MTR_AIMCT, TREC: PrtType
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- Number of nodes
+	assert numNodes-axiom :=
+	(forall NETWORK
+		((Random.lenRVS
+	 		(Random.consRVS
+	 			(Netwrk.netIMTSource-Dest NETWORK) 
+	 				(Netwrk.netTTRelays->Dest NETWORK)))
+		= (netNumSrcDst NETWORK)
+		)		
+	)
+
+
+	#-- If all intermeeting times are independent,
+	#   then intermeeting time of source and dest
+	#   is independent of the time taken to deliver
+	#   copy to dest by each relay
+
+	assert iMTimeSrcDst-ind-RlyTms-axiom :=
+	(forall ?net:Network .
+		(
+			(Random.rvsIID (netNodeIMTmSet ?net:Network))
+			   ==>
+		 		(Random.rvSetInd
+			 		(Random.consRVS
+			 			(netIMTSource-Dest ?net:Network) 
+			 				(netTTRelays->Dest ?net:Network)))
+		)   	   
+	)	 
+
+
+	#-- if K = N, it means that the source has transmitted to Every
+	#   relay and the time to transmit is the minimum of the
+	#  time taken by the source to transmit direcly to
+	#  the dest and the time needed for each of the relay nodes to deliver
+	#  a copy to the dest	
+
+
+	assert timeToTransmit-axiom :=
+	(forall ?net:Network .
+		(
+			( (netNumCopies ?net:Network) = (numNodes (netNodeSet-Dest ?net:Network)))
+			==>
+			 	(
+			 		(netTd ?net:Network)
+			 		= 
+			 			(Random.minRVS 
+						 		(Random.consRVS
+						 			(netIMTSource-Dest ?net:Network) 
+						 				(netTTRelays->Dest ?net:Network)))
+			 	)
+	 	)
+	)
+
+
+
+	#-- If unrestricted TTL, and intermeeting times are iid
+	#   then the set of [time to deliver by source and
+	#   times to deliver by all relays] is iid 
+	#   and the common cdf is the common cdf of  
+	#   the intermeeting times
+	assert unrstrctTTL-axiom :=
+	(forall NETWORK .
+		(
+			  (netUnrstTTL NETWORK)
+			& (Random.rvsIID (Netwrk.netNodeIMTmSet NETWORK))
+		)
+		==>
+			(
+	 			(Random.rvsIID 
+				 		(Random.consRVS
+				 			(netIMTSource-Dest NETWORK) 
+				 				(netTTRelays->Dest NETWORK)))
+	 			& (forall R . 
+	 					(
+	 						(Random.cdf 
+					 			(Random.rvSetIdElmnt 
+								 		(Random.consRVS
+								 			(netIMTSource-Dest NETWORK) 
+								 				(netTTRelays->Dest NETWORK)))
+
+				 		    R)
+	 						=
+	 						(Random.cdf 
+					 			(Random.rvSetIdElmnt 
+								 		(Netwrk.netNodeIMTmSet NETWORK)) R)
+				 		)    	 					
+	 			  )
+
+			)
+	)
+
+}# end module

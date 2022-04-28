@@ -1,0 +1,29 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Logarithm
+
+load "Athena_LibDDDAS/math/RealExt/RealExt.ath"
+
+module Logarithm { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- natural Logarithm
+
+	declare ln : [Real] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+}# end module

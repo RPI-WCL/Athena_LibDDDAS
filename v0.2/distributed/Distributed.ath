@@ -1,0 +1,250 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Distributed Protocols in VANETs
+
+load "Athena_LibDDDAS/network/MTR-AIMCT.ath"
+load "Athena_LibDDDAS/math/Queue/MM1.ath"
+
+module Distributed { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- domain of all messages
+
+	domain Msg
+
+	#-- set of all sets of random variables
+
+	structure MsgSet := emptyMS | (consMS Msg MsgSet)
+
+	#-- domain of distributed protocols 
+
+	domain DisProt
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#-- Set of messages involved in progress
+
+	declare dpGetMsgs : [DisProt] -> MsgSet
+
+	#-- Random variables representing transmission delays of a set of messages
+
+	declare msGetTd : [MsgSet] -> Random.RandVarSet
+
+	#-- Random variables representing processing delays of a set of messages
+
+	declare msGetTp : [MsgSet] -> Random.RandVarSet
+
+	#-- Random variable representing the total time for worst case progress
+
+	declare dpTotTim : [DisProt] -> Random.RandVar
+
+	#-- The Network model (communication protocol) being used 
+
+	declare dpNet : [DisProt] -> Netwrk.Network
+
+	#-- The queueing model being used 
+
+	declare dpQ : [DisProt] -> Queue.Queue	
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [DP] := [?DP:DisProt]
+
+	define [r1 r2 r3] := [?r1:Real ?r2:Real ?r3:Real]
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- Relationship to network protocol
+	#   assuming iid transmission times
+
+	assert disProt-network-rel :=
+	(forall DP .
+		( (Random.rvsIID (msGetTd (dpGetMsgs DP)))
+			==>
+				(
+					  (Random.rvSetIdElmnt (msGetTd (dpGetMsgs DP))) 
+					=
+					  (Netwrk.netTd (dpNet DP))
+				)
+		)
+	)
+
+
+	#-- Relationship to queueing model
+	#   assuming iid processing times
+
+	assert disProt-Queue-rel :=
+	(forall DP .
+		( (Random.rvsIID (msGetTp (dpGetMsgs DP)))
+			==>
+				(
+					  (Random.rvSetIdElmnt (msGetTp (dpGetMsgs DP))) 
+					=
+					  (Queue.cstDly (dpQ DP))
+				)
+		)
+	)
+
+
+
+	#-- TS = SUM[msGetTd[dpGetMsgs]] + SUM[msGetTp[dpGetMsgs]]
+
+	assert total-time-axiom :=
+	(forall DP .
+		(
+			(dpTotTim DP) 
+			=
+			 ((Random.SUM (msGetTd (dpGetMsgs DP))) Random.+ (Random.SUM (msGetTp (dpGetMsgs DP))))
+		)
+	)
+
+
+
+	# TD-ind-TP
+
+	assert TD-ind-TP :=
+	(forall DP .
+		(Random.ind (Random.SUM (msGetTd (dpGetMsgs DP))) (Random.SUM (msGetTp (dpGetMsgs DP))) ) 
+	)
+
+
+
+	#-- THEOREM-sum-implies-TS
+	# (SUM[msGetTd[dpGetMsgs]] <= x & SUM[msGetTp[dpGetMsgs]] <= y ) 
+	#  ==> 
+	#   ((dpTotTim DP) <= (x+y))
+
+	define THEOREM-sum-implies-TS :=
+	(forall DP r1 r2 .
+			(	
+				(Prob.happens	
+					(Prob.cons2E 
+						(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+						(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+					)
+				)
+				==>
+					(Prob.happens	
+						(Prob.consE Prob.<= (dpTotTim DP) (r1 + r2)
+						) 
+					)						
+			)
+	)
+
+
+	conclude THEOREM-sum-implies-TS 
+	pick-any DP
+	pick-any r1
+	pick-any r2
+	let{
+		z := (dpTotTim DP);
+		x := (Random.SUM (msGetTd (dpGetMsgs DP)));
+		y := (Random.SUM (msGetTp (dpGetMsgs DP)));
+		conn2-sum-implies-axiom := (!uspec (!uspec (!uspec (!uspec (!uspec Prob.sum-implies-axiom x) y) z) r1) r2);
+		conn2-total-time-axiom := (!uspec total-time-axiom DP)
+	}
+	(!mp conn2-sum-implies-axiom conn2-total-time-axiom)	
+
+
+	#-- THEOREM-P-TS>=P-TD&TP 
+	# P(TS ≤ (x + y)) ≥ P((TD ≤ x) ∧ (TP ≤ y))
+
+	define THEOREM-P-TS>=P-TD&TP :=
+	(forall DP r1 r2 .
+			(	
+				(Prob.probE	(Prob.consE Prob.<= (dpTotTim DP) (r1 + r2)))
+				>=
+				(Prob.probE	
+					(Prob.cons2E 
+						(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+						(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+					)
+				)
+
+			)
+	)	
+
+
+	conclude THEOREM-P-TS>=P-TD&TP
+	pick-any DP
+	pick-any r1
+	pick-any r2
+	let{
+		E1 := (Prob.consE Prob.<= (dpTotTim DP) (r1 + r2));
+		E2 :=  
+			(Prob.cons2E 
+				(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+				(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+			);
+		conn2-e1==>e2-prob := (!uspec (!uspec Prob.e1==>e2-prob E2) E1);
+		conn2-THEOREM-sum-implies-TS := (!uspec (!uspec (!uspec THEOREM-sum-implies-TS DP) r1) r2)
+	}
+	(!mp conn2-e1==>e2-prob conn2-THEOREM-sum-implies-TS)		
+
+
+
+
+
+
+	#-- prob-TD-&-TP=P-TD-x-P-TP
+	#  P((T_D <= x) & (T_P <= y)) = P(T_D <= x) * P(T_P <= y)
+
+	define prob-TD-&-TP=P-TD-x-P-TP :=
+	(forall DP r1 r2 .
+		(
+			(Prob.probE 
+				(Prob.cons2E 
+					(Prob.consE Prob.<=  (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+				)
+			)
+			=
+				(   (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2))
+				)
+		)		
+	)
+
+
+
+	conclude prob-TD-&-TP=P-TD-x-P-TP
+	pick-any DP
+	pick-any r1
+	pick-any r2
+	let{
+		lhs :=
+			(Prob.probE 
+				(Prob.cons2E 
+					(Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1) 
+					(Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2)
+				)
+			);		
+		rhs := 
+				(   (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTd (dpGetMsgs DP))) r1)) 
+				  * (Prob.probE (Prob.consE Prob.<= (Random.SUM (msGetTp (dpGetMsgs DP))) r2))
+				);					
+		TD := (Random.SUM (msGetTd (dpGetMsgs DP)));
+		TP := (Random.SUM (msGetTp (dpGetMsgs DP))); 
+		TD-ind-TP := (!uspec TD-ind-TP DP);
+		conn2-ind-randvar-rul := (!uspec (!uspec (!uspec (!uspec (!uspec (!uspec Prob.ind-randvar-rul TD) TP) r1) r2) Prob.<=) Prob.<=);	
+		e1 := (Prob.consE Prob.<= TD r1);
+		e2 := (Prob.consE Prob.<= TP r2);
+		e1-ind-e2 := (!mp conn2-ind-randvar-rul TD-ind-TP);		
+		conn2-product-rul := (!uspec (!uspec Prob.product-rul e1) e2);
+		P-e1-e2=P-e1-xP-e2 := (!mp conn2-product-rul e1-ind-e2) 
+	}
+	(!chain [ lhs
+			= rhs [P-e1-e2=P-e1-xP-e2]
+			])
+
+
+
+
+
+
+}# end module

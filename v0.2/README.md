@@ -3,16 +3,33 @@
 ### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
 
 
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+#### Contents:
 
+* `distributed` -- theory and proofs about distributed protocols
 
-##### Version Notes:
+* `network` -- theory and proofs about network, relay protocols, etc
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
+* `nmac` -- theory and proofs about an NMAC-aware flight planning algorithm 
 
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
+* `math` -- theory and proofs about basic mathematical concepts like random variables, probability, distributions, etc  
 
-* `v0.0` - Initial attempt at creating a reusable library 
+* `hierarchy_generator` -- python code to generate a hierarchy graph for the library
+
+* A rough hierarchy of the files can be seen below (A --> B implies that B is dependent on A)
+    * Note: The hierarchy graph does not include all Athena files in our library   
+<p align="center">
+  <img height="600" src="root_hierarchy.svg">
+</p>
+
+##### Instructions:
+
+1. [Download and install ATHENA](https://proofcentral.org/athena/1.4/) 
+
+2. Place this directory in the `ATHENA_HOME` directory created during installation
+
+3. Rename this directory to `Athena_LibDDDAS` (E.g., `vx.x` will be renamed to `Athena_LibDDDAS`) 
+
+3. Any ATHENA file in the library can then be loaded by issuing the command `.\athena <relative_address_of_file>` from the `ATHENA_HOME` directory
 
 
 ##### ATHENA Resources:

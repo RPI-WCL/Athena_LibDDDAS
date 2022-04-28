@@ -1,30 +1,11 @@
-# Athena_LibDDDAS
+# PROPAGATION
 
-### This repository contains an extension of the Athena proof library for reasoning about higher-level properties of Dynamic Data-Driven Aerospace Systems
-
-
-#### This library is an ongoing component of the [ASSURE](http://wcl.cs.rpi.edu/assure/) research project 
+##### This repository contains theory and proofs about the knowledge propagation protocol presented in DASC 2020
 
 
-##### Version Notes:
+##### Contents:
 
-* `v0.2` - The Athena modules have been reorganized and new statistical theories have been added
-
-* `v0.1` - The Athena modules have been reorganized and new theories about airborne distributed protocols have been added
-
-* `v0.0` - Initial attempt at creating a reusable library 
-
-
-##### ATHENA Resources:
-
-* [ATHENA Website](http://proofcentral.org/)
-
-* [Athena Library](http://proofcentral.org/athena/lib/)
-
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
-
-* For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
-
+* `prop-timely` -- theory and proofs about timely progress in the knowledge propagation protocol
 
 ###### Note: This library is under development and many modules may be currently just stubs
 

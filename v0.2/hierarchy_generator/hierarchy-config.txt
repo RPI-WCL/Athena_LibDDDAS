@@ -1,0 +1,41 @@
+#### List Manual Descriptions Below (add valid reasons for reference)
+
++ nat-less.ath Natural Numbers
+
+#### List Files to Ignore Below (also list any files that call these files)
+
+- prove-all.ath
+
+# In math/Dist (because the constructs are not reusable and have not been used for high-level properties)
+- NormDist.ath
+
+# In consensus/synod-eventual (because the constructs are not reusable and the theory is not connected to probabilistic properties)
+- behavior.ath
+- conditions.ath
+- methods.ath
+- progress-proof.ath
+- symbols.ath
+- system.ath
+- conditions-proof.ath
+
+# In consensus/synod-timely (because incomplete)
+- TimSyn.ath
+
+# In nmac (because the constructs are not reusable and the theory is not connected to probabilistic properties)
+- algorithm.ath
+- configuration.ath
+- flightplan.ath
+- matrix.ath
+- nmac.ath
+- proofs.ath
+- real.ath
+- state.ath
+- types.ath
+- vector_2d.ath
+- violation.ath
+- v-list.ath
+
+
+
+
+
