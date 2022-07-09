@@ -87,6 +87,82 @@ module CRLB {
 		(!force Var_val_DiffLogFXTheta)
 
 
+
+	#-- Covariance Inequality Expression (d/d_theta E[T(X)])^2 <= V[T(X)] * E[d/d_theta log f(X,theta)^2]	
+
+	define Covariance-Inequality-THEOREM :=
+	(forall theta X .
+		(not                # the denominator cannot be 0
+			(= 
+			  (Random.expected (Random.pow 
+			  						(Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
+			  						2)
+			  )
+			  0.0				
+			)
+		)
+		==>
+			(   (RealExt.pow 
+		           (Derivative.parDif 
+							(Random.expected 
+								(Estimator.estOut (Estimator.consEst (Model.consMod theta X)))) theta)
+		            2)
+
+				<=
+
+				 ( (Random.var (Estimator.estOut (Estimator.consEst (Model.consMod theta X))))
+				 	*
+				    (Random.expected (Random.pow 
+				  	  					  (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
+		  								   2)
+				    )
+			 	 )
+			)
+	)
+
+	conclude Covariance-Inequality-THEOREM
+	pick-any theta
+	pick-any X
+	assume (not                # the denominator cannot be 0
+				(= 
+				  (Random.expected (Random.pow 
+				  						(Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
+				  						2)
+				  )
+				  0.0				
+				)
+			)
+	let{
+		W := (Estimator.estOut (Estimator.consEst (Model.consMod theta X)));
+		Y := (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta);
+	    V_Y_not_zero := (not                # the denominator cannot be 0
+							(= 
+							  (Random.expected (Random.pow 
+							  						(Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
+							  						2)
+							  )
+							  0.0				
+							)
+						);		
+		conn-2-Cov_Prod_Property := (!uspec (!uspec Cov_Prod_Property W) Y); # Cov(W,Y)^2 <= V[W]V[Y]
+		conn-2-Cov_val_TX_DiffLogFXTheta := (!uspec (!uspec Cov_val_TX_DiffLogFXTheta theta) X); # Cov[W,Y] = d/d_theta E[T(X)]
+		conn-2-Var_val_DiffLogFXTheta := (!uspec (!uspec Var_val_DiffLogFXTheta theta) X); # V[Y] = E[d/d_theta log f(X,theta)^2]
+		r1 := (Random.cov (Estimator.estOut (Estimator.consEst (Model.consMod theta X))) (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta));
+		r2 := (Random.var W);
+		r3 := (Random.var Y);
+		r1e := (Derivative.parDif 
+						(Random.expected 
+							(Estimator.estOut (Estimator.consEst (Model.consMod theta X)))) theta);													
+		r3e := (Random.expected (Random.pow 
+			  	  					  (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
+	  								   2)
+			   );													
+		antecedent := (!both conn-2-Cov_Prod_Property (!both  conn-2-Cov_val_TX_DiffLogFXTheta conn-2-Var_val_DiffLogFXTheta ));
+		conn-2-THEOREM-replace-with-equal2 := (!uspec (!uspec (!uspec (!uspec (!uspec RealExt.THEOREM-replace-with-equal2 r1) r2) r3) r1e) r3e) 
+	}	
+	(!mp conn-2-THEOREM-replace-with-equal2 antecedent)
+
+
 	#-- The Cramer-Rao Lower Bound (Eq 7)
 
 	define CRLB-Theorem :=
@@ -151,41 +227,8 @@ module CRLB {
 							  0.0				
 							)
 						);		
-		conn-2-Cov_Prod_Property := (!uspec (!uspec Cov_Prod_Property W) Y); # Cov(W,Y)^2 <= V[W]V[Y]
-		conn-2-Cov_val_TX_DiffLogFXTheta := (!uspec (!uspec Cov_val_TX_DiffLogFXTheta theta) X); # Cov[W,Y] = d/d_theta E[T(X)]
-		conn-2-Var_val_DiffLogFXTheta := (!uspec (!uspec Var_val_DiffLogFXTheta theta) X); # V[Y] = E[d/d_theta log f(X,theta)^2]
-		cov-inequality-expression := conclude 
-												(   (RealExt.pow 
-											           (Derivative.parDif 
-																(Random.expected 
-																	(Estimator.estOut (Estimator.consEst (Model.consMod theta X)))) theta)
-											            2)
-
-													<=
-
-													 ( (Random.var (Estimator.estOut (Estimator.consEst (Model.consMod theta X))))
-													 	*
-													    (Random.expected (Random.pow 
-													  	  					  (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
-											  								   2)
-													    )
-												 	 )
-												)
-												let{													
-													r1 := (Random.cov (Estimator.estOut (Estimator.consEst (Model.consMod theta X))) (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta));
-													r2 := (Random.var W);
-													r3 := (Random.var Y);
-													r1e := (Derivative.parDif 
-																	(Random.expected 
-																		(Estimator.estOut (Estimator.consEst (Model.consMod theta X)))) theta);													
-													r3e := (Random.expected (Random.pow 
-														  	  					  (Derivative.parDifLog (Logarithm.ln (Vector.jointDen X theta)) theta)
-												  								   2)
-														   );													
-													antecedent := (!both conn-2-Cov_Prod_Property (!both  conn-2-Cov_val_TX_DiffLogFXTheta conn-2-Var_val_DiffLogFXTheta ));
-													conn-2-THEOREM-replace-with-equal2 := (!uspec (!uspec (!uspec (!uspec (!uspec RealExt.THEOREM-replace-with-equal2 r1) r2) r3) r1e) r3e) 
-												}
-												(!mp conn-2-THEOREM-replace-with-equal2 antecedent);
+		conn-2-Covariance-Inequality-THEOREM := (!uspec (!uspec Covariance-Inequality-THEOREM theta) X);
+		cov-inequality-expression := (!mp conn-2-Covariance-Inequality-THEOREM V_Y_not_zero);
 	r1 := (RealExt.pow 
 			(Derivative.parDif 
 				(Random.expected 
