@@ -17,11 +17,11 @@
 
 ##### ATHENA Resources:
 
-* [ATHENA Website](http://proofcentral.org/)
+* [ATHENA Website](https://athena-lang.org)
 
-* [Athena Library](http://proofcentral.org/athena/lib/)
+* [Athena Library](https://github.com/AthenaFoundation/athena/tree/master/lib)
 
-* [ATHENA user's guide](http://proofcentral.org/athena/Athena_User's_Guide.pdf)
+* [ATHENA user's guide](https://athena-lang.org/learn)
 
 * For more about ATHENA, refer to the book [Fundamental Proof Methods in Computer Science](https://mitpress.mit.edu/books/fundamental-proof-methods-computer-science) by Konstantine Arkoudas and David Musser, MIT Press, 2017
 
