@@ -1,0 +1,267 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Random Variables
+
+
+load "Athena_LibDDDAS/math/Dist/Dist.ath"
+
+module Random {
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- set of all random variables
+
+	domain RandVar
+
+	#-- set of all sets of random variables
+
+	structure RandVarSet := emptyRVS | (consRVS RandVar RandVarSet)
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- Cumulitive Distribution Function of a random variable X evaluated at a real x
+	#  Since it represents the probability of X <= x, it returns a Real
+
+	declare cdf: [RandVar Real]-> Real	
+
+	#-- covariance of two random variables
+
+	declare cov: [RandVar RandVar]-> Real	
+
+	#-- Expected value of a random variable
+	#-- (in our current specification, expected value is a property of random variables 
+	#-- and mean is the property of the probability distribution followed by a random variable.
+	#-- This is specified in the mean=expected-axiom. Will need to unite the concepts 
+	#-- in a later iteration)
+
+	declare expected: [RandVar] -> Real
+
+	#-- iDist returns True if two random variables are identically distributed
+
+	declare iDist: [RandVar RandVar]-> Boolean
+
+	#-- ind returns True if two random variables are independent
+
+	declare ind: [RandVar RandVar]-> Boolean
+
+	#-- membership opertaor for RandVarSet
+
+	declare inRVS: [RandVarSet RandVar] -> Boolean 
+
+	#-- length for RandVarSet
+
+	declare lenRVS: [RandVarSet] -> Int 
+
+#	#-- mIndRVS returns True for a collection of random variables if all random variables in the collection are mutually independent.
+
+#	declare mIndRvs: [RandVarSet]-> Boolean
+
+	#-- minRVS function takes a set of random varibles S and returns the minimum random Variable
+
+	declare minRVS: [RandVarSet] -> RandVar		
+
+	#-- pdf returns the Probability Distribution Function of a random variable
+
+	declare pdf: [RandVar]-> Dist.Dist
+
+	#-- probability-RandVar<=c function takes a random varible z and a Real c and finds the probability that z<=c by using its pdf
+
+	declare probability-RandVar<=c: [RandVar Real] -> Real	
+
+	#-- probability-RandVar>c function takes a random varible z and a Real c and finds the probability that z>c by using its pdf
+
+	declare probability-RandVar>c: [RandVar Real] -> Real		
+
+	#-- probability-RandVarSet<=c function takes a set of random varibles S and a Real c and finds the probability that every random variable in S is <=T by using its pdf
+
+	declare probability-RandVarSet<=c: [RandVarSet Real] -> Real		
+
+	#-- "Reliability Function" or "Survival Function" or "Complementary CDF" of a CDF given by (1 - CDF)
+
+	declare rf: [Dist.Dist]-> Dist.Dist	
+
+	#-- All rvs in a given set of rvs are mutually independent
+
+	declare rvSetInd: [RandVarSet] -> Boolean 
+
+	#-- All rvs in a given set of rvs are identically distributed
+
+	declare rvSetId: [RandVarSet] -> Boolean 	
+
+	#-- rvsIID returns True for a collection of random variables if each random variable in the collection has the same probability distribution as the others and all are mutually independent.
+
+	declare rvsIID: [RandVarSet]-> Boolean
+
+	#-- The element of an RandVarSet whose elements are all identical 
+
+	declare rvSetIdElmnt: [RandVarSet] -> RandVar 
+
+	#-- sum returns the sum of two random variables
+
+	declare sum: [RandVar RandVar]-> RandVar
+
+	overload + sum
+
+	#-- prod returns the product of two random variables
+
+	declare prod: [RandVar RandVar]-> RandVar
+
+	overload * prod
+
+	#-- pow returns the power of a random variables raised to a real
+
+	declare pow: [RandVar Real]-> RandVar	
+
+	#-- SUM returns the sum of a set of random variables
+
+	declare SUM: [RandVarSet]-> RandVar
+
+
+	#-- variance of a random variable
+	#-- (relation to variance of the pdf of the random variable 
+	#-- expressed in varRandVar=varPDF-axiom)
+
+	declare var: [RandVar]-> Real	
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [x y z] := [?x:RandVar ?y:RandVar ?z:RandVar]
+
+	define [T] := [?T:Real]
+
+	define [rv rvSet rvSetTail] := [?rv:RandVar ?rvSet:RandVarSet ?rvSetTail:RandVarSet]
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------	
+
+	#-- mean=expected-axiom states that the expected value of a random variable 
+	#-- is the mean of the probability distribution followed by the random variable.
+
+	assert mean=expected-axiom :=
+	(forall rv .
+			(= (expected rv) 
+			   (Dist.mean (pdf rv)))	
+	)	
+
+
+	#-- varRandVar=varPDF-axiom states that the variance of a random variable 
+	#-- is the variance of the probability distribution followed by the random variable.
+
+	assert varRandVar=varPDF-axiom :=
+	(forall rv .
+			(= (var rv) 
+			   (Dist.var (pdf rv)))	
+	)	
+
+	#-- iIDRvs-axiom states that
+	#   if a rvSet is IID, then it is 
+	#   also Ind and Id
+
+	assert iIDRvs-axiom :=
+	(forall rvSet .
+		(rvsIID rvSet) 
+			<==>
+				(
+					(rvSetId rvSet) 
+					& (rvSetInd rvSet)
+				)
+	)
+
+
+	#-- probability-RandVar<=c-axiom function definition
+
+	assert probability-RandVar<=c-axiom :=
+	(forall z T .
+		(
+	          (= (probability-RandVar<=c z T)
+	             (Dist.probability-Dist<=c (pdf z) T)  )
+	    )      
+    )
+
+	#-- *OLD AND REDUNDANT*. (See Prob.THEOREM-probability-MIN-<=-&->)
+	#-- probability-RandVar<=c-COMP-RandVar>c states that
+	#   the probability that a random variable X takes a value
+	#   at most c is 1 - the probability that the
+	# random variable takes a value more that c 
+	#   P(X <= c) = 1 - P(X > c) 
+
+	assert probability-RandVar<=c-COMP-RandVar>c :=
+	(forall z T .
+		(
+			((probability-RandVar<=c z T) 
+				=
+					(1.0 - (probability-RandVar>c z T)))
+			& ((probability-RandVar>c z T) 
+				=
+					(1.0 - (probability-RandVar<=c z T))) 		 			
+		)
+	)
+
+
+
+	#-- sum-randVars states that 
+	#   The probability distribution of the sum of two 
+	#   independent random variables is the convolution of each of 
+	#   their probability distributions.
+
+	define sum-randVars :=
+	(
+	forall x y .
+	   (= (pdf (sum x y)) 
+	      (Dist.convo (pdf x) 
+	                   (pdf y) ) ) 
+	)
+
+	assert sum-randVars
+
+
+
+	#-- composite-rvSetInd states that  
+	#   the tail of a composite set of random variables is
+	#   mutually independent if the set is mutually independent
+	#   ie, if all elements of [head, [tail]] are mutually independent
+	#   then all elements of [tail] are mutually independent
+
+	assert composite-rvSetInd :=
+	(forall y rvSetTail .
+		(
+			 
+			(rvSetInd (Random.consRVS y rvSetTail))
+				==>
+				(rvSetInd rvSetTail)
+		)
+	)
+
+
+
+	#-- *OLD AND REDUNDANT*. (See Prob.THEOREM-probability-MIN-<=-&->)
+	#-- THEOREM-prob-minRVS-<=c-and->c states that 
+	#   the probability that the minimum of a set of random 
+	#   variables takes a value at most c is 
+	#   1 - the probability that the min takes a value at least c 
+
+	define THEOREM-prob-minRVS-<=c-COMP->c :=
+	(forall rvSet T .
+		( (probability-RandVar<=c (minRVS rvSet) T)
+			=
+			(1.0 - (probability-RandVar>c (minRVS rvSet) T))
+		)
+	)
+
+	conclude THEOREM-prob-minRVS-<=c-COMP->c 
+	pick-any rvSet:RandVarSet
+	pick-any T:Real
+	let{
+		min-rvSet := (minRVS rvSet);
+		comp-rul := (!uspec (!uspec probability-RandVar<=c-COMP-RandVar>c min-rvSet) T);
+		<=COMP> := (!left-and comp-rul)
+	}
+	(!chain [ (probability-RandVar<=c min-rvSet T)
+			= (1.0 - (probability-RandVar>c min-rvSet T)) [<=COMP>]
+			]
+	)
+
+
+} # end module	
+

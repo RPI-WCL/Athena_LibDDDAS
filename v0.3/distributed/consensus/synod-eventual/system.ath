@@ -1,0 +1,142 @@
+#****************************************************************************
+# Constraints/rules defining the general system model following the actor model and paxos
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- FAM Assumptions  
+#****************************************************************************
+load "lib/main/nat-less"
+load "symbols.ath"
+
+
+extend-module Synod{
+
+
+#----------------------------------------------------------------------------
+#-- Availability syntactic sugar (unused for progress)
+
+	#-- An actor is available iff it it in the alpha set of the configuration
+	define availability-axiom :=
+		(forall T i x .
+			(available (config (rho T i)) x)
+				<==> 
+					(inASet x (alpha (config (rho T i))))
+		)
+	 
+
+#----------------------------------------------------------------------------
+#-- Ready-to fair-axioms (unused for progress)
+
+	#-- An actor can only be ready for a transition if it is available
+	define ready-to-axiom :=
+		(forall T i x s .
+			(ready-to (rho T i) x s)
+				==> 
+					(available (config (rho T i)) x)
+		)
+
+#----------------------------------------------------------------------------
+#-- Transition Step Syntactic Sugar 
+
+	#-- If a receive trasition happens at an indexed position, the message exists 
+	#-- in the set of unresponded messages in the local state of the actor at that position 
+	define rcv-affect :=
+			(forall x m T i j .
+			        (= (rho T i) (then (rho T j) (receive x m))) 
+	            	==>
+		            	  (inMSet m (amu (als (config (rho T i)) x))) 
+             )
+
+	#-- If a Send trasition happens at an indexed position, the message exists  
+	#-- in the multiset at that position 
+	define snd-affect :=
+			(forall x m T i j .
+			        (= (rho T i) (then (rho T j) (send x m)))
+	            	==>
+		            	(inMSet m (mu (config (rho T i))) )
+             )
+
+
+	define model-step-axioms := [ rcv-affect
+								  snd-affect
+							    ]
+	 
+
+#----------------------------------------------------------------------------
+#-- Actor Fairness theory 
+
+	#-- The fair receive and fair send assumptions of the actor model
+	define F-Rcv-Axm :=
+			(forall x m T i .
+			        ((inMSet m (mu (config (rho T i)))) 
+			        & (ready-to (rho T i) x (receive x m)))  
+		            	==>
+		            	(
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (receive x m))) )
+		            	    | (exists k . (i N.< k)
+		            	    			& (forall j .
+		            	    			   (k N.<= j)
+		            	    			     ==>
+		            	    			     	(~(
+				            	    			   (inMSet m (mu (config (rho T j)))) 
+				            	    			 & (ready-to (rho T j) x (receive x m))		            	    			     		
+		            	    			     	 ))
+		            	    			  )
+
+		            	       )		
+		            	) 
+             )
+
+
+	define F-Snd-Axm :=
+			(forall x m T i .
+			        (ready-to (rho T i) x (send x m))  
+		            	==>
+		            	(
+		            		  (exists j . (i N.<= j) 
+		            		   			& (= (rho T (S j)) (then (rho T j) (send x m))) )
+		            	    | (exists k . (i N.< k)
+		            	    			& (forall j .
+		            	    			   (k N.<= j)
+		            	    			     ==>
+		            	    			     	(~(ready-to (rho T j) x (send x m)))
+		            	    			  )
+
+		            	       )		
+		            	) 
+             )
+
+
+	define model-fair-axioms := [ F-Rcv-Axm 
+							      F-Snd-Axm
+							    ]				
+
+
+
+
+#----------------------------------------------------------------------------
+#-- Message Persistance Property
+
+	# Messages in the multiset persist until received (can be proven, but currently taking as an axiom)
+	# States that messages are not lost
+	define msg-persists-until-read :=
+			(forall T i a p typ b v .
+					(inMSet (consM p a typ b v) (mu (config (rho T i))))			
+					==>
+						(
+							  (forall j .
+							        (i N.<= j) 
+							  		      ==> 
+							  			     (inMSet (consM p a typ b v) (mu (config (rho T j)))) 
+							  )
+
+							| (exists k . (   (i N.<= k) 
+		            	    				& (= (rho T (S k)) (then (rho T k) (receive a (consM p a typ b v))))
+		            	    			  )
+							  )
+						)	
+			)
+
+
+
+
+}#close module

@@ -1,0 +1,334 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Properties of Reals
+#-- For some reason, cannot extend built-in module Real using extend-module
+
+module RealExt { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Domain of sets of real numbers
+
+	datatype RealSet := emptyRS | (consRS Real RealSet)
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	# factorial
+
+	declare fact : [Real] -> Real
+
+
+	# All elements of a set of real numbers are equal
+	# We call such sets "Homogenous Sets" for brevity
+	# eg - {1.0, 1.0, 1.0, ... }
+	
+	declare homoRS : [RealSet] -> Boolean
+
+	# return the element of a homogenous set
+	
+	declare elmntHRS : [RealSet] -> Real
+
+	# largest integer
+
+	declare largest_int : [Real] -> Real # 1.0, 2.0, 3.0 , etc
+
+	# Length of a set of real numbers
+	
+	declare lenRS : [RealSet] -> Real
+
+	# max function
+
+	declare max : [Real Real] -> Real
+
+	# Product function for set of real numbers
+	
+	declare prod : [RealSet] -> Real		
+
+	# power function for real numbers
+	
+	declare pow : [Real Real] -> Real
+
+	# square root function for real numbers
+	
+	declare sqrt : [Real] -> Real
+
+	# tends to function for real numbers
+	# x -> infinity
+
+	declare tends_to : [Real Real] -> Boolean	
+
+	#-- membership opertaor for RealSet
+
+	declare inRVS: [RealSet Real] -> Boolean 
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [hS] := [?hS:RealSet]
+
+	define [r r1 r2 r3 r1e r2e r3e r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r1e:Real ?r2e:Real ?r3e:Real ?r4:Real]
+
+	declare INFY, EULER : Real # infinity and Euler's constant e 
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	# >=-transitive1-axiom 
+
+	assert >=-transitive1-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 = r2) & (r2 >= r3)) 
+			==> (r1 >= r3)
+		)
+	)
+
+
+	# >=-transitive2-axiom 
+
+	assert >=-transitive2-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 >= r2) & (r2 = r3)) 
+			==> (r1 >= r3)
+		)
+	)
+
+
+	# >=-transitive2-axiom 
+
+	assert >=-transitive3-axiom :=
+	(forall r1 r2 r3 .
+		(
+			((r1 >= r2) & (r2 >= r3)) 
+			==> (r1 >= r3)
+		)
+	)	
+
+
+	
+
+
+	# <=-inverse->=-axiom
+
+	assert <=-inverse->=-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 >= r2) <==> (r2 <= r1)
+		)
+	)
+
+
+	#-- prod-commutative-axiom states that 
+	# a * b = b * a
+
+	assert prod-commutative-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 * r2) = (r2 * r1)
+		)
+	)
+
+	#-- prod-identity-axiom states that
+	# x * 1.0 = x
+	assert prod-identity-axiom :=
+	(forall r1 . (r1 * 1.0) = r1)
+
+
+
+	# =-implies->=-axiom
+
+	assert =-implies->=-axiom :=
+	(forall r1 r2 .
+		(
+			(r1 = r2) ==> (r1 >= r2)
+		)
+	)
+
+
+	#-- swap-sides-axiom states that Z <= XY ==> Z/X <= Y
+
+	assert swap-sides-axiom :=
+	(forall r1 r2 r3 .
+		(
+			(not (= r3 0.0))
+				==>		
+				 ( (r1 <= (r2 * r3))
+				   		==>
+				   			((r1 / r3) <= r2)  
+			 	 )
+	 	)
+	)
+
+
+
+	#-- inverse-axiom states the relationship betweek inverses 
+
+	assert by-1-axiom :=
+	(forall r .
+		(not (= r 0.0))
+			==>		
+			 ( (1.0 / (1.0 / r) ) = r )
+	)
+
+
+	#-- prod-pow-axiom states that 
+	#   the product of a homogenous set of length N is 
+	#   the Nth power of the valueof elements in the set
+
+	assert prod-pow-axiom :=
+	(forall hS .
+		(homoRS hS)
+		==>
+			(
+				(prod hS)
+					=	
+						(pow (elmntHRS hS) (lenRS hS))
+			)
+	)
+
+
+	#-- prod-split-axiom states that 
+	#   the product of a set whose head and tail are given 
+	#  is the product of the head and the product of tail
+	#  prod([head, [tail]]) = prod([head , prod([tail])])
+
+	assert prod-split-axiom :=
+	(forall r hS .
+		(
+			(prod (consRS r hS))
+				=	
+					(* r (prod hS))
+		)
+	)
+
+
+
+	#-- ab-by-da-axiom states that  
+	# a/d * b/a = b/d
+
+	assert a-by-d-x-b-by-a-axiom :=
+	(forall r1 r2 r3 .
+		((not (= r1 0.0)) and (not (= r2 0.0)))
+			==>
+				(
+					((r1 / r2) * (r3 / r1))
+					= 
+						((r3 / r2))
+				)
+	)
+
+
+	#-- a-by-b-axiom states that 
+	# a/b = 1/b * a
+
+	assert a-by-b-axiom :=
+	(forall r1 r2 .
+		(not (= r2 0.0))
+			==>		
+			(
+				(r1 / r2)
+				= 
+					((1.0 / r2) * r1 )
+			)
+	)
+
+
+	#-- a-x-b=c-axiom states that 
+	# a * b = c <==> a = c / b
+
+	assert a-x-b=c-axiom :=
+	(forall r1 r2 r3 .
+		(not (= r2 0.0))	
+			==> 
+					(
+						((r1 * r2) = r3)
+							<==> 
+								(r1 = (r3 * (1.0 / r2)))
+					)	
+	)	
+
+
+	#-- replace with equal
+	#  this is very obvious that equal values can betweek
+	#   replaced in a real expression
+	#****  NEED to find a generic version ****
+
+	define THEOREM-replace-with-equal :=
+	(forall r1 r2 r3 r4 r1e r2e r3e .
+		(
+			
+			(  (r4 >= ((r1 * (r2 * r3))))
+			  &	(r1 = r1e)
+			  & (r2 = r2e)
+			  & (r3 = r3e)
+			)
+
+			==> (r4 >= ((r1e * (r2e * r3e))))
+		)
+	)
+
+
+	conclude THEOREM-replace-with-equal
+	pick-any r1
+	pick-any r2
+	pick-any r3
+	pick-any r4
+	pick-any r1e
+	pick-any r2e
+	pick-any r3e
+	assume
+			(  (r4 >= ((r1 * (r2 * r3))))
+			  &	(r1 = r1e)
+			  & (r2 = r2e)
+			  & (r3 = r3e)
+			)
+	let{
+		assum :=
+			(  (r4 >= ((r1 * (r2 * r3))))
+			  &	(r1 = r1e)
+			  & (r2 = r2e)
+			  & (r3 = r3e)
+			);
+		>=rel := (!left-and assum);
+		r1=r1e := (!left-and (!right-and assum));
+		r2=r2e := (!left-and (!right-and (!right-and assum)));
+		r3=r3e := (!right-and (!right-and (!right-and assum)));
+		mult := (r1 * (r2 * r3));
+		replace := (r1e * (r2e * r3e));
+		mult=replace := conclude (mult = replace)
+					(!chain [ mult
+							= (r1 * (r2 * r3)) [mult]
+							= (r1e * (r2 * r3)) [r1=r1e]
+							= (r1e * (r2e * r3)) [r2=r2e]
+							= (r1e * (r2e * r3e)) [r3=r3e]
+							= replace [replace]
+							]);
+		cond-for-transitive2 := (!both >=rel mult=replace);
+		conn2->=-transitive2-axiom := (!uspec (!uspec (!uspec >=-transitive2-axiom r4) mult) replace)			
+	}
+	(!mp conn2->=-transitive2-axiom cond-for-transitive2)
+
+
+	#-- Another instance of replace with equal 
+	#-- required only for the proof of Cramer-Rao Lower Bound
+	#****  NEED to find a generic version ****	
+
+	define THEOREM-replace-with-equal2 :=
+	(forall r1 r2 r3 r1e r3e .
+		(
+		   ((RealExt.pow r1 2) <= (r2 * r3))
+		 & (r1 = r1e)
+		 & (r3 = r3e)
+		) 
+			==>
+				((RealExt.pow r1e 2) <= (r2 * r3e))
+	)
+
+	#-- forcing the proof for now
+	conclude THEOREM-replace-with-equal2
+		(!force THEOREM-replace-with-equal2)
+
+}# end module
