@@ -6,6 +6,7 @@
 #   pdf: https://github.com/paulsaswata/Library/blob/master/files/books/Bertsekas_Gallager_Data_Networks.pdf
 
 load "Athena_LibDDDAS/math/Queue/Queue.ath"
+load "Athena_LibDDDAS/math/Prob/PrbRv.ath"
 
 extend-module Queue { 
 
@@ -15,10 +16,9 @@ extend-module Queue {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
-
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
-	define [r] := [?r:Real]
+	define [r n] := [?r:Real ?n.Real]
 
 	#-------------------------  RELEVANT THEORY  -------------------------
 
@@ -41,14 +41,138 @@ extend-module Queue {
 		)
 	)
 
+	# needed for intermediate MM1 proofs
+	# technically this should be an extra condition of the queueing theory
+	# informally, the queue is used in KP and KP has a finite amount of messages
+	# so in the limit (as time approaches infinity) the mean of customer arrival rate 
+	# to the queue approaches 0, and so it must be less than the service time
+	assert MM1-never-overloads :=
+	(forall Q . 
+		(
+			((qTyp Q) = MM1) ==>
+			((Dist.mean (Random.pdf (cstArRat Q))) < (Dist.ratePar (Random.pdf (srvcTm Q)))) &
+			((Dist.mean (Random.pdf (cstArRat Q))) > 0.0) &
+			((Dist.ratePar (Random.pdf (srvcTm Q))) > 0.0)
+		)
+	)
 
+	define MM1-rho<1 :=
+	(forall Q .
+		(
+			((qTyp Q) = MM1) ==>
+			let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
+			rho < 1.0
+		)
+	)
+	(!force MM1-rho<1)
+
+	define MM1-rho>0 :=
+	(forall Q .
+		(
+			((qTyp Q) = MM1) ==>
+			let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
+			rho > 0.0
+		)
+	)
+	(!force MM1-rho>0)
+
+	#-- For MM1 queue, mean number of customers = expected number of customers in queue
+	# which is weighted average of all states
+	define expected-numCst :=
+	(forall Q .
+		(
+			((qTyp Q) = MM1) ==>
+				((Dist.mean (Random.pdf (numCst Q))) # N
+				= (RealExt.summation 0.0 RealExt.INFY n (n * (Prob.probE (Prob.consE Prob.== (numCst Q) n))))))
+	)
+	(!force expected-numCst)
+
+	#-- For MM1 queue, probability of n customers = probability of 0 customers * (rho^n)
+	# where rho is lambda / mu
+	# follows from induction and p_n lambda = p_(n+1) mu
+	# but induction over reals wouldn't work here and type sig has to be reals bc it's a randvar
+	# so it's defined for now
+	define MM1-prob-n-cst :=
+	(forall Q n . 
+		(((qTyp Q) = MM1) ==>
+		let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
+		((Prob.probE (Prob.consE Prob.== (numCst Q) n)) 
+		= ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.pow rho n))))
+	)
+	(!force MM1-prob-n-cst)
+
+	# the queue exists and each customer state is distinct
+	# so they are disjoint events and cover every possibility
+	# therefore sum to 1
+	define MM1-universal-prob :=
+	(forall Q n .
+		(((qTyp Q) = MM1) ==>
+		(RealExt.summation 0.0 RealExt.INFY n (Prob.probE (Prob.consE Prob.== (numCst Q) n))) = 1.0))
+	(!force MM1-universal-prob)
+
+	# in an MM1 queue, the probability that there are 0 customers is equal to 1.0 - rho
+	# where rho is the utilization factor lambda / mu
+	# lambda = arrival rate
+	# mu = service rate
+	define MM1-rho-p0 :=
+	(forall Q .
+		(((qTyp Q) = MM1) ==>
+		let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
+		((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) = (1.0 - rho))))
+	
+	define tmp-MM1 :=
+	(forall Q n .
+		(((qTyp Q) = MM1) ==>
+		let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
+		((RealExt.summation 0.0 RealExt.INFY n (Prob.probE (Prob.consE Prob.== (numCst Q) n))) = 
+		((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) / (1.0 - rho)))
+		)
+	)
+	(!force tmp-MM1)
+
+	#conclude tmp-MM1
+		# [
+		# 			(RealExt.summation 0.0 RealExt.INFY n (Prob.probE (Prob.consE Prob.== (numCst Q) n)))
+		# 		  = (RealExt.summation 0.0 RealExt.INFY n ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.pow rho n))) [MM1-prob-n-cst]
+		# 		  = ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.summation 0.0 RealExt.INFY n (RealExt.pow rho n))) [RealExt.summation-times-distributive-axiom]
+		# 		  = ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (1.0 / (1.0 - rho))) [RealExt.power-sum-axiom]
+		# 		  = ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) / (1.0 - rho)) [RealExt.prod-commutative-axiom RealExt.a-by-b-axiom]
+		# 	]
+
+	conclude MM1-rho-p0
+		let {temp :=
+			pick-any Q n
+			assume ((qTyp Q) = MM1)
+			let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))));
+				p0 := (Prob.probE (Prob.consE Prob.== (numCst Q) 0.0));
+				rho<1 := (!mp (!uspec MM1-rho<1 Q) ((qTyp Q) = MM1));
+				rho>0 := (!mp (!uspec MM1-rho>0 Q) ((qTyp Q) = MM1));
+				sum-to-inf-1 := (!mp (!uspec* MM1-universal-prob [Q n]) ((qTyp Q) = MM1));
+				1=p0/1-rho := (!chain-last [sum-to-inf-1
+						==> ((p0 / (1.0 - rho)) = 1.0) [tmp-MM1]]);
+				1-rho-neq-0 := (!chain-last [rho<1
+						==> (0.0 + rho < 1.0) [RealExt.sum-identity-axiom]
+						==> (0.0 < (1.0 - rho)) [RealExt.additive-swap-axiom]
+						==> (not (0.0 = (1.0 - rho))) [RealExt.<-not-=]
+						==> (not (= (1.0 - rho) 0.0)) [sym]]);
+				a-x-b=c-1 := (!mp (!uspec* RealExt.a-x-b=c-axiom [1.0 (1.0 - rho) p0]) 1-rho-neq-0)}
+			(!chain-last [1=p0/1-rho
+					==> (1.0 = (p0 / (1.0 - rho))) [sym]
+					==> (1.0 = ((1.0 / (1.0 - rho)) * p0)) [RealExt.a-by-b-axiom]
+					==> (1.0 = (p0 * (1.0 / (1.0 - rho)))) [RealExt.prod-commutative-axiom]
+					==> ((1.0 * (1.0 - rho)) = p0) [a-x-b=c-1]
+					==> ((1.0 - rho) = p0) [RealExt.prod-commutative-axiom RealExt.prod-identity-axiom]
+					==> (p0 = (1.0 - rho)) [sym]])}
+		pick-any Q
+			assume ((qTyp Q) = MM1)
+				(!uspec* temp [Q 0.0])
 
 	#-- For MM1 queue,  
 	# N = lambda / (mu - lambda)
 	# Eq. 3.24, pg 168, Bertsekar and Gallager
 	# Taking as an axiom for now, will prove in future
 	
-	assert mean-numCst-axiom :=
+	define mean-numCst-axiom :=
 	(forall Q .
 		(
 			((qTyp Q) = MM1)
@@ -65,6 +189,19 @@ extend-module Queue {
 					)
 		)
 	)	 
+	
+	conclude mean-numCst-axiom
+		pick-any Q
+			assume ((qTyp Q) = MM1)
+			let {Lambda := (Dist.mean (Random.pdf (cstArRat Q)));
+				mu := (Dist.ratePar (Random.pdf (srvcTm Q)));
+				rho := (Lambda / mu)}
+			(!chain [(Dist.mean (Random.pdf (numCst Q)))
+					= (RealExt.summation 0.0 RealExt.INFY n (n * (Prob.probE (Prob.consE Prob.== (numCst Q) n)))) [expected-numCst]
+					= (RealExt.summation 0.0 RealExt.INFY n (n * ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.pow rho n)))) [MM1-prob-of-n-cst]
+					= (RealExt.summation 0.0 RealExt.INFY n ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (n * (RealExt.pow rho n)))) [RealExt.prod-associative-axiom RealExt.prod-commutative-axiom]
+					= ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.summation 0.0 RealExt.INFY n (n * (RealExt.pow rho n)))) [RealExt.summation-times-distributive-axiom]
+					= (Lambda / (mu - Lambda)) [force]])
 
 
 	#-- MM1 queue has 
@@ -164,17 +301,6 @@ extend-module Queue {
 			  & ((Dist.mean (Random.pdf (cstDly Q))) 
 			  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
 			);
-		rhs := 	
-			(
-				(Dist.mean (Random.pdf (cstDly Q)))   # T 
-				= ( 1.0   
-					/  
-					( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
-					  -
-					  (Dist.mean (Random.pdf (cstArRat Q))) # lambda
-					)
-				  )
-			);
 		N_d := 	# denominator of N from Eq 3.24
 			( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu	
 			  -
@@ -201,8 +327,8 @@ extend-module Queue {
 						=  N [N=TL]
 						]);
 		conn-2-a-x-b=c-axiom := (!uspec (!uspec (!uspec RealExt.a-x-b=c-axiom T) L) N);
-		conn-2-a-x-b=c-axiom-conclusion := (!mp conn-2-a-x-b=c-axiom T-L-not-zero);
-		T=N-x-inv-L := (!mp (!left-iff (!left-and conn-2-a-x-b=c-axiom-conclusion)) TL=N);
+		conn-2-a-x-b=c-axiom-conclusion := (!mp conn-2-a-x-b=c-axiom (!right-and T-L-not-zero));
+		T=N-x-inv-L := (!mp (!left-iff conn-2-a-x-b=c-axiom-conclusion) TL=N);
 		conn-2-mean-numCst-axiom := (!uspec mean-numCst-axiom Q);
 		N=L-by-N_d := (!mp conn-2-mean-numCst-axiom Q-is-mm1);
 		conn-2-a-by-d-x-b-by-a-axiom := (!mp (!uspec (!uspec (!uspec RealExt.a-by-d-x-b-by-a-axiom L) N_d) 1.0) L-Not-0+N_d-Not-0)
@@ -397,10 +523,10 @@ extend-module Queue {
 								  ]);
 		conn-2-expo-cdf := (!uspec (!uspec Dist.expo-cdf (cstDly Q)) r);
 		cdf=1-pow-e-ratePar-x := (!mp conn-2-expo-cdf T-dist-is-expo);
-		conn-2-cdf-prob-conjecture := (!uspec (!uspec Prob.cdf-prob-conjecture (cstDly Q)) r)
+		conn-2-cdf-prob := (!uspec (!uspec Prob.cdf-prob (cstDly Q)) r)
 	}
 	(!chain [ (Prob.probE (Prob.consE Prob.<= (cstDly Q) r))
-			= (Random.cdf (cstDly Q) r) [conn-2-cdf-prob-conjecture]
+			= (Random.cdf (cstDly Q) r) [conn-2-cdf-prob]
 			= rhs [cdf=1-pow-e-ratePar-x T-dist-ratePar] 
 			])
 

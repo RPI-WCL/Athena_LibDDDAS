@@ -14,6 +14,9 @@ module RealExt {
 
 	#------------------------  RELEVANT FUNCTIONS ------------------------  
 
+	# absolute value
+
+	declare abs : [Real] -> Real
 
 	# factorial
 
@@ -50,6 +53,14 @@ module RealExt {
 	
 	declare pow : [Real Real] -> Real
 
+	# summation over real numbers
+	# note that this is unwieldy
+	# the proper way to do it should be to have the arguments be two reals and a lambda
+	# so that you force the variable to occur in the summed function explicitly
+	# athena did not like that when I tried it
+
+	declare summation : [Real Real Real Real] -> Real
+
 	# square root function for real numbers
 	
 	declare sqrt : [Real] -> Real
@@ -68,6 +79,8 @@ module RealExt {
 	define [hS] := [?hS:RealSet]
 
 	define [r r1 r2 r3 r1e r2e r3e r4] := [?r:Real ?r1:Real ?r2:Real ?r3:Real ?r1e:Real ?r2e:Real ?r3e:Real ?r4:Real]
+
+	define [r5 r6 r7 r8] := [?r5:Real ?r6:Real ?r7:Real ?r8:Real]
 
 	declare INFY, EULER : Real # infinity and Euler's constant e 
 
@@ -120,6 +133,22 @@ module RealExt {
 		)
 	)
 
+	# <-not->=
+	assert <-not-= :=
+	(forall r1 r2 .
+		(
+			(r1 < r2) ==> (~ (r1 = r2))
+		)
+	)
+
+	assert sum-identity-axiom :=
+	(forall r1 . r1 = 0.0 + r1)
+
+	assert sum-commutative-axiom :=
+	(forall r1 r2 . r1 + r2 = r2 + r1)
+
+	assert sum-associative-axiom :=
+	(forall r1 r2 r3 . (r1 + r2) + r3 = r1 + (r2 + r3))
 
 	#-- prod-commutative-axiom states that 
 	# a * b = b * a
@@ -136,7 +165,8 @@ module RealExt {
 	assert prod-identity-axiom :=
 	(forall r1 . (r1 * 1.0) = r1)
 
-
+	assert prod-associative-axiom :=
+	(forall r1 r2 r3 . r1 * (r2 * r3) = (r1 * r2) * r3)
 
 	# =-implies->=-axiom
 
@@ -147,6 +177,14 @@ module RealExt {
 		)
 	)
 
+	# additive-swap-axiom states that
+	# x + y < z ==> y < z - x
+	assert additive-swap-axiom :=
+	(forall r1 r2 r3 .
+		(
+			(r1 + r2 < r3) ==> (r1 < r3 - r2)
+		)
+	)
 
 	#-- swap-sides-axiom states that Z <= XY ==> Z/X <= Y
 
@@ -249,6 +287,29 @@ module RealExt {
 								(r1 = (r3 * (1.0 / r2)))
 					)	
 	)	
+
+	assert abs-def-pos :=
+	(forall r1 .
+		(r1 >= 0.0) ==> ((abs r1) = r1))
+
+	assert abs-def-neg :=
+	(forall r1 .
+		(r1 < 0.0) ==> (abs r1) = (0.0 - r1))
+
+	# power-sum-axiom states that
+	# if |x| < 1, then 
+	# sum from 0 to infinity of x^n
+	# is equal to 1 / (1 - x)
+
+	assert power-sum-axiom := 
+	(forall r1 r2 .
+		(((abs r1) < 1.0))
+			==>
+				((summation 0.0 INFY r2 (pow r1 r2)) = (1.0 / (1.0 - r1))))
+	
+	assert summation-times-distributive-axiom :=
+	(forall r1 r2 r3 r4 r5 .
+		((summation r3 r4 r2 (r1 * r5)) = (r1 * (summation r3 r4 r2 r5))))
 
 
 	#-- replace with equal
