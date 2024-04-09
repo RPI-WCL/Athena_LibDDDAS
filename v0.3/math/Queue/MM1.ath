@@ -64,7 +64,21 @@ extend-module Queue {
 			rho < 1.0
 		)
 	)
-	(!force MM1-rho<1)
+	
+	conclude MM1-rho<1
+		pick-any Q
+			assume ((qTyp Q) = MM1)
+			let {Lambda := (Dist.mean (Random.pdf (cstArRat Q)));
+				mu := (Dist.ratePar (Random.pdf (srvcTm Q)));
+				rho := (Lambda / mu);
+				q-props := (!mp (!uspec MM1-never-overloads Q) ((qTyp Q) = MM1));
+				lambda<mu := (!left-and q-props);
+				mu>0 := (!right-and (!right-and q-props))}
+			(!chain-last [lambda<mu
+					==> (Lambda < (mu * 1.0)) [RealExt.prod-identity-axiom]
+					==> ((Lambda / mu) < 1.0) [RealExt.a-by-pos-b-<-axiom]
+					==> (rho < 1.0) []])
+
 
 	define MM1-rho>0 :=
 	(forall Q .
@@ -74,7 +88,21 @@ extend-module Queue {
 			rho > 0.0
 		)
 	)
-	(!force MM1-rho>0)
+	
+	conclude MM1-rho>0
+		pick-any Q
+			assume ((qTyp Q) = MM1)
+			let {Lambda := (Dist.mean (Random.pdf (cstArRat Q)));
+				mu := (Dist.ratePar (Random.pdf (srvcTm Q)));
+				rho := (Lambda / mu);
+				q-props := (!mp (!uspec MM1-never-overloads Q) ((qTyp Q) = MM1));
+				lambda>0 := (!left-and (!right-and q-props));
+				mu>0 := (!right-and (!right-and q-props))}
+			(!chain-last [lambda>0
+					==> (Lambda > (mu * 0.0)) [RealExt.prod-zero-axiom]
+					==> ((Lambda / mu) > 0.0) [RealExt.a-by-pos-b->-axiom]
+					==> (rho > 0.0) []])
+
 
 	#-- For MM1 queue, mean number of customers = expected number of customers in queue
 	# which is weighted average of all states
@@ -119,42 +147,31 @@ extend-module Queue {
 		(((qTyp Q) = MM1) ==>
 		let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
 		((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) = (1.0 - rho))))
-	
-	define tmp-MM1 :=
-	(forall Q n .
-		(((qTyp Q) = MM1) ==>
-		let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))))}
-		((RealExt.summation 0.0 RealExt.INFY n (Prob.probE (Prob.consE Prob.== (numCst Q) n))) = 
-		((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) / (1.0 - rho)))
-		)
-	)
-	(!force tmp-MM1)
-
-	#conclude tmp-MM1
-		# [
-		# 			(RealExt.summation 0.0 RealExt.INFY n (Prob.probE (Prob.consE Prob.== (numCst Q) n)))
-		# 		  = (RealExt.summation 0.0 RealExt.INFY n ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.pow rho n))) [MM1-prob-n-cst]
-		# 		  = ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.summation 0.0 RealExt.INFY n (RealExt.pow rho n))) [RealExt.summation-times-distributive-axiom]
-		# 		  = ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (1.0 / (1.0 - rho))) [RealExt.power-sum-axiom]
-		# 		  = ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) / (1.0 - rho)) [RealExt.prod-commutative-axiom RealExt.a-by-b-axiom]
-		# 	]
 
 	conclude MM1-rho-p0
-		let {temp :=
-			pick-any Q n
+		pick-any Q
 			assume ((qTyp Q) = MM1)
 			let {rho := ((Dist.mean (Random.pdf (cstArRat Q))) / (Dist.ratePar (Random.pdf (srvcTm Q))));
 				p0 := (Prob.probE (Prob.consE Prob.== (numCst Q) 0.0));
 				rho<1 := (!mp (!uspec MM1-rho<1 Q) ((qTyp Q) = MM1));
 				rho>0 := (!mp (!uspec MM1-rho>0 Q) ((qTyp Q) = MM1));
+				rho>=0 := (!mp (!uspec* RealExt.>-implies->= [rho 0.0]) rho>0);
+				absrho=rho := (!mp (!uspec RealExt.abs-def-pos rho) rho>=0);
+				absrho<1 := (!chain-last [rho<1 ==> ((RealExt.abs rho) < 1.0) [absrho=rho]]);
 				sum-to-inf-1 := (!mp (!uspec* MM1-universal-prob [Q n]) ((qTyp Q) = MM1));
-				1=p0/1-rho := (!chain-last [sum-to-inf-1
-						==> ((p0 / (1.0 - rho)) = 1.0) [tmp-MM1]]);
 				1-rho-neq-0 := (!chain-last [rho<1
 						==> (0.0 + rho < 1.0) [RealExt.sum-identity-axiom]
 						==> (0.0 < (1.0 - rho)) [RealExt.additive-swap-axiom]
 						==> (not (0.0 = (1.0 - rho))) [RealExt.<-not-=]
 						==> (not (= (1.0 - rho) 0.0)) [sym]]);
+				1=p0/1-rho := (!chain-last [1.0
+										= (RealExt.summation 0.0 RealExt.INFY n (Prob.probE (Prob.consE Prob.== (numCst Q) n))) [sum-to-inf-1]
+		 								= (RealExt.summation 0.0 RealExt.INFY n ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.pow rho n))) [MM1-prob-n-cst]
+		 								= ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.summation 0.0 RealExt.INFY n (RealExt.pow rho n))) [RealExt.summation-times-distributive-axiom]
+		 								= ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (1.0 / (1.0 - rho))) [RealExt.power-sum-axiom]
+										= ((1.0 / (1.0 - rho)) * (Prob.probE (Prob.consE Prob.== (numCst Q) 0.0))) [RealExt.prod-commutative-axiom]
+		 								= ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) / (1.0 - rho)) [RealExt.a-by-b-axiom]
+										= (p0 / (1.0 - rho))]);
 				a-x-b=c-1 := (!mp (!uspec* RealExt.a-x-b=c-axiom [1.0 (1.0 - rho) p0]) 1-rho-neq-0)}
 			(!chain-last [1=p0/1-rho
 					==> (1.0 = (p0 / (1.0 - rho))) [sym]
@@ -162,10 +179,7 @@ extend-module Queue {
 					==> (1.0 = (p0 * (1.0 / (1.0 - rho)))) [RealExt.prod-commutative-axiom]
 					==> ((1.0 * (1.0 - rho)) = p0) [a-x-b=c-1]
 					==> ((1.0 - rho) = p0) [RealExt.prod-commutative-axiom RealExt.prod-identity-axiom]
-					==> (p0 = (1.0 - rho)) [sym]])}
-		pick-any Q
-			assume ((qTyp Q) = MM1)
-				(!uspec* temp [Q 0.0])
+					==> (p0 = (1.0 - rho)) [sym]])
 
 	#-- For MM1 queue,  
 	# N = lambda / (mu - lambda)
@@ -183,7 +197,7 @@ extend-module Queue {
 							/  
 							( (Dist.ratePar (Random.pdf (srvcTm Q))) # mu is ratepar of service time since mean = 1 / mu and service time is exponential 	
 							  -
-							  (Dist.ratePar (Random.pdf (cstArRat Q))) # lambda
+							  (Dist.mean (Random.pdf (cstArRat Q))) # lambda
 							)
 						  )
 					)
@@ -195,13 +209,55 @@ extend-module Queue {
 			assume ((qTyp Q) = MM1)
 			let {Lambda := (Dist.mean (Random.pdf (cstArRat Q)));
 				mu := (Dist.ratePar (Random.pdf (srvcTm Q)));
-				rho := (Lambda / mu)}
+				rho := (Lambda / mu);
+				p0 := (Prob.probE (Prob.consE Prob.== (numCst Q) 0.0));
+				rho<1 := (!mp (!uspec MM1-rho<1 Q) ((qTyp Q) = MM1));
+				rho>0 := (!mp (!uspec MM1-rho>0 Q) ((qTyp Q) = MM1));
+				rho>=0 := (!mp (!uspec* RealExt.>-implies->= [rho 0.0]) rho>0);
+				absrho=rho := (!mp (!uspec RealExt.abs-def-pos rho) rho>=0);
+				absrho<1 := (!chain-last [rho<1 ==> ((RealExt.abs rho) < 1.0) [absrho=rho]]);
+				rho-neq-0 := (!left-and (!mp (!uspec* RealExt.trichotomy-> [rho 0.0]) rho>0));
+				1-rho-neq-0 := (!chain-last [rho<1
+						==> (0.0 + rho < 1.0) [RealExt.sum-identity-axiom]
+						==> (0.0 < (1.0 - rho)) [RealExt.additive-swap-axiom]
+						==> (not (0.0 = (1.0 - rho))) [RealExt.<-not-=]
+						==> (not (= (1.0 - rho) 0.0)) [sym]]);
+				q-props := (!mp (!uspec MM1-never-overloads Q) ((qTyp Q) = MM1));
+				mu>0 := (!right-and (!right-and q-props));
+				mu-neq-0 := (!left-and (!mp (!uspec* RealExt.trichotomy-> [mu 0.0]) mu>0));
+				lambda<mu := (!left-and q-props);
+				0<mu-Lambda := (!chain-last [lambda<mu
+										==> ((0.0 + Lambda) < mu) [RealExt.sum-identity-axiom]
+										==> (0.0 < (mu - Lambda)) [RealExt.additive-swap-axiom]]);
+				mu-Lambda-neq-0 := (!left-and (!mp (!uspec* RealExt.trichotomy-< [0.0 (mu - Lambda)]) 0<mu-Lambda))}
 			(!chain [(Dist.mean (Random.pdf (numCst Q)))
 					= (RealExt.summation 0.0 RealExt.INFY n (n * (Prob.probE (Prob.consE Prob.== (numCst Q) n)))) [expected-numCst]
-					= (RealExt.summation 0.0 RealExt.INFY n (n * ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.pow rho n)))) [MM1-prob-of-n-cst]
-					= (RealExt.summation 0.0 RealExt.INFY n ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (n * (RealExt.pow rho n)))) [RealExt.prod-associative-axiom RealExt.prod-commutative-axiom]
-					= ((Prob.probE (Prob.consE Prob.== (numCst Q) 0.0)) * (RealExt.summation 0.0 RealExt.INFY n (n * (RealExt.pow rho n)))) [RealExt.summation-times-distributive-axiom]
-					= (Lambda / (mu - Lambda)) [force]])
+					= (RealExt.summation 0.0 RealExt.INFY n (n * (p0 * (RealExt.pow rho n)))) [MM1-prob-n-cst]
+					= (RealExt.summation 0.0 RealExt.INFY n (p0 * (n * (RealExt.pow rho n)))) [RealExt.THEOREM-ab-paren-swap]
+					= (p0 * (RealExt.summation 0.0 RealExt.INFY n (n * (RealExt.pow rho n)))) [RealExt.summation-times-distributive-axiom]
+					= (p0 * (RealExt.summation 0.0 RealExt.INFY n (n * (rho * (RealExt.pow rho (n - 1.0)))))) [RealExt.pow-split]
+					= (p0 * (RealExt.summation 0.0 RealExt.INFY n (rho * (n * (RealExt.pow rho (n - 1.0)))))) [RealExt.THEOREM-ab-paren-swap]
+					= (p0 * (rho * (RealExt.summation 0.0 RealExt.INFY n (n * (RealExt.pow rho (n - 1.0)))))) [RealExt.summation-times-distributive-axiom]
+					= (p0 * (rho * (RealExt.summation 0.0 RealExt.INFY n (RealExt.partial rho (RealExt.pow rho n))))) [RealExt.power-derivative-axiom]
+					= (p0 * (rho * (RealExt.partial rho (RealExt.summation 0.0 RealExt.INFY n (RealExt.pow rho n))))) [RealExt.summation-derivative-axiom]
+					= (p0 * (rho * (RealExt.partial rho (1.0 / (1.0 - rho))))) [RealExt.power-sum-axiom]
+					= (rho * (p0 * (RealExt.partial rho (1.0 / (1.0 - rho))))) [RealExt.THEOREM-ab-paren-swap]
+					= (rho * (p0 * ((1.0 / (1.0 - rho)) / (1.0 - rho)))) [RealExt.div-derivative-axiom]
+					= (rho * ((1.0 - rho) * ((1.0 / (1.0 - rho)) / (1.0 - rho)))) [MM1-rho-p0]
+					= (rho * ((1.0 - rho) * ((1.0 / (1.0 - rho)) * (1.0 / (1.0 - rho))))) [RealExt.a-by-b-axiom]
+					= (rho * (((1.0 - rho) * (1.0 / (1.0 - rho))) * (1.0 / (1.0 - rho)))) [RealExt.prod-associative-axiom]
+					= (rho * (((1.0 / (1.0 - rho)) * (1.0 - rho)) * (1.0 / (1.0 - rho)))) [RealExt.prod-commutative-axiom]
+					= (rho * (((1.0 - rho) / (1.0 - rho)) * (1.0 / (1.0 - rho)))) [RealExt.a-by-b-axiom]
+					= (rho * (1.0 * (1.0 / (1.0 - rho)))) [RealExt.div-by-x-axiom]
+					= (rho * ((1.0 / (1.0 - rho)) * 1.0)) [RealExt.prod-commutative-axiom]
+					= (rho * (1.0 / (1.0 - rho))) [RealExt.prod-identity-axiom]
+					= ((Lambda / mu) * (1.0 / (1.0 - (Lambda / mu))))
+					= ((Lambda / mu) * (1.0 / ((mu / mu) - (Lambda / mu)))) [RealExt.div-by-x-axiom]
+					= ((Lambda / mu) * (1.0 / ((mu - Lambda) / mu))) [RealExt.frac-sub-axiom]
+					= ((Lambda / mu) * (mu / (mu - Lambda))) [RealExt.reciprocal-axiom]
+					= ((mu / (mu - Lambda)) * (Lambda / mu)) [RealExt.prod-commutative-axiom]
+					= (Lambda / (mu - Lambda)) [RealExt.a-by-d-x-b-by-a-axiom]
+					])
 
 
 	#-- MM1 queue has 

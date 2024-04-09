@@ -45,6 +45,8 @@ module RealExt {
 
 	declare max : [Real Real] -> Real
 
+	declare partial : [Real Real] -> Real
+
 	# Product function for set of real numbers
 	
 	declare prod : [RealSet] -> Real		
@@ -133,11 +135,25 @@ module RealExt {
 		)
 	)
 
-	# <-not->=
-	assert <-not-= :=
+	# trichotomy-<
+	assert trichotomy-< :=
 	(forall r1 r2 .
 		(
-			(r1 < r2) ==> (~ (r1 = r2))
+			(r1 < r2) ==> ((~ (r1 = r2)) & (~ (r1 > r2)))
+		)
+	)
+
+	assert trichotomy-> :=
+	(forall r1 r2 .
+		(
+			(r1 > r2) ==> ((~ (r1 = r2)) & (~ (r1 < r2)))
+		)
+	)
+
+	assert trichotomy-= :=
+	(forall r1 r2 .
+		(
+			(r1 = r2) ==> ((~ (r1 < r2)) & (~ (r1 > r2)))
 		)
 	)
 
@@ -165,17 +181,40 @@ module RealExt {
 	assert prod-identity-axiom :=
 	(forall r1 . (r1 * 1.0) = r1)
 
+	#-- prod-zero-axiom states that
+	# the product of anything with 0 is 0
+	assert prod-zero-axiom :=
+	(forall r1 . (r1 * 0.0) = 0.0)
+
 	assert prod-associative-axiom :=
 	(forall r1 r2 r3 . r1 * (r2 * r3) = (r1 * r2) * r3)
 
-	# =-implies->=-axiom
+	assert pow-split :=
+	(forall r1 r2 . (not (= r1 0.0)) ==> (pow r1 r2) = (r1 * (pow r1 (r2 - 1.0))))
 
-	assert =-implies->=-axiom :=
+
+	assert >=-def :=
 	(forall r1 r2 .
 		(
-			(r1 = r2) ==> (r1 >= r2)
+			(r1 >= r2) <==> ((r1 > r2) | (r1 = r2))
 		)
 	)
+
+	# =-implies->=
+
+	define =-implies->= := (forall r1 r2 . (r1 = r2) ==> (r1 >= r2))
+	conclude =-implies->=
+		pick-any r1 r2
+			(!chain [(r1 = r2)
+				==> ((r1 > r2) | (r1 = r2)) [prop-taut]
+				==> (r1 >= r2) [>=-def]])
+
+	define >-implies->= := (forall r1 r2 . (r1 > r2) ==> (r1 >= r2))
+	conclude >-implies->=
+		pick-any r1 r2
+			(!chain [(r1 > r2)
+				==> ((r1 > r2) | (r1 = r2)) [prop-taut]
+				==> (r1 >= r2) [>=-def]])
 
 	# additive-swap-axiom states that
 	# x + y < z ==> y < z - x
@@ -200,15 +239,40 @@ module RealExt {
 	 	)
 	)
 
-
-
-	#-- inverse-axiom states the relationship betweek inverses 
+	#-- by-1-axiom states the relationship betweek inverses 
 
 	assert by-1-axiom :=
 	(forall r .
 		(not (= r 0.0))
 			==>		
 			 ( (1.0 / (1.0 / r) ) = r )
+	)
+
+	#-- div-by-x-axiom states that
+	# if x is not 0, x/x = 1
+	assert div-by-x-axiom :=
+	(forall r .
+		(not (= r 0.0))
+			==>
+			((r / r) = 1.0)
+	)
+
+	assert frac-sub-axiom :=
+	(forall r1 r2 r3 . 
+		(not (= r2 0.0))
+			==>
+			(((r1 / r2) - (r3 / r2)) = ((r1 - r3) / r2))
+	)
+
+	assert reciprocal-axiom :=
+	(forall r1 r2 .
+		(and 
+			(not (= r1 0.0))
+			(not (= r2 0.0))
+		)
+			==>
+			((1.0 / (r1 / r2))
+			= (r2 / r1))
 	)
 
 
@@ -286,7 +350,33 @@ module RealExt {
 							<==> 
 								(r1 = (r3 * (1.0 / r2)))
 					)	
-	)	
+	)
+
+	# a-by-pos-b-<-axiom
+	# division side swapping for < with positive denom
+	assert a-by-pos-b-<-axiom :=
+	(forall r1 r2 r3 . 
+		(r2 > 0.0)
+			==>
+				(
+					(r1 < (r2 * r3))
+						<==>
+							((r1 / r2) < r3)
+				)
+	)
+
+	# a-by-pos-b->-axiom
+	# division side swapping for > with positive denom
+	assert a-by-pos-b->-axiom :=
+	(forall r1 r2 r3 . 
+		(r2 > 0.0)
+			==>
+				(
+					(r1 > (r2 * r3))
+						<==>
+							((r1 / r2) > r3)
+				)
+	)
 
 	assert abs-def-pos :=
 	(forall r1 .
@@ -311,6 +401,23 @@ module RealExt {
 	(forall r1 r2 r3 r4 r5 .
 		((summation r3 r4 r2 (r1 * r5)) = (r1 * (summation r3 r4 r2 r5))))
 
+	assert power-derivative-axiom :=
+	(forall r1 r2 .
+			((partial r2 (pow r2 r1)) = (r1 * (pow r2 (r1 - 1.0)))
+		)
+	)
+
+	# this could be more general as a form of the power axiom
+	# maybe for next time
+	assert div-derivative-axiom :=
+	(forall r1 .
+		((partial r1 (1.0 / (1.0 - r1))) = ((1.0 / (1.0 - r1)) / (1.0 - r1))))
+
+	assert summation-derivative-axiom :=
+	(forall r1 r2 r3 r4 r5 .
+		((partial r2 (summation r3 r4 r1 r5)) = 
+			(summation r3 r4 r1 (partial r2 r5)))
+	)
 
 	#-- replace with equal
 	#  this is very obvious that equal values can betweek
@@ -392,4 +499,22 @@ module RealExt {
 	conclude THEOREM-replace-with-equal2
 		(!force THEOREM-replace-with-equal2)
 
+	define THEOREM-ab-paren-swap :=
+	(forall r1 r2 r3 .
+	(r1 * (r2 * r3)) = (r2 * (r1 * r3)))
+	conclude THEOREM-ab-paren-swap
+		pick-any r1 r2 r3
+			(!chain [(r1 * (r2 * r3))
+					= ((r1 * r2) * r3) [prod-associative-axiom]
+					= ((r2 * r1) * r3) [prod-commutative-axiom]
+					= (r2 * (r1 * r3)) [prod-associative-axiom]])
+
+	
+	define <-not-= :=
+	(forall r1 r2 .
+	(r1 < r2) ==> (~ (r1 = r2)))
+	conclude <-not-=
+		pick-any r1 r2
+			assume hyp := (r1 < r2)
+				(!left-and (!mp (!uspec* trichotomy-< [r1 r2]) hyp))
 }# end module

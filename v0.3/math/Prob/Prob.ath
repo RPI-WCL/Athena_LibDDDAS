@@ -15,7 +15,9 @@ module Prob {
 	#  Eg. -  We are concerned with relationships like >, <=, etc for 
 	#  statistical analysis of random variables
 
-	domain Rel 
+	domain Rel
+
+	# domain Outcome
 
 	#-- Domain of all events - An event is a set of outcomes which may or may 
 	#   not come true. For any relation like <, >=, the associated event can
@@ -69,6 +71,14 @@ module Prob {
 
 	declare condProbE : [Event Event] -> Real
 
+	# #-- Outcomes either occur or do not
+
+	# declare occurs : [Outcome] -> Boolean
+
+	# #-- Outcomes satisfy events
+
+	# declare satisfies : [Event Outcome] -> Boolean
+
 
 	#------------------------  RELEVANT VARIABLES ------------------------  
 
@@ -94,6 +104,8 @@ module Prob {
 
 	define [A B] := [?A:Boolean ?B:Boolean]
 
+	#define [O] := [?O:Outcome]
+
 	#-------------------------  RELEVANT THEORY  -------------------------
 
 
@@ -112,6 +124,19 @@ module Prob {
 							( (probE E1) * (probE E2) )
 				)
 	)
+
+	# # an outcome satisfies an event if, when that outcome occurs, the event happens
+	# assert satisfies-def := (forall E1 O . (satisfies E1 O) <==> ((occurs O) ==> (happens E1)))
+
+	# # if the outcome set of E1 is a subset of the outcome set of E2, then P(E1) <= P(E2)
+	# assert monotonicity :=
+	# (forall E1 E2 .
+	# 	(forall O . 
+	# 		(satisfies E1 O) ==> (satisfies E2 O)
+	# 	) ==> ((probE E1) Real.<= (probE E2))
+	# )
+
+
 
 	# this is kind of clunky because it's impossible to have functions of sentences in Athena
 	# so instead of being able to say P(A --> B) = 1 --> P(~A | B) = 1 --> P(~ A) + P(B) - P(~A & B) = 1
