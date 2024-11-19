@@ -1,0 +1,56 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Derivative
+
+load "Athena_LibDDDAS/math/Random/Random.ath"
+load "Athena_LibDDDAS/math/RealExt/RealExt.ath"
+
+module Derivative { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#**** The following functional specifications of derivatives is very crude.
+	#**** It might not be sufficient to express differentiation like this.
+	#**** Howver, this was done to express the Cramer-Rao Lower Bound quickly 
+	#**** and must be changed in future.
+
+#	#-- A derivative function that takes a real and  a FunExp and returns a real
+#	#-- E.g. use: d/d_x x = 1 
+#
+#	declare parDif : [Real Function.FunExp] -> Real
+#
+#
+#	#-- A derivative function that takes a real and  a FunExp and returns a FunExp
+#	#-- E.g. use: d/dx x^2 = 2x 
+#
+#	declare parDif2 : [Real Function.FunExp] -> Function.FunExp
+#
+#	#-- overloading both operations as parDif
+#
+#	overload parDif parDif2	
+
+
+	#-- A derivative function that takes a real and  a Real and returns a real
+	#-- E.g. use: d/d_theta theta = 1 
+
+	declare parDif : [Real Real] -> Real
+
+	#-- A derivative function that takes a log function and  a Real and returns a Random variable
+	#-- E.g. use: d/dx log f(X;theta) = some Random variable 
+
+	declare parDifLog : [Real Real] -> Random.RandVar
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+}# end module

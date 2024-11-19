@@ -1,0 +1,28 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Models
+
+load "Athena_LibDDDAS/math/Collection/Vector.ath"
+
+module Model { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Datatype of all statistical models
+
+	datatype Model := (consMod Real Vector.VectRandom) # Constructs a model X ~ P_theta from a vector X of randoms and a fixed true parameter theta
+					  # Will create constructors for other types of models as required	
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+}# end module

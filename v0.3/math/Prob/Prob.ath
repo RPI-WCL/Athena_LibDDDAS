@@ -1,0 +1,267 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Probability of Events
+
+load "Athena_LibDDDAS/math/Random/Random.ath"
+load "Athena_LibDDDAS/math/RealExt/RealExt.ath"
+
+module Prob {
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Probability is a function over "events". So we need to define events first
+
+	#-- Domain of all the relationships which can be used to define Event 
+	#  Eg. -  We are concerned with relationships like >, <=, etc for 
+	#  statistical analysis of random variables
+
+	domain Rel
+
+	# domain Outcome
+
+	#-- Domain of all events - An event is a set of outcomes which may or may 
+	#   not come true. For any relation like <, >=, the associated event can
+	#   be that the relation has come true
+	#   The consE constructor creates an event with a relationship, rv, and Real 
+	#   NOTE: Would have preferred to create a polymorphic datatype, but 
+	#   having issue with the Athena syntax
+
+	datatype Event  :=  (consE rel:Rel rv:Random.RandVar rl:Real) # wrt to a single rv
+					  | (consErvs rel:Rel rvS:Random.RandVarSet rl:Real) # wrt all in a set of rvs
+					  | (cons2E e1:Event e2:Event) #both event e1 and e2 happen
+
+	#-- sets of events
+
+	datatype EventSet := emptyES | (consES EventSet Event)
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#-- Two events are complementary
+
+	declare complement : [Event Event] -> Boolean	
+
+	#-- Disjoint events
+
+	declare disjoint : [Event Event] -> Boolean		
+
+	#-- get complementary event
+
+	declare get-comp : [Event] -> Event		
+
+	#-- Two events are independent
+
+	declare indEvnt : [Event Event] -> Boolean	
+
+
+	#-- membership opertaor for EventSet
+
+	declare inES: [EventSet Event] -> Boolean 	
+
+	#-- an event happens
+
+	declare happens : [Event] -> Boolean	
+
+	#-- Probability of an event
+
+	declare probE : [Event] -> Real	
+
+	#-- Conditional probability of A on B
+
+	declare condProbE : [Event Event] -> Real
+
+	# #-- Outcomes either occur or do not
+
+	# declare occurs : [Outcome] -> Boolean
+
+	# #-- Outcomes satisfy events
+
+	# declare satisfies : [Event Outcome] -> Boolean
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	#-- The relationship symbols which we will use to define events 
+	#   interesting to us 
+	declare > , <= , == : Rel
+
+	#-- 
+
+	define [symbl symbl2] := [?symbl:Rel ?symbl2:Rel] 
+
+	define [E1 E2] := [?E1:Event ?E2:Event]
+
+	define [x y] := [?x:Random.RandVar ?y:Random.RandVar]
+
+	define [R R2] := [?R:Real ?R2:Real]
+
+	define [r1 r2] := [?r1:Real ?r2:Real]
+
+	define [rvSet rvSetTail] := [?rvSet:Random.RandVarSet ?rvSetTail:Random.RandVarSet]
+
+	define [rlSet] := [?rlSet:RealExt.RealSet]
+
+	define [A B] := [?A:Boolean ?B:Boolean]
+
+	#define [O] := [?O:Outcome]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+	#-- product-rul states that
+	#  if two events are independent, then 
+	#  the probability of both happening is 
+	#  the product of the probabilities of each happening
+
+	assert product-rul :=
+	(forall E1 E2 .
+		(indEvnt E1 E2) 
+			==>	
+				(
+					(probE (cons2E E1 E2)) 
+						= 
+							( (probE E1) * (probE E2) )
+				)
+	)
+
+	# # an outcome satisfies an event if, when that outcome occurs, the event happens
+	# assert satisfies-def := (forall E1 O . (satisfies E1 O) <==> ((occurs O) ==> (happens E1)))
+
+	# # if the outcome set of E1 is a subset of the outcome set of E2, then P(E1) <= P(E2)
+	# assert monotonicity :=
+	# (forall E1 E2 .
+	# 	(forall O . 
+	# 		(satisfies E1 O) ==> (satisfies E2 O)
+	# 	) ==> ((probE E1) Real.<= (probE E2))
+	# )
+
+
+
+	# this is kind of clunky because it's impossible to have functions of sentences in Athena
+	# so instead of being able to say P(A --> B) = 1 --> P(~A | B) = 1 --> P(~ A) + P(B) - P(~A & B) = 1
+	# --> (1 - P(A)) + P(B) - P(~A & B) = 1 --> P(B) - P(~A & B) = P(A) --> P(B) >= P(A)
+
+	# we have to do this awkward workaround since P(A --> B) is inexpressible
+
+	# first of kolmogorov's axioms of probability - every probability is at least 0
+	assert kolmogorov-1 := (forall E1 . (probE E1) >= 0.0)
+
+	# P(A|B) P(B) = P(A & B) - this is the definition of conditional probability (as an axiom in some cases)
+	assert conditional-def := (forall E1 E2 . (condProbE E1 E2) * (probE E2) = (probE (cons2E E1 E2)))
+
+	# this should be provable, but would require kolmogorovian axioms
+	# A -> B means that P(B | A) = 1
+	define e1==>e2-1 := (forall E1 E2 . ((happens E1) ==> (happens E2)) ==> ((condProbE E2 E1) = 1.0))
+	(!force e1==>e2-1)
+
+	#the probability of any two events occurring must be less than or equal to the probability of one of them occurring
+	# again, should be provable, but would require kolmogorov probability theory stuff
+	# proof would essentially be that the outcome set of both is A & B which has to be a subset of A
+	# since every element in A&B is an element of A since A&B -> A
+	define p-a&b := (forall E1 E2 . (probE (cons2E E1 E2)) Real.<= (probE E1))
+	(!force p-a&b)
+
+#-------------------------------------------------------
+	#-- e1==>e2-prob states that if an event A
+	#   implies another event B, then the probability of
+	#   B happening is at least the probability of A
+	#   happeneing since if A happens, then B must happen
+	#   while B can also happen independently of A happening 
+
+	# the proof is basically - if A -> B, P(B|A) = 1.0
+	# then P(A&B) = P(B|A) P(A) = 1.0 * P(A) = P(A)
+	# and since P(A&B) <= P(B), P(A) <= P(B)
+	conclude e1==>e2-prob :=
+	(forall E1 E2 . ((happens E1) ==> (happens E2)) ==> ((probE E2) >= (probE E1)))
+		pick-any E1 E2
+			assume hyp := ((happens E1) ==> (happens E2))
+				conclude ((probE E2) >= (probE E1))
+					let {condProb1 := (!mp (!uspec* e1==>e2-1 [E1 E2]) hyp);
+						A&B<B := (!uspec* p-a&b [E2 E1])}
+					(!chain-last [A&B<B
+							==> ((probE E1) Real.<= (probE E2)) [
+									(probE (cons2E E2 E1)) 
+								= ((condProbE E2 E1) * (probE E1)) [conditional-def]
+								= (1.0 * (probE E1)) [condProb1]
+								= ((probE E1) * 1.0) [RealExt.prod-commutative-axiom]
+								= (probE E1) [RealExt.prod-identity-axiom]]
+							==> ((probE E2) >= (probE E1)) [RealExt.<=-inverse->=-axiom]])
+					
+
+
+	#-- get-comp definition
+	assert get-comp-axiom :=
+	(forall E1 .
+		    (complement E1 (get-comp E1))
+	)
+
+
+	#-- complement-rule - Complement Rule states that 
+	#   the sum of the probabilities of an event and 
+	#   its complement must equal 1
+
+	assert complement-rule :=
+	(forall E1 E2 .
+		(
+			(complement E1 E2) 
+				<==>
+				( 
+					  ((probE E2) = (1.0 - (probE E1)))
+				    & ((probE E1) = (1.0 - (probE E2))) 
+				)
+		)
+	)
+
+
+	#-- comp-2-way states that 
+	#   complement is a two-way relation
+	conclude comp-2-way := (forall E1 E2 . (complement E1 E2) <==> (complement E2 E1))
+		pick-any E1
+			pick-any E2
+					(!chain [(complement E1 E2)
+						<==> (((probE E2) = (1.0 - (probE E1))) & ((probE E1) = (1.0 - (probE E2)))) [complement-rule]
+						<==> (((probE E1) = (1.0 - (probE E2))) & ((probE E2) = (1.0 - (probE E1)))) [method (p) (!both (!right-and p) (!left-and p))]
+						<==> (complement E2 E1) [complement-rule]])
+
+
+#**************************************************
+# TO DO:
+
+# 1. Use "methods" for making the theorems conceise by
+# creating functions for repetative proof constructs
+
+# 2. PROVE THEOREM ((Random.cdf x R) = (1.0 - (probE (consE > x R))))
+# and ((probE (consE > x R)) = 1.0 - (Random.cdf x R))
+
+#**************************************************
+
+
+
+	#-- THEOREM-probability-Comp-Evnts states that 
+	#   P(E1) = 1 - P(comp(E1))
+
+	define THEOREM-probability-Comp-Evnts :=
+	(forall E1 .  
+		(
+			(probE E1) 
+				= 
+					(1.0 - (probE (get-comp E1)))
+		)
+	)
+
+	conclude THEOREM-probability-Comp-Evnts
+	pick-any E1
+	let{
+		e2 := (get-comp E1);
+		is-comp-E1-e2 := (!uspec get-comp-axiom E1); #(complement E1 (get-comp E1))
+		two-way-comp-e2-E1 := (!uspec (!uspec comp-2-way E1) e2); #(complement E1 (get-comp E1)) <==> (complement (get-comp E1) E2)
+		is-comp-e2-E1 := (!mp (!left-iff two-way-comp-e2-E1) is-comp-E1-e2); #(complement (get-comp E1) E2)
+		comp-rul-E1-e2 := (!uspec (!uspec complement-rule E1) e2);
+		p-options-comp := (!mp (!left-iff comp-rul-E1-e2) is-comp-E1-e2)
+	}
+	(!right-and p-options-comp)
+
+
+
+} # end module	

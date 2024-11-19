@@ -1,0 +1,9 @@
+extend module Real{
+	
+	declare sqrt: [Real] -> Real
+
+	declare sin: [Real] -> Real
+
+	declare cos: [Real] -> Real 
+
+}

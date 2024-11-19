@@ -1,0 +1,63 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Erlang Distribution
+
+load "Athena_LibDDDAS/math/Dist/Dist.ath"
+load "Athena_LibDDDAS/math/Prob/Prob.ath"
+
+extend-module Dist { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#-- True if distribution is exponential
+
+	declare isErlang : [Dist] -> Boolean	
+
+
+	#-- Gives the shape parameter or k (see Wikipedia)
+
+	declare shapePar : [Dist] -> Real
+
+	#-- Gives the rate parameter or lambda (see Wikipedia)
+
+	declare rateParEr : [Dist] -> Real
+
+
+	#-- Computes the cdf (see Wikipedia)
+
+	declare erlangCDF : [Real Real Real] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [x] := [?x:Random.RandVar]
+
+	define [r] := [?r:Real]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+	#-- if a random variable follows erlang distribution,
+	#   then its cdf can be computed by the erlangCDF function
+
+	assert erlang-cdf :=
+	(forall x r . 
+		(
+			(isErlang (Random.pdf x))
+				==>
+					(
+						(Random.cdf x r) 
+							= 
+								(erlangCDF (shapePar (Random.pdf x)) (rateParEr (Random.pdf x)) r)	
+					)
+		)
+	)
+
+}# end module

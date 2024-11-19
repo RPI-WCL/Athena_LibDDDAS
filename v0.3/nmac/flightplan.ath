@@ -1,0 +1,134 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "types"
+load "v-list"
+load "matrix"
+load "nmac"
+load "real"
+load "violation"
+
+
+extend-module NMAC{
+
+#****************************************************************************
+
+#---------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- membership operator in-Flightplan
+
+  declare in-Flightplan : (Configuration) [Configuration Flightplan]-> Boolean
+
+  assert* empty-Flightplan :=
+          (~ (in-Flightplan ?x:Configuration nilF))
+
+  assert* nonempty-Flightplan :=
+          ((in-Flightplan ?x:Configuration (consF ?h:Configuration ?t:Flightplan)) <==> ?x:Configuration = ?h:Configuration | (in-Flightplan ?x:Configuration ?tail:Flightplan) )
+#---------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- membership operator in-Fplan-list
+
+  declare in-Fplan-list : (Flightplan) [Flightplan Fplan-list]-> Boolean
+
+  assert* empty-Fplan-list :=
+          (~ (in-Fplan-list ?x:Flightplan nilP))
+
+  assert* nonempty-Fplan-list :=
+          ((in-Fplan-list ?x:Flightplan (consP ?h:Flightplan ?t:Fplan-list)) <==> ?x:Flightplan = ?h:Flightplan | (in-Fplan-list ?x:Flightplan ?tail:Fplan-list) )   
+#---------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- a function that takes a time and a Time-list and returns a new Time-list
+  #-- by adding the time to it
+
+  declare time-list-add: [Real Time-list] -> Time-list
+
+  assert* time-list-add-axiom :=
+  ((time-list-add t t_list) = (consTl t t_list))
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- function that takes Flightplan and returns a list of all times   
+
+  declare get-times: [Flightplan Time-list] -> Time-list
+
+  #-- exit
+  assert* get-times-axiom1 :=
+  ((get-times nilF t_list) = t_list)
+
+  #-- next
+  assert* get-times-axiom2 :=
+  ((get-times (consF (config sxa sya sza vga ha vza ta) fp) t_list) =  (get-times fp (time-list-add ta t_list) ))  
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- a function that takes two flightplans and returns a list of all 
+  #-- times
+
+  declare get-all-times: [Flightplan Flightplan] -> Time-list
+
+  assert* get-all-times-axiom :=
+  let{ t_list_fa := (get-times fa nilTl); t_list_all := (get-times fb t_list_fa)}
+  ((get-all-times fa fb) = t_list_all)
+#----------------------------------------------------------------------------
+
+
+#****************************************************************************
+  #-- conflict returns true iff there is a possible conflict 
+  #-- between fa and fb
+
+  declare conflict: [Flightplan Flightplan Real Real] -> Boolean
+
+  assert conflict-axioms :=
+  let{ 
+       T := (get-all-times fa fb)
+       }
+  (fun
+  [
+   (conflict fa fb D H) =
+      [
+       true  when (T-violation T fa fb D H)
+       false when (~ (T-violation T fa fb D H))
+      ]
+  ])
+
+  define [conflict-true conflict-false] := conflict-axioms
+
+
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- safe returns true if there exists no collisio  between 
+  #-- any two flight-plans in the given set of flight-plans
+
+  declare safe: [Fplan-list Real Real] -> Boolean
+
+  assert safe-axioms := 
+  (fun
+  [
+   (safe f_list D H) =
+      [
+       false  when ( exists fa fb . (in-Fplan-list fa f_list) & (in-Fplan-list fb f_list) & (conflict fa fb D H) )
+       true when (~( exists fa fb . (in-Fplan-list fa f_list) & (in-Fplan-list fb f_list) & (conflict fa fb D H) ))
+      ]
+  ])
+
+    define [safe-false safe-true] := safe-axioms
+
+#----------------------------------------------------------------------------
+
+#****************************************************************************
+  #-- plan is a procedure that 
+  #-- returns a cropped flightplan 
+  #-- until interval 
+  #-- and assigns the Nth element of v-list 
+  #-- as the vxy of the last state in the cropped flightplan
+  
+  declare plan: [Matrix Flightplan V-list] -> Flightplan
+
+#----------------------------------------------------------------------------
+
+ 
+}#extend-module NMAC

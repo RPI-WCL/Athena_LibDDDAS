@@ -1,0 +1,51 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "vector_2d"
+load "types"
+
+#datatype Configuration := (config sx:Real sy:Real sz:Real vg:Real h:Real vz:Real t:Real)
+
+
+module Configuration{
+#****************************************************************************
+	define [sxa sya sza vga ha vza t]:= [?sxa:Real ?sya:Real ?sza:Real ?vga:Real ?ha:Real ?vza:Real ?t:Real]
+
+#****************************************************************************
+ #-- Functions to get elements
+ declare getsx: [Configuration] -> Real
+
+ assert* getsx-axiom :=
+ ((getsx (config sxa sya sza vga ha vza t)) = sxa)
+
+ declare getsy: [Configuration] -> Real
+
+ assert* getsy-axiom :=
+ ((getsy (config sxa sya sza vga ha vza t)) = sya)
+
+ declare getsz: [Configuration] -> Real
+
+ assert* getsz-axiom :=
+ ((getsz (config sxa sya sza vga ha vza t)) = sza)
+
+ declare getvg: [Configuration] -> Real
+
+ assert* getvg-axiom :=
+ ((getvg (config sxa sya sza vga ha vza t)) = vga)
+
+ declare geth: [Configuration] -> Real
+
+ assert* geth-axiom :=
+ ((geth (config sxa sya sza vga ha vza t)) = ha)
+
+ declare getvz: [Configuration] -> Real
+
+ assert* getvz-axiom :=
+ ((getvz (config sxa sya sza vga ha vza t)) = vza)
+
+ declare gettime: [Configuration] -> Real
+
+ assert* gettime-axiom :=
+ ((gettime (config sxa sya sza vga ha vza t)) = t)
+
+}#module state

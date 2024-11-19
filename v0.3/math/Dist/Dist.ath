@@ -1,0 +1,76 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Distributions
+
+load "Athena_LibDDDAS/math/CharFun/CharFun.ath"
+
+module Dist {  
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Dist is the set of all distributions  
+	
+	domain Dist
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- mean takes a distribution and returns its real mean
+
+	declare mean : [Dist] -> Real
+
+	#-- var takes a distribution and returns its real variance
+
+	declare var : [Dist] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	define [D] := [?D:Dist]
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+}# end module
+
+
+
+#-------------------------------------------------------------------------------
+
+
+extend-module Dist { # These were created by Sam Breese
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+	#-- charecteristic-fuction takes a distribution ad returns its CF
+
+	(declare charFun (-> (Dist) CharFun.CF))
+
+	#-- convotakes two distributions and returns their linear combination
+
+	(declare convo (-> (Dist Dist) Dist))
+
+	#-- is-norm takes a distribution and returns True iff it is a normal distribution
+
+	(declare is-norm (-> (Dist) Boolean))
+
+
+	#-- A probabiliity function that takes in a normal distribution Z and a Real T, and returns the probability-Dist<=c that a random variable that lies in Z will be at most some real T. It returns zero if the distribution is not normal.   
+	#  If need be, we can overload the probability-Dist<=c function according to different input cases
+	# NEEDS TO BE DEPRECATED. Should define events over distributions
+
+	declare probability-Dist<=c : [Dist.Dist Real]-> Real
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	
+}# end module

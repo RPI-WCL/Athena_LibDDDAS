@@ -1,0 +1,29 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Integral
+
+load "Athena_LibDDDAS/math/Function/Function.ath"
+load "Athena_LibDDDAS/math/RealExt/RealExt.ath"
+
+extend-module Function { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- Output the limit
+	declare integral : [Real Real FunExp] -> Real
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+
+
+}# end module

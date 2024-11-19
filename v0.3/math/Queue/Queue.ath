@@ -1,0 +1,406 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Queue 
+
+load "Athena_LibDDDAS/math/Function/Integral.ath"
+load "Athena_LibDDDAS/math/Function/Limit.ath"
+load "Athena_LibDDDAS/math/Dist/ExpoDist.ath"
+
+module Queue { 
+
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+	#-- Domain of all queues
+
+	domain Queue
+
+	#-- Domain of queue protocol types
+
+	domain QType
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+
+
+	#-- returns a random variable representing the customer arrival rate
+
+	declare cstArRat : [Queue] -> Random.RandVar
+
+	#-- returns a random variable representing the customer delay
+
+	declare cstDly : [Queue] -> Random.RandVar
+
+	#-- returns a random variable representing the number of customers in the system
+
+	declare numCst : [Queue] -> Random.RandVar
+
+	#-- returns the number of servers
+
+	declare numSrvrs : [Queue] -> Real
+
+	#-- returns a random variable representing the service time
+
+	declare srvcTm : [Queue] -> Random.RandVar
+
+	#-- returns the type of a queue
+
+	declare qTyp : [Queue] -> QType
+
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+	#-- Symbols to represent various queue properties abstractly
+
+	declare N : Function.FunSym # the number of customers in the system at time tau
+	declare A : Function.FunSym # the number of customers who arrived in the interval [0, tau].
+	declare B : Function.FunSym # number of customers who have departed in the interval [0, tau].		
+	declare T : Function.FunSym # the time spent queuing by the ith customer
+
+	declare N_ : Function.FunSym # N_t --> Limit of N_t is The Mean number of customers randomvar
+	declare L_ : Function.FunSym # lambda_t --> Limit of L_t is The Mean of arrival rate randomvar
+	declare T_ : Function.FunSym # T_t --> Limit of T_t is The Mean of delay randomvar
+
+
+	define [t Ne Le Te] := [?t:Real ?Ne:Real ?Le:Real ?Te:Real]
+
+	define [Q] := [?Q:Queue]
+
+	declare MM1 : QType
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- Limit to INFY of N_t is the Mean of number of customers randvar 
+
+	assert lmt-N_t=mean-numCst :=
+	(forall t Q .
+		(
+			(Function.limit t RealExt.INFY (Function.consUF N_ t))
+				= 
+					(Dist.mean (Random.pdf (numCst Q)))
+		)		
+	)
+
+
+	#-- Limit to INFY of L_t is the Mean of arrival rate randvar 
+
+	assert lmt-L_t=mean-cstArRat :=
+	(forall t Q .
+		(
+			(Function.limit t RealExt.INFY (Function.consUF L_ t))
+				= 
+					(Dist.mean (Random.pdf (cstArRat Q)))
+		)		
+	)
+
+
+	#-- Limit to INFY of N_t is the Mean of delay randvar 
+
+	assert lmt-T_t=mean-cstDly :=
+	(forall t Q .
+		(
+			(Function.limit t RealExt.INFY (Function.consUF T_ t))
+				= 
+					(Dist.mean (Random.pdf (cstDly Q)))
+		)		
+	)		
+
+
+	#*************** PROOF OF LITTLE'S THEOREM ***************
+
+	#-- Main theory in Bertsekar and Gallagher or Kleinrock
+	# Following the proof in:
+	# [RC-Lec-Note4] https://www.richardclegg.org/sites/default/files/Lecture4_05.pdf
+	# OR https://github.com/paulsaswata/Library/blob/master/files/queues/little_theorem_proof.pdf  
+
+	#-- N_t is the Mean value of N(tau) taken over the interval [0,t]
+	#   Eq 2 in RC-Lec-Note4  
+
+	assert N_t-is-integral-by-t :=
+	(forall t .
+		(
+			(Function.output (Function.consUF N_ t))
+				= 
+					( (1.0 / t) * (Function.integral 0.0 t (Function.createFunExp N) ) )
+		)		
+	)
+
+
+	#-- lambda_t is the average arrival rate over [0,t]
+	#   Eq 4 in RC-Lec-Note4
+	
+	assert L_t-is-A_t-by-t :=
+	(forall t .
+		(
+			(Function.output (Function.consUF L_ t))
+				= 
+					( (Function.output (Function.consUF A t) ) / t ) 
+		)		
+	)
+
+
+	#-- T_t is the SUM function
+	#   Eq 6 in RC-Lec-Note4
+	
+	assert T_t-is-SUM-T_i :=
+	(forall t .
+		(
+			(Function.output (Function.consUF T_ t))
+				= 
+					(Function.SUM
+					 1.0
+					 (Function.output (Function.consUF A t) )
+					 ((Function.createFunExp T) Function./ (Function.output (Function.consUF A t) ) )     	 
+					 ) 		
+		)		
+	)
+
+
+	#-- In a FIFO queue
+	#  Combination of Eq 9 and Eq 11 in RC-Lec-Note4
+	
+	assert Integral=SUM :=
+	(forall t .
+		(
+			(Function.integral 0.0 t (Function.createFunExp N) )
+				=
+					(Function.SUM
+					 1.0
+					 (Function.output (Function.consUF A t) )
+					 (Function.createFunExp T)     	 
+					 ) 
+		)
+	)
+
+
+
+	#-- THEOREM: a(T)/t * SUM T(i)/ a(t) = (1/t)SUM T(i) 
+	
+	define THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM :=
+	(forall t .
+		(not (= t 0.0))
+			==>
+			(
+				(( (Function.output (Function.consUF A t)) / t ) * 
+					( (Function.SUM
+			 		   1.0
+					   (Function.output (Function.consUF A t) )
+					   (Function.createFunExp T)     	 
+					  ) 					
+					  / 
+					  (Function.output (Function.consUF A t))  ))
+					=
+						( (1.0 / t) * 
+							(Function.SUM
+							 1.0
+							 (Function.output (Function.consUF A t) )
+							 (Function.createFunExp T)     	 
+							 ) 					
+						)		
+			)	
+	)
+
+	#-- some extra assumptions required for the proofs
+	#-- the number of customers who arrived in the interval [0, tau] != 0
+	assert numcust-not-zero :=
+	(forall t .
+		(not (= (Function.output (Function.consUF A t)) 0.0))
+	)	
+
+	conclude THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM
+	pick-any t
+	assume (not (= t 0.0))
+	let{
+		lhs := 	(( (Function.output (Function.consUF A t)) / t ) * 
+					( (Function.SUM
+			 		   1.0
+					   (Function.output (Function.consUF A t) )
+					   (Function.createFunExp T)     	 
+					  ) 					
+					  / 
+					  (Function.output (Function.consUF A t))  ));
+		a := (Function.output (Function.consUF A t));
+		t-not-zero := (not (= t 0.0));
+		sum := 		(Function.SUM
+					 1.0
+					 (Function.output (Function.consUF A t) )
+					 (Function.createFunExp T)     	 
+					 );
+		t-and-a-not-zero := (!both (!uspec numcust-not-zero t) t-not-zero); 			  					
+		conn-2-a-by-d-x-b-by-a-axiom := (!uspec (!uspec (!uspec RealExt.a-by-d-x-b-by-a-axiom a) t) sum);
+		conn-2-a-by-d-x-b-by-a-axiom-conclusion := (!mp conn-2-a-by-d-x-b-by-a-axiom t-and-a-not-zero);
+		conn-2-a-by-b-axiom := (!uspec (!uspec RealExt.a-by-b-axiom sum) t);
+		conn-2-a-by-b-axiom-conclusion := (!mp conn-2-a-by-b-axiom t-not-zero)
+	}
+	(!chain [ lhs
+			= (sum / t) [conn-2-a-by-d-x-b-by-a-axiom-conclusion]
+			= ((1.0 / t) * sum) [conn-2-a-by-b-axiom-conclusion]
+			])
+
+
+
+
+	#-- THEOREM: lambda_t * T_t = (1/t) SUM T(i) 
+	
+	define THEOREM-lambda_t-x-T_t=SUM-by-t :=
+	(forall t .
+		(not (= t 0.0))
+			==>
+			(		
+				((Function.output (Function.consUF L_ t)) 
+				 *
+				 (Function.output (Function.consUF T_ t))	
+				)
+				=
+					( (1.0 / t) * 
+						(Function.SUM
+						 1.0
+						 (Function.output (Function.consUF A t) )
+						 (Function.createFunExp T)     	 
+						 ) 					
+					)
+			)
+	)
+
+
+
+
+	conclude THEOREM-lambda_t-x-T_t=SUM-by-t
+	pick-any t
+	assume (not (= t 0.0))
+	let{
+		lhs := 	((Function.output (Function.consUF L_ t)) 
+			     *
+			     (Function.output (Function.consUF T_ t))	
+			    );
+		a := (Function.output (Function.consUF A t));
+		sum := 		(Function.SUM
+					 1.0
+					 (Function.output (Function.consUF A t) )
+					 (Function.createFunExp T)     	 
+					 );
+		t-not-zero := (not (= t 0.0));
+		T_i := (Function.createFunExp T);
+		T_i-by-a := ((Function.createFunExp T) Function./ a );
+		conn-2-L_t-is-A_t-by-t := (!uspec L_t-is-A_t-by-t t);
+		conn-2-T_t-is-SUM-T_i := (!uspec T_t-is-SUM-T_i t);
+		conn-2-SUM-subsumes-denominator := (!uspec (!uspec (!uspec (!uspec Function.SUM-subsumes-denominator 1.0) a) a) T_i);
+		conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM := (!uspec THEOREM-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM t);
+		conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM-conclusion := (!mp conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM t-not-zero)		
+	}
+	(!chain [ lhs
+			= ((a / t) * (Function.output (Function.consUF T_ t))) [conn-2-L_t-is-A_t-by-t]
+			= ((a / t) * (Function.SUM 1.0 a (T_i Function./ a))) [conn-2-T_t-is-SUM-T_i]
+			= ((a / t) * ((Function.SUM 1.0 a T_i) Function./ a)) [conn-2-SUM-subsumes-denominator]
+			= ((1.0 / t) * sum) [conn2-alpha_t-x-SUM-by-t-alpha_t=t_inverse-x-SUM-conclusion]
+			])
+
+
+	#-- THEOREM: lambda_t * T_t = N_t
+
+	define THEOREM-lambda_t-x-T_t=N_t :=
+	(forall t .
+		(not (= t 0.0))
+			==>
+			(			
+				((Function.output (Function.consUF L_ t)) 
+				 *
+				 (Function.output (Function.consUF T_ t))	
+				)
+				=
+					(Function.output (Function.consUF N_ t))
+			)
+	)
+
+	conclude THEOREM-lambda_t-x-T_t=N_t
+	pick-any t
+	assume (not (= t 0.0))	
+	let{
+		lhs := 	((Function.output (Function.consUF L_ t)) 
+			     *
+			     (Function.output (Function.consUF T_ t))	
+			    );
+		sum := 		(Function.SUM
+					 1.0
+					 (Function.output (Function.consUF A t) )
+					 (Function.createFunExp T)     	 
+					 );
+		t-not-zero := (not (= t 0.0));
+		intgrl := (Function.integral 0.0 t (Function.createFunExp N) );			 		
+		conn-2-lambda_t-x-T_t=SUM-by-t := (!uspec THEOREM-lambda_t-x-T_t=SUM-by-t t);
+		conn-2-lambda_t-x-T_t=SUM-by-t-conclusion := (!mp conn-2-lambda_t-x-T_t=SUM-by-t t-not-zero);
+		conn-2-N_t-is-integral-by-t := (!uspec N_t-is-integral-by-t t);
+		conn-2-Integral=SUM := (!uspec Integral=SUM t) 		
+	}
+	(!chain [ lhs
+			= ((1.0 / t) * sum) [conn-2-lambda_t-x-T_t=SUM-by-t-conclusion]
+			= ((1.0 / t) * intgrl) [conn-2-Integral=SUM]
+			= (Function.output (Function.consUF N_ t)) [conn-2-N_t-is-integral-by-t]
+			])
+
+
+
+	#-- THEOREM: Little's Theorem 
+
+	define LITTLES-THEOREM :=
+	(forall t Q .
+		(not (= t 0.0))
+			==>		
+			(
+				(
+					((Dist.mean (Random.pdf (numCst Q))) 
+						= (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+				  & ((Dist.mean (Random.pdf (cstArRat Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+				  & ((Dist.mean (Random.pdf (cstDly Q))) 
+				  	= (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+				)
+				==>
+					((Dist.mean (Random.pdf (numCst Q))) 
+						= ((Dist.mean (Random.pdf (cstArRat Q))) * (Dist.mean (Random.pdf (cstDly Q)))))
+			)	
+	)
+
+
+	conclude LITTLES-THEOREM
+	pick-any t
+	pick-any Q
+	assume (not (= t 0.0))	
+	assume  
+			(
+				((Dist.mean (Random.pdf (numCst Q))) = (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+			  & ((Dist.mean (Random.pdf (cstArRat Q))) = (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+			  & ((Dist.mean (Random.pdf (cstDly Q))) = (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+			)
+	let{
+		assum :=
+			(
+				((Dist.mean (Random.pdf (numCst Q))) = (Function.limit t RealExt.INFY (Function.consUF N_ t)) )
+			  & ((Dist.mean (Random.pdf (cstArRat Q))) = (Function.limit t RealExt.INFY (Function.consUF L_ t)) )
+			  & ((Dist.mean (Random.pdf (cstDly Q))) = (Function.limit t RealExt.INFY (Function.consUF T_ t)) )		  
+			);
+		NF := (Function.consUF N_ t);
+		LF := (Function.consUF L_ t);
+		TF := (Function.consUF T_ t);		
+		N-Exists := (!left-and assum);		
+		L-Exists := (!left-and (!right-and assum));
+		T-Exists := (!right-and (!right-and assum));
+		t-not-zero := (not (= t 0.0));		
+		LF-x-TF=NF := (!uspec THEOREM-lambda_t-x-T_t=N_t t);
+		LF-x-TF=NF-conclusion := (!mp LF-x-TF=NF t-not-zero);
+		NF=LF-x-TF :=   (!chain [ (Function.output NF)
+					  			= ((Function.output LF) * (Function.output TF)) [LF-x-TF=NF-conclusion]
+					  		]);
+		conn-2-limit-of-prod := (!uspec (!uspec (!uspec (!uspec (!uspec Function.limit-of-prod t) RealExt.INFY) NF) LF) TF);
+		lmt-NF=lmt-LF-x-lmt-TF := (!mp conn-2-limit-of-prod NF=LF-x-TF);
+		Ne=Le-x-Te := 	(!chain [ (Function.limit t RealExt.INFY (Function.consUF N_ t))
+								= ((Function.limit t RealExt.INFY (Function.consUF L_ t)) * (Function.limit t RealExt.INFY (Function.consUF T_ t))) [lmt-NF=lmt-LF-x-lmt-TF]
+								]) 
+	}
+	(!chain [ (Dist.mean (Random.pdf (numCst Q)))
+		   = (Function.limit t RealExt.INFY (Function.consUF N_ t)) [N-Exists]
+		   = ((Dist.mean (Random.pdf (cstArRat Q))) * (Dist.mean (Random.pdf (cstDly Q)))) [Ne=Le-x-Te L-Exists T-Exists] 
+		])
+
+
+}# end module

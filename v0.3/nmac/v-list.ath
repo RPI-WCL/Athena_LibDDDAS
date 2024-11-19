@@ -1,0 +1,31 @@
+load "lib/main/nat-plus"
+load "lib/main/nat-minus"
+load "lib/main/nat-less"
+load "vector_2d"
+load "types"
+
+#datatype V-list := nilV | (consV Real V-list)
+
+module V-list{
+#****************************************************************************
+	define [v1 ]:= [?v1:Vector_2d]
+    define [i counter] := [?i:N ?counter:N]
+    define [v_list] := [?v_list:V-list]
+#****************************************************************************
+  #-- membership operator in-V-list
+
+  declare in-V-list : (Real) [Real V-list]-> Boolean
+
+  assert* empty-V-list :=
+          (~ (in-V-list ?x:Real nilV))
+
+  assert* nonempty-V-list :=
+          ((in-V-list ?x:Real (consV ?h:Real ?t:V-list)) <==> ?x:Real = ?h:Real | (in-V-list ?x:Real ?tail:V-list) )
+#****************************************************************************
+	#-- function that takes a a V-list v_list and an element v 
+	#-- and returns the index of v in v-list
+
+	declare get-index: [V-list Real] -> N
+
+
+}#module V-list

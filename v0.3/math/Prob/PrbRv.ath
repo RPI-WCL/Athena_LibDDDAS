@@ -1,0 +1,237 @@
+#-------------------------------------------------------------------------
+# Lines beginning with '#+-' are used to create the hierarchy graph
+#+- Probability of Random Variables
+
+load "Athena_LibDDDAS/math/Prob/Prob.ath"
+
+extend-module Prob {
+
+	#-------------------------  RELEVANT DOMAINS -------------------------  
+
+
+	#------------------------  RELEVANT FUNCTIONS ------------------------  
+
+	#-- Given an event  [X1 Rel y, X2 Rel y, ...]  
+	#   it returns a set of Probabilities [P(X1 Rel y), P(X2 Rel y), ... ]
+
+	declare get-set-probs : [Event] -> RealExt.RealSet	
+
+	#------------------------  RELEVANT VARIABLES ------------------------  
+
+
+	#-------------------------  RELEVANT THEORY  -------------------------
+
+	#-- (Z = X + Y) ==> ((X<=x & Y<=y) ==>  (Z <= x+y))
+	#   Property of addition 
+
+	assert sum-implies-axiom :=
+	(forall x y z r1 r2 .
+		(
+			(z = (x Random.+ y))
+			==> 
+				(	
+					(Prob.happens	
+						(Prob.cons2E 
+							(Prob.consE Prob.<= x r1) 
+							(Prob.consE Prob.<= y r2)
+						)
+					)
+					==>
+						(Prob.happens	
+							(Prob.consE Prob.<= z (r1 + r2)
+							) 
+						)						
+				)
+		)
+	)
+
+
+
+	#-- eq-randvar-rul states that
+	#  if two rvs are equal, then 
+	#  the probability of some event happening for the first
+	#  is equal to the probability of some event happening for the second
+	#  (X1 = X2) ==> P(X1 _ R) = P(X2 _ R) where _ can be <, <=, >, >= or = 
+
+	# CAN PROVE THIS
+	assert eq-randvar-rul :=
+	(forall x y R symbl .
+		(x = y) 
+			==>	
+				(
+					(probE (consE symbl x R)) 
+						= 
+							(probE (consE symbl y R))
+				)
+	)
+
+
+
+	#-- comp-<=-&-> states that 
+	#   there is Complementary relationship between 
+	#   the > and <= relations
+
+	assert comp-<=-&-> :=
+	(forall x R .
+		(
+			(complement (consE <= x R) (consE > x R))
+		)
+	)
+
+
+	#-- get-set-probs length axiom 
+	#   number of probabilities is equal to number of rvs
+	assert get-set-probs-axiom1 :=
+	(forall rvSet symbl R .
+		(
+			(RealExt.lenRS (get-set-probs (consErvs symbl rvSet R)))
+			= (Random.lenRVS rvSet)
+		)
+	)
+
+
+	#-- get-set-probs composition axiom - 
+	#   get-set-probs() returns a list of reals with a defined head and tail
+	assert get-set-probs-axiom2 :=
+	(forall rvSet y rvSetTail symbl R .
+		(
+			(get-set-probs (consErvs symbl (Random.consRVS y rvSetTail) R))
+			= (RealExt.consRS (probE (consE symbl y R)) (get-set-probs (consErvs symbl rvSetTail R)))
+		)
+	)	
+
+
+
+	#-- cdf-prob states that 
+	#   cdf(X,x) = P(X <= x)
+	#   this is the definition of a CDF
+
+	assert cdf-prob :=
+	(forall x R .
+		(
+			(Random.cdf x R) = (probE (consE <= x R))
+		)
+	)
+
+
+#	#-- evnt-RVS-axiom states that defining an event over an entire set of rvS
+#	#   is equal to defining the same event for each rv in the set
+
+#	assert evnt-RVS-axiom :=
+#	(forall rvSet R ?symbl:Rel .
+#		(
+#			(consErvs ?symbl:Rel rvSet R)
+#			=
+#			 (forall x .
+#			 	((Random.inRVS rvSet x)
+#			 		==>
+#			 			(consE ?symbl:Rel x R)) 
+#			 )
+#		)
+#	)
+
+
+	#-- p-Min-axiom states that 
+	#   P(min[X1,X2...] > y) = P( [X1 > y, X2 > y, ...])
+
+	assert p-Min-axiom :=
+	(forall rvSet R .
+		(
+			(probE (consE > (Random.minRVS rvSet) R))
+			=
+			(probE (consErvs > rvSet R))
+		)
+	)
+
+
+
+
+#**************************************************
+# TO DO:
+
+# 1. Use "methods" for making the theorems conceise by
+# creating functions for repetative proof constructs
+
+# 2. PROVE THEOREM ((Random.cdf x R) = (1.0 - (probE (consE > x R))))
+# and ((probE (consE > x R)) = 1.0 - (Random.cdf x R))
+
+#**************************************************
+
+
+
+	#-- THEOREM-probability-X-<=-&-> states that 
+	#   P(X <= y) = 1 - P(X > y)
+
+	define THEOREM-probability-X-<=-&-> :=
+	(forall x R .  
+		(
+			(probE (consE <= x R)) 
+				= 
+					(1.0 - (probE (consE > x R)))
+		)
+	)
+
+	conclude THEOREM-probability-X-<=-&-> 
+	pick-any x
+	pick-any R 
+	let{
+		e1 :=  (consE <= x R);
+		e2 :=  (consE > x R);
+		is-complement := (!uspec (!uspec comp-<=-&-> x) R);
+		comp-rul := (!left-iff (!uspec (!uspec complement-rule e1) e2))
+	}
+	(!right-and (!mp comp-rul is-complement))
+
+
+	#-- THEOREM-probability-X-<=-&-> states that 
+	#   P(X > y) = 1 - P(X <= y)
+
+	define THEOREM-probability-X->-&-<= :=
+	(forall x R .  
+		(
+			(probE (consE > x R)) 
+				= 
+					(1.0 - (probE (consE <= x R)))
+		)
+	)
+
+	conclude THEOREM-probability-X->-&-<=
+	pick-any x
+	pick-any R 
+	let{
+		e1 :=  (consE <= x R);
+		e2 :=  (consE > x R);
+		is-complement := (!uspec (!uspec comp-<=-&-> x) R);
+		comp-rul := (!left-iff (!uspec (!uspec complement-rule e1) e2))
+	}
+	(!left-and (!mp comp-rul is-complement))	
+
+
+
+	#-- THEOREM-probability-MIN-<=-&-> states that 
+	#   P(min[X1,X2,...] <= y) = 1 - P(min[X1,X2,...] > y)
+
+	define THEOREM-probability-MIN-<=-&-> :=
+	(forall rvSet R .  
+		(
+			(probE (consE <= (Random.minRVS rvSet) R)) 
+				= 
+					(1.0 - (probE (consE > (Random.minRVS rvSet) R)))
+		)
+	)
+
+	conclude THEOREM-probability-MIN-<=-&-> 
+	pick-any rvSet
+	pick-any R 
+	let{
+		min := (Random.minRVS rvSet);
+		e1 :=  (consE <= min R);
+		e2 :=  (consE > min R);
+		is-complement := (!uspec (!uspec comp-<=-&-> min) R);
+		comp-rul := (!left-iff (!uspec (!uspec complement-rule e1) e2))
+	}
+	(!right-and (!mp comp-rul is-complement))
+
+
+
+} # end module	
